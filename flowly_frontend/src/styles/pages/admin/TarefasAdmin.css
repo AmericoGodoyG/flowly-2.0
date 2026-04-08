@@ -1,0 +1,156 @@
+/* TarefasAdmin Form - Dark Glassmorphism */
+
+.dashboard-container .form-tarefa,
+.form-tarefa {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 30px;
+  max-width: 600px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: var(--glass-shadow);
+}
+
+.form-tarefa input,
+.form-tarefa select,
+.form-tarefa textarea {
+  padding: 12px 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  font-size: 1rem;
+  font-family: inherit;
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-tarefa select {
+  cursor: pointer;
+}
+
+.form-tarefa select option {
+  color: #000;
+  background: #fff;
+}
+
+.form-tarefa input:focus,
+.form-tarefa select:focus,
+.form-tarefa textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(126, 87, 194, 0.2);
+}
+
+.form-tarefa textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.form-tarefa button {
+  background: linear-gradient(135deg, var(--primary-color), #4527a0);
+  color: white;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(126, 87, 194, 0.3);
+}
+
+.form-tarefa button:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #8e6ee6, #512da8);
+}
+
+/* Task list in admin */
+.dashboard-container .lista-tarefas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.dashboard-container .lista-tarefas h3 {
+  grid-column: 1 / -1;
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: #fff;
+}
+
+.dashboard-container .tarefa-item {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: var(--glass-shadow);
+  transition: transform 0.3s;
+  color: #fff;
+}
+
+.dashboard-container .tarefa-item:hover {
+  transform: translateY(-3px);
+}
+
+.dashboard-container .tarefa-item p {
+  margin: 8px 0;
+  color: #e0e0e0;
+}
+
+.dashboard-container .tarefa-item p strong {
+  color: #fff;
+}
+
+/* Urgency indicators */
+.urgencia-alta {
+  border-left: 4px solid #ff3366;
+}
+
+.urgencia-media {
+  border-left: 4px solid #fbc02d;
+}
+
+.urgencia-baixa {
+  border-left: 4px solid #00d48d;
+}
+
+/* Messages */
+.dashboard-container .mensagem,
+.mensagem {
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 15px;
+  text-align: center;
+  font-weight: 600;
+  animation: fadeIn 0.4s ease;
+}
+
+.mensagem.sucesso {
+  background: rgba(76, 175, 80, 0.15);
+  color: #81c784;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.mensagem.erro {
+  background: rgba(255, 51, 102, 0.15);
+  color: #ffb3c6;
+  border: 1px solid rgba(255, 51, 102, 0.3);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .dashboard-container .lista-tarefas { grid-template-columns: 1fr; }
+  .form-tarefa { margin: 0 10px; }
+}

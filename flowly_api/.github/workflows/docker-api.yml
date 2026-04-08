@@ -1,0 +1,36 @@
+# Nome do workflow, que aparece na aba "Actions" do GitHub
+name: Build Docker API
+
+# Define quando o workflow deve ser executado
+# Neste caso, sempre que um push for feito na branch "main"
+on:
+  push:
+    branches: [ "main" ]
+
+# Define os jobs que o GitHub Actions irá executar
+jobs:
+  build:
+    # Indica que o job será executado em uma máquina virtual Ubuntu
+    runs-on: ubuntu-latest
+
+    steps:
+      # Faz o checkout (clonagem) do repositório para dentro do runner
+      - name: Checkout o código
+        uses: actions/checkout@v3
+
+      # Faz login no Docker Hub usando os secrets definidos no repositório
+      - name: Login no DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}  # Nome de usuário do Docker Hub
+          password: ${{ secrets.DOCKERHUB_TOKEN }}     # Token de acesso do Docker Hub
+
+      # Faz o build da imagem Docker da API usando o Dockerfile presente na raiz do projeto
+      - name: Build da imagem da API
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/flowly-api:latest .
+
+      # Faz o push da imagem criada para o Docker Hub
+      - name: Push da imagem
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/flowly-api:latest

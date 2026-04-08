@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="1696.0938"
+   height="2057.9714"
+   viewBox="0 0 448.75815 544.50496"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
+   sodipodi:docname="logo flowly.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#a1a1a1"
+     bordercolor="#000000"
+     borderopacity="1"
+     inkscape:pageshadow="0"
+     inkscape:pageopacity="1"
+     inkscape:pagecheckerboard="false"
+     inkscape:document-units="mm"
+     showgrid="false"
+     width="211mm"
+     units="px"
+     inkscape:zoom="1"
+     inkscape:cx="2352.5"
+     inkscape:cy="671.5"
+     inkscape:window-width="1920"
+     inkscape:window-height="1027"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer6"
+     inkscape:showpageshadow="2"
+     inkscape:deskcolor="#d1d1d1"
+     showguides="false" />
+  <defs
+     id="defs2">
+    <linearGradient
+       id="linearGradient23"
+       inkscape:label="Gradientes">
+      <stop
+         style="stop-color:#2f3cf5;stop-opacity:1;"
+         offset="0"
+         id="stop19" />
+      <stop
+         style="stop-color:#094ebd;stop-opacity:1;"
+         offset="0.26985562"
+         id="stop20" />
+      <stop
+         style="stop-color:#4cb4e0;stop-opacity:1;"
+         offset="0.79061376"
+         id="stop21" />
+      <stop
+         style="stop-color:#2ff5f2;stop-opacity:1;"
+         offset="1"
+         id="stop22" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient13-1"
+       inkscape:label="Gradientes">
+      <stop
+         style="stop-color:#2f3cf5;stop-opacity:1;"
+         offset="0"
+         id="stop13" />
+      <stop
+         style="stop-color:#094ebd;stop-opacity:1;"
+         offset="0.26985562"
+         id="stop12" />
+      <stop
+         style="stop-color:#4cb4e0;stop-opacity:1;"
+         offset="0.79061376"
+         id="stop11" />
+      <stop
+         style="stop-color:#2ff5f2;stop-opacity:1;"
+         offset="1"
+         id="stop10" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient13-1"
+       id="linearGradient6"
+       x1="-650.07178"
+       y1="620.38599"
+       x2="-107.263"
+       y2="620.38599"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(-84.829999,-7.335793)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient23"
+       id="linearGradient8"
+       x1="-647.07837"
+       y1="657.80371"
+       x2="-104.26959"
+       y2="657.80371"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(-87.823417,-44.753524)" />
+  </defs>
+  <g
+     inkscape:groupmode="layer"
+     id="layer6"
+     inkscape:label="Layer 1"
+     style="display:inline"
+     transform="translate(681.01061,-340.69793)">
+    <g
+       id="g23"
+       transform="rotate(89.974515,-459.64042,616.06043)">
+      <rect
+         style="display:inline;fill:url(#linearGradient8);stroke:url(#linearGradient6);stroke-width:1;stroke-linecap:butt;stroke-miterlimit:30;stroke-dasharray:none;paint-order:stroke fill markers"
+         id="rect2"
+         width="541.80878"
+         height="447.51608"
+         x="-734.40186"
+         y="389.29214"
+         ry="0" />
+      <rect
+         style="display:inline;fill:#424242;fill-opacity:0.322176;stroke:none;stroke-width:1.07388;stroke-linecap:butt;stroke-miterlimit:30;stroke-dasharray:none;paint-order:stroke fill markers"
+         id="rect23"
+         width="542.80878"
+         height="448.51608"
+         x="-733.40515"
+         y="388.79214" />
+    </g>
+  </g>
+</svg>

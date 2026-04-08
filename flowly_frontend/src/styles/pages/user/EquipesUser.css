@@ -1,0 +1,83 @@
+.equipes-user-page {
+  min-height: 100vh;
+}
+
+.equipes-user-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.equipes-user-header p {
+  margin-top: 0.5rem;
+  color: #d6dce8;
+}
+
+.equipes-user-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.equipes-user-metric {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  box-shadow: var(--glass-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.metric-label {
+  color: #b8c4d8;
+  font-size: 0.9rem;
+}
+
+.equipes-user-metric strong {
+  font-size: 1.5rem;
+}
+
+.equipes-user-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  padding-bottom: 5rem;
+}
+
+.equipe-user-card {
+  background: rgba(20, 25, 36, 0.66);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  padding: 1.2rem;
+}
+
+.equipe-user-card h3 {
+  margin: 0 0 0.75rem 0;
+}
+
+.equipe-user-card p {
+  margin: 0 0 0.8rem 0;
+  color: #d6dce8;
+}
+
+.equipe-user-card ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: #f3f5f8;
+}
+
+.equipe-user-card li {
+  margin: 0.3rem 0;
+}
+
+.equipes-user-error {
+  color: #ffc6c6;
+}
+
+@media (max-width: 768px) {
+  .equipes-user-grid {
+    padding-bottom: 7rem;
+  }
+}

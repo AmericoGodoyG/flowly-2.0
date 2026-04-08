@@ -1,0 +1,44 @@
+# Define o tipo de recurso como Deployment (para criar e gerenciar pods replicados)
+apiVersion: apps/v1
+kind: Deployment
+
+# Metadados do Deployment (nome, rótulos, etc.)
+metadata:
+  name: api-deployment  # Nome que identifica este Deployment no cluster
+
+spec:
+  replicas: 2  # Define que queremos 2 réplicas (2 pods) da API rodando simultaneamente
+
+  selector:
+    matchLabels:
+      app: api  # O Deployment vai gerenciar os pods que tiverem esse label
+
+  template:  # Define o modelo (template) do pod que será criado
+    metadata:
+      labels:
+        app: api  # Rótulo atribuído a cada pod criado (usado para seleção pelo Service)
+
+    spec:
+      containers:
+        - name: api  # Nome do container dentro do pod
+          image: pedrobvasconcellos/flowly-api:latest  # Imagem Docker da API (puxada do Docker Hub)
+          ports:
+            - containerPort: 5000  # Porta que o container escuta (a API usa a 5000)
+---
+# Define o tipo de recurso como Service (para expor os pods internamente ou externamente)
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: api-service  # Nome do serviço (referenciado pelo frontend ou outros pods)
+
+spec:
+  selector:
+    app: api  # Este serviço vai encaminhar o tráfego para os pods com esse label
+
+  ports:
+    - protocol: TCP          # Tipo de protocolo (normalmente TCP)
+      port: 5000             # Porta pela qual o serviço será acessado
+      targetPort: 5000       # Porta dentro do container que o serviço vai atingir
+
+  type: ClusterIP  # Tipo padrão de serviço (acesso interno somente dentro do cluster)

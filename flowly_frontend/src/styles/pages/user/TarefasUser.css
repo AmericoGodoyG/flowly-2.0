@@ -1,0 +1,170 @@
+.tarefas-page {
+  display: flex;
+  min-height: 100vh;
+  background: transparent;
+}
+
+.tarefas-content {
+  flex: 1;
+  margin-left: 260px;
+  min-width: 0;
+  transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar.collapsed ~ .tarefas-content {
+  margin-left: 78px;
+}
+
+.tarefas-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0;
+  padding: 40px 24px;
+  position: relative;
+  z-index: 10;
+}
+
+.tarefas-container h2 {
+  color: #fff;
+  margin-bottom: 30px;
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 800;
+  text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.kanban-board {
+  display: flex;
+  gap: 25px;
+  align-items: flex-start;
+  overflow-x: auto;
+  padding-bottom: 20px;
+  padding-right: 6px;
+}
+
+.kanban-column {
+  flex: 1;
+  min-width: 320px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 16px;
+  padding: 20px;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.kanban-column h3 {
+  margin-bottom: 20px;
+  font-size: 1.2rem;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 10px;
+}
+
+.tarefa-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 18px;
+  margin-bottom: 15px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s;
+  user-select: none;
+  color: #fff;
+  position: relative;
+}
+
+.tarefa-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.tarefa-dragging {
+  transform: rotate(2deg) scale(1.01);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+  background: rgba(126, 87, 194, 0.3);
+  border: 1px solid var(--primary-color);
+}
+
+.urgencia-alta { border-left: 4px solid #ff3366; }
+.urgencia-media { border-left: 4px solid #fbc02d; }
+.urgencia-baixa { border-left: 4px solid #00d48d; }
+
+.tarefa-item h4 {
+  color: #fff;
+  margin-bottom: 8px;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.tarefa-item p {
+  margin: 5px 0;
+  color: #b0bec5;
+  font-size: 0.95rem;
+}
+
+.buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.iniciar-btn, .pausar-btn, .finalizar-btn, .pdf-btn {
+  padding: 8px 14px; 
+  border: none; 
+  border-radius: 8px;
+  cursor: pointer; 
+  font-size: 0.85rem; 
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.iniciar-btn { background: linear-gradient(135deg, #00d48d, #009688); color: white; }
+.iniciar-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,212,141,0.4); }
+
+.pausar-btn { background: linear-gradient(135deg, #fbc02d, #f57f17); color: #fff; }
+.pausar-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(251,192,45,0.4); }
+
+.finalizar-btn { background: linear-gradient(135deg, var(--primary-color), #4527a0); color: white; }
+.finalizar-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(126,87,194,0.4); }
+
+.pdf-btn { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
+.pdf-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
+
+.mensagem {
+  padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;
+  font-weight: 600;
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.mensagem.sucesso { background-color: rgba(76, 175, 80, 0.2); color: #81c784; border: 1px solid rgba(76, 175, 80, 0.3); }
+.mensagem.erro { background-color: rgba(255, 51, 102, 0.2); color: #ffb3c6; border: 1px solid rgba(255, 51, 102, 0.3); }
+.mensagem.alerta { background-color: rgba(251, 192, 45, 0.2); color: #ffe082; border: 1px solid rgba(251, 192, 45, 0.3); }
+
+@media (max-width: 768px) {
+  .tarefas-content {
+    margin-left: 0;
+  }
+
+  .tarefas-container {
+    padding: 88px 16px 24px;
+  }
+
+  .kanban-column {
+    min-width: 290px;
+  }
+}

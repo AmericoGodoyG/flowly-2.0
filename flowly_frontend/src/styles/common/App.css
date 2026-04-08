@@ -1,0 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  /* Globais Premium Wix-Style */
+  --primary-color: #7e57c2;
+  --secondary-color: #ff3366;
+  --bg-color: transparent; /* O fundo agora vem do ColorBends */
+  --text-color: #ffffff;
+  --light-text: #b0bec5;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --error-color: #ff3366;
+  --success-color: #4caf50;
+  
+  /* Glassmorphism Variables */
+  --glass-bg: rgba(20, 20, 30, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-blur: blur(24px);
+  --glass-shadow: 0 16px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #0d0c13;
+  color: var(--text-color);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+a:hover {
+  color: var(--secondary-color);
+}
+
+button {
+  font-family: 'Outfit', sans-serif;
+}

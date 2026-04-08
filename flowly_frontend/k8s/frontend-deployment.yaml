@@ -1,0 +1,43 @@
+# Define que o recurso é um Deployment (para gerenciar pods replicados)
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: frontend-deployment  # Nome do Deployment (identificação no cluster)
+
+spec:
+  replicas: 1  # Apenas 1 réplica (1 pod do frontend)
+
+  selector:
+    matchLabels:
+      app: frontend  # O Deployment gerenciará pods com esse rótulo
+
+  template:  # Template do pod que será criado
+    metadata:
+      labels:
+        app: frontend  # Label usado para identificação e associação com o Service
+
+    spec:
+      containers:
+        - name: frontend  # Nome do container no pod
+          image: pedrobvasconcellos/flowly-frontend:latest  # Imagem Docker do frontend (do Docker Hub)
+          ports:
+            - containerPort: 80  # Porta onde o container (NGINX) está escutando
+---
+# Segundo recurso no mesmo YAML: um Service
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: frontend-service  # Nome do serviço (usado para expor o frontend)
+
+spec:
+  selector:
+    app: frontend  # Este serviço irá encaminhar o tráfego para os pods com esse rótulo
+
+  ports:
+    - protocol: TCP      # Protocolo de rede
+      port: 80           # Porta externa do serviço (acessível no cluster)
+      targetPort: 80     # Porta no container onde a aplicação está rodando
+
+  type: NodePort  # Permite o acesso externo ao serviço (via IP do cluster + porta aleatória 30000–32767)

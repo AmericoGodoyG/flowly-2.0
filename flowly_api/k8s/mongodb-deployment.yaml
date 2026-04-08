@@ -1,0 +1,49 @@
+# Estamos declarando um recurso do tipo Deployment, que gerencia a criação e manutenção de pods.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb  # Nome do Deployment (pode ser usado para identificação via kubectl)
+
+spec:
+  replicas: 1  # Apenas um pod rodando o MongoDB (suficiente para testes locais)
+  
+  # Define como identificar os pods gerenciados por este Deployment
+  selector:
+    matchLabels:
+      app: mongodb  # O label usado deve coincidir com o do template abaixo
+  
+  # Template do pod (como ele será criado)
+  template:
+    metadata:
+      labels:
+        app: mongodb  # Label usado para o selector e também para associar com o Service
+    
+    spec:
+      containers:
+        - name: mongodb  # Nome do container dentro do pod
+          image: mongo:5  # Imagem do MongoDB, versão 5 (puxada do Docker Hub)
+          
+          # Porta que o MongoDB expõe dentro do container
+          ports:
+            - containerPort: 27017
+          
+          # Variáveis de ambiente usadas pelo MongoDB para configurar usuário e senha inicial
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: root  # Nome de usuário root
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              value: example  # Senha do usuário root
+
+---
+# Abaixo estamos criando um Service, que atua como uma "porta de entrada" estável para acessar os pods do MongoDB
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-service  # Nome do serviço (usado pela API para se conectar ao banco)
+spec:
+  selector:
+    app: mongodb  # Este serviço irá encaminhar tráfego para os pods com esse label
+  
+  ports:
+    - port: 27017        # Porta do serviço acessível por outros pods
+      targetPort: 27017  # Porta do container MongoDB onde o tráfego será entregue

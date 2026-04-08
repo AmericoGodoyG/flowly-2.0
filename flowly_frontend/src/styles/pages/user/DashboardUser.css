@@ -1,0 +1,215 @@
+/* Dashboard do Usuário - Dark Glassmorphism */
+
+.dashboard-user h2 {
+  font-size: 2.2rem;
+  margin-bottom: 2rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+/* Cards de tarefas */
+.tarefa-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  transition: transform 0.3s ease, background 0.3s;
+  color: #fff;
+}
+
+.tarefa-card:hover {
+  transform: translateY(-3px);
+  background: rgba(30, 30, 45, 0.65);
+}
+
+.tarefa-card h3 {
+  margin: 0 0 12px 0;
+  color: #fff;
+  font-weight: 600;
+}
+
+.tarefa-card p {
+  margin: 8px 0;
+  color: #e0e0e0;
+}
+
+.tarefa-card p strong {
+  color: #fff;
+}
+
+.tarefa-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.tarefa-actions button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.tarefa-actions button:first-child {
+  background: linear-gradient(135deg, var(--primary-color), #4527a0);
+  color: white;
+}
+
+.tarefa-actions button:first-child:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(126, 87, 194, 0.4);
+}
+
+.status-select {
+  margin-bottom: 15px;
+}
+
+.status-select select {
+  margin-left: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+  font-family: inherit;
+  outline: none;
+}
+
+.status-select select:focus {
+  border-color: var(--primary-color);
+}
+
+.status-select select option {
+  color: #000;
+  background: #fff;
+}
+
+.start-btn {
+  background: linear-gradient(135deg, #00d48d, #009688) !important;
+  color: white !important;
+}
+
+.start-btn:hover {
+  box-shadow: 0 4px 12px rgba(0, 212, 141, 0.4) !important;
+  transform: translateY(-2px);
+}
+
+.pause-btn {
+  background: linear-gradient(135deg, #fbc02d, #f57f17) !important;
+  color: #fff !important;
+}
+
+.pause-btn:hover {
+  box-shadow: 0 4px 12px rgba(251, 192, 45, 0.4) !important;
+  transform: translateY(-2px);
+}
+
+/* Modal de tarefa do Usuário */
+.modal-tarefa {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-tarefa .modal-content {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  padding: 30px;
+  border-radius: 20px;
+  max-width: 550px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  color: #fff;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);
+}
+
+.modal-tarefa .modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.4rem;
+}
+
+.modal-tarefa .modal-content p {
+  margin: 10px 0;
+  color: #e0e0e0;
+}
+
+.modal-tarefa .modal-content button {
+  margin-top: 15px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, var(--primary-color), #4527a0);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all 0.3s;
+}
+
+.modal-tarefa .modal-content button:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #8e6ee6, #512da8);
+}
+
+.atualizar-status-btn {
+  width: 100%;
+  display: block;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.modal-buttons button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.download-btn {
+  background: linear-gradient(135deg, #00d48d, #009688) !important;
+  color: white !important;
+}
+
+.download-btn:hover {
+  box-shadow: 0 4px 12px rgba(0, 212, 141, 0.4) !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .dashboard-user {
+    margin-left: 0;
+    padding-top: 80px;
+  }
+}
