@@ -55,7 +55,6 @@ class _DashboardAdminScreenState extends State<DashboardAdminScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         drawer: AppNavigationDrawer(
-          userType: 'admin',
           currentRoute: '/admin',
           onLogout: _logout,
         ),
@@ -147,6 +146,7 @@ class _DashboardAdminScreenState extends State<DashboardAdminScreen> {
                             ),
                             SizedBox(height: compact ? 10 : 14),
                             Card(
+                              margin: EdgeInsets.only(bottom: compact ? 12 : 14),
                               child: ListTile(
                                 leading: const Icon(Icons.groups),
                                 title: const Text('Número de equipes'),
@@ -156,21 +156,27 @@ class _DashboardAdminScreenState extends State<DashboardAdminScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 16),
+                            SizedBox(height: compact ? 10 : 14),
                             Text(
                               'Equipes',
                               style: Theme.of(context).textTheme.titleLarge,
                             ),
                             const SizedBox(height: 8),
                             if (teams.isEmpty)
-                              const Card(
-                                child: ListTile(
+                              Card(
+                                margin: EdgeInsets.only(
+                                  bottom: compact ? 12 : 14,
+                                ),
+                                child: const ListTile(
                                   title: Text('Nenhuma equipe cadastrada'),
                                 ),
                               )
                             else
                               ...teams.map(
                                 (Team team) => Card(
+                                  margin: EdgeInsets.only(
+                                    bottom: compact ? 12 : 14,
+                                  ),
                                   child: ListTile(
                                     title: Text(team.nome),
                                     subtitle: Text(

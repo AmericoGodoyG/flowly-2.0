@@ -45,7 +45,7 @@ function EquipesUser() {
       <main className="dashboard-user equipes-user-content">
         <header className="equipes-user-header">
           <h2>Minhas Equipes</h2>
-          <p>Veja as equipes em que voce participa. O chat entre membros fica disponivel nesta area.</p>
+          <p>Veja as equipes em que voce participa.</p>
         </header>
 
         <section className="equipes-user-metrics">

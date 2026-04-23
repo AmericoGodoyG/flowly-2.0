@@ -208,7 +208,6 @@ class _TasksUserScreenState extends State<TasksUserScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         drawer: AppNavigationDrawer(
-          userType: 'user',
           currentRoute: '/user/tarefas',
           onLogout: _logout,
         ),
@@ -320,7 +319,7 @@ class _TasksUserScreenState extends State<TasksUserScreen> {
                         : task.tempoGasto * 60;
 
                     return Card(
-                      margin: EdgeInsets.only(bottom: compact ? 8 : 10),
+                      margin: EdgeInsets.only(bottom: compact ? 12 : 14),
                       child: Padding(
                         padding: const EdgeInsets.all(10),
                         child: Column(

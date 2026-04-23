@@ -102,7 +102,7 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
             backgroundColor: const Color(0xFF0D9C6E),
           ),
         );
-        context.go('/admin/equipes');
+        context.go('/equipes/minhas');
       }
     } catch (e) {
       if (mounted) {

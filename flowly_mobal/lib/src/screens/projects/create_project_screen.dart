@@ -85,9 +85,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
           ),
         );
         if (widget.projectId != null) {
-          context.go('/admin/projetos/${widget.projectId}');
+          context.pop();
         } else {
-          context.go('/admin/equipes/$teamId/projetos');
+          context.go('/projetos');
         }
       }
     } catch (e) {

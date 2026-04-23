@@ -46,6 +46,35 @@ class TaskService {
     }
   }
 
+  Future<List<Task>> listarBacklog() async {
+    try {
+      final response = await ApiClient.instance.dio.get<List<dynamic>>(
+        '/api/tarefas/backlog',
+      );
+      final data = response.data ?? [];
+      return data
+          .map((json) => Task.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (error) {
+      throw ApiClient.mapError(error);
+    }
+  }
+
+  Future<Task> atribuirParaMim(String tarefaId) async {
+    try {
+      final response = await ApiClient.instance.dio.put<Map<String, dynamic>>(
+        '/api/tarefas/$tarefaId/atribuir-para-mim',
+      );
+      final Map<String, dynamic> data = response.data ?? <String, dynamic>{};
+      if (data['tarefa'] is Map<String, dynamic>) {
+        return Task.fromJson(data['tarefa'] as Map<String, dynamic>);
+      }
+      return Task.fromJson(data);
+    } catch (error) {
+      throw ApiClient.mapError(error);
+    }
+  }
+
   Future<List<Task>> listarTarefas({
     String? userId,
     String? equipeId,

@@ -69,8 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (result.success) {
-      final bool isAdmin = result.userType == 'admin';
-      context.go(isAdmin ? '/admin' : '/dashboard');
+      context.go('/dashboard');
       return;
     }
 

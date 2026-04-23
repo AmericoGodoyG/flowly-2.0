@@ -76,7 +76,7 @@ function DashboardTarefasAdmin() {
               <div key={tarefa._id} className="team-item">
                 <h3>{tarefa.descricao}</h3>
                 <p><strong>Entrega:</strong> {new Date(tarefa.dataEntrega).toLocaleDateString()}</p>
-                <p><strong>Usuário:</strong> {tarefa.user?.nome}</p>
+                <p><strong>Usuário:</strong> {tarefa.user?.nome || 'Sem responsável (Backlog)'}</p>
                 <p><strong>Equipe:</strong> {tarefa.equipe?.nome}</p>
                 <p><strong>Status:</strong> {formatarStatus(tarefa.status)}</p>
 

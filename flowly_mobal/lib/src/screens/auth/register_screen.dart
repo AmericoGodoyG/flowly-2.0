@@ -19,7 +19,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
-  String _selectedUserType = 'user';
 
   bool _obscurePassword = true;
   bool _isSubmitting = false;
@@ -44,7 +43,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       nome: _nameController.text.trim(),
       email: _emailController.text.trim(),
       senha: _passwordController.text,
-      tipo: _selectedUserType,
     );
 
     if (!mounted) {
@@ -164,53 +162,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 16),
-                        DropdownButtonFormField<String>(
-                          initialValue: _selectedUserType,
-                          isExpanded: true,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.copyWith(color: flowlyText),
-                          dropdownColor: flowlySurfaceAlt,
-                          iconEnabledColor: flowlyText,
-                          decoration: InputDecoration(
-                            labelText: 'Tipo de usuário',
-                            prefixIcon: const Icon(
-                              Icons.admin_panel_settings_outlined,
-                              color: flowlyMutedText,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          items: const <DropdownMenuItem<String>>[
-                            DropdownMenuItem<String>(
-                              value: 'user',
-                              child: Text(
-                                'Usuário normal',
-                                style: TextStyle(color: flowlyText),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            DropdownMenuItem<String>(
-                              value: 'admin',
-                              child: Text(
-                                'Administrador',
-                                style: TextStyle(color: flowlyText),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                          onChanged: _isSubmitting
-                              ? null
-                              : (String? value) {
-                                  if (value == null) {
-                                    return;
-                                  }
-                                  setState(() => _selectedUserType = value);
-                                },
-                        ),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 28),
                         FilledButton(
                           onPressed: _isSubmitting ? null : _submit,
                           style: FilledButton.styleFrom(

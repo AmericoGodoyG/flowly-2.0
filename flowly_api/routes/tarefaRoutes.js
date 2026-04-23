@@ -23,6 +23,12 @@ router.delete('/:id', isAdmin, tarefaController.excluirTarefa);
 // USER: visualizar suas tarefas
 router.get('/minhas', isUser, tarefaController.minhasTarefas);
 
+// USER: backlog (tarefas sem responsável)
+router.get('/backlog', isUser, tarefaController.listarBacklog);
+
+// USER: autoatribuir tarefa do backlog
+router.put('/:id/atribuir-para-mim', isUser, tarefaController.atribuirParaMim);
+
 // ALL: detalhes da tarefa (comentários, logs etc)
 router.get('/:id/detalhes', tarefaController.detalhesTarefa);
 

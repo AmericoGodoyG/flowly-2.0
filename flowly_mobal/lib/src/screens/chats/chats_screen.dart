@@ -1,33 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:meu_app/src/models/team.dart';
 import 'package:meu_app/src/services/auth_service.dart';
 import 'package:meu_app/src/services/team_service.dart';
+import 'package:meu_app/src/models/team.dart';
 import 'package:meu_app/src/widgets/app_navigation_drawer.dart';
 import 'package:meu_app/src/widgets/auth_background.dart';
 
-class MyTeamsScreen extends StatefulWidget {
-  const MyTeamsScreen({super.key});
+class ChatsScreen extends StatefulWidget {
+  const ChatsScreen({super.key});
 
   @override
-  State<MyTeamsScreen> createState() => _MyTeamsScreenState();
+  State<ChatsScreen> createState() => _ChatsScreenState();
 }
 
-class _MyTeamsScreenState extends State<MyTeamsScreen> {
+class _ChatsScreenState extends State<ChatsScreen> {
   final TeamService _teamService = TeamService();
   final AuthService _authService = AuthService();
+
   Future<List<Team>>? _teamsFuture;
 
   @override
   void initState() {
     super.initState();
-    _loadTeams();
+    _teamsFuture = _teamService.listarMinhasEquipes();
   }
 
-  void _loadTeams() {
+  Future<void> _reload() async {
     setState(() {
       _teamsFuture = _teamService.listarMinhasEquipes();
     });
+    await _teamsFuture;
   }
 
   Future<void> _logout() async {
@@ -41,14 +43,15 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
   @override
   Widget build(BuildContext context) {
     final bool compact = MediaQuery.of(context).size.width < 390;
+
     return AuthBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
         drawer: AppNavigationDrawer(
-          currentRoute: '/equipes/minhas',
+          currentRoute: '/chats',
           onLogout: _logout,
         ),
-        appBar: AppBar(title: const Text('Minhas Equipes')),
+        appBar: AppBar(title: const Text('Chats')),
         body: FutureBuilder<List<Team>>(
           future: _teamsFuture,
           builder: (BuildContext context, AsyncSnapshot<List<Team>> snapshot) {
@@ -63,10 +66,10 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                      Text('Erro ao carregar equipes: ${snapshot.error}'),
+                      Text('Erro ao carregar chats: ${snapshot.error}'),
                       const SizedBox(height: 12),
                       FilledButton(
-                        onPressed: _loadTeams,
+                        onPressed: _reload,
                         child: const Text('Tentar novamente'),
                       ),
                     ],
@@ -78,18 +81,18 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
             final List<Team> teams = snapshot.data ?? <Team>[];
             if (teams.isEmpty) {
               return RefreshIndicator(
-                onRefresh: () async => _loadTeams(),
+                onRefresh: _reload,
                 child: ListView(
                   children: const <Widget>[
                     SizedBox(height: 160),
-                    Center(child: Text('Você não está em nenhuma equipe.')),
+                    Center(child: Text('Você não participa de nenhuma equipe.')),
                   ],
                 ),
               );
             }
 
             return RefreshIndicator(
-              onRefresh: () async => _loadTeams(),
+              onRefresh: _reload,
               child: ListView(
                 padding: EdgeInsets.all(compact ? 12 : 16),
                 children: <Widget>[
@@ -97,7 +100,7 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
                     padding: EdgeInsets.all(compact ? 14 : 16),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: <Color>[Color(0xFF152742), Color(0xFF1E4FA8)],
+                        colors: <Color>[Color(0xFF0B1F4D), Color(0xFF1E4FA8)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -111,7 +114,7 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
-                              'Equipes vinculadas',
+                              'Chats das equipes',
                               style: Theme.of(context).textTheme.titleLarge
                                   ?.copyWith(
                                     color: Colors.white,
@@ -120,7 +123,7 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Visualização simples das suas equipes',
+                              'Converse com os membros em um lugar só',
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(color: Colors.white70),
                             ),
@@ -146,9 +149,20 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
                     return Card(
                       margin: EdgeInsets.only(bottom: compact ? 12 : 14),
                       child: ListTile(
-                        leading: const Icon(Icons.groups_outlined),
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E4FA8).withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.forum_outlined),
+                        ),
                         title: Text(team.nome),
                         subtitle: Text('${team.membros.length} membros'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push(
+                          '/chats/${team.id}?nome=${Uri.encodeComponent(team.nome)}',
+                        ),
                       ),
                     );
                   }),

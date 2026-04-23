@@ -9,15 +9,37 @@ const logActivity = require('../utils/activityLogger');
 exports.criarTarefa = async (req, res) => {
   try {
     const { descricao, detalhes, dataEntrega, user, equipe, tempoEstimado, urgencia, tags, subtarefas } = req.body;
+    if (!equipe) return res.status(400).json({ erro: 'Equipe é obrigatória' });
 
-    const usuario = await User.findById(user);
-    if (!usuario || usuario.tipo !== 'user') return res.status(400).json({ erro: 'User inválido' });
+    const equipeDoc = await Equipe.findById(equipe).select('membros nome');
+    if (!equipeDoc) {
+      return res.status(400).json({ erro: 'Equipe inválida' });
+    }
+
+    let usuario = null;
+    let userId = null;
+    if (user && String(user).trim()) {
+      userId = String(user).trim();
+    }
+
+    if (userId) {
+      usuario = await User.findById(userId);
+      if (!usuario || usuario.tipo !== 'user') {
+        return res.status(400).json({ erro: 'User inválido' });
+      }
+      const pertenceEquipe = equipeDoc.membros.some(
+        (membroId) => String(membroId) === String(usuario._id),
+      );
+      if (!pertenceEquipe) {
+        return res.status(400).json({ erro: 'Usuário não pertence à equipe selecionada' });
+      }
+    }
 
     const tarefa = new Tarefa({ 
       descricao, 
       detalhes,
       dataEntrega, 
-      user, 
+      user: userId,
       equipe,
       tempoEstimado,
       urgencia,
@@ -25,8 +47,11 @@ exports.criarTarefa = async (req, res) => {
       subtarefas: subtarefas || []
     });
     await tarefa.save();
-    
-    await logActivity('criacao', `Tarefa criada e atribuída a ${usuario.nome}`, req.user.id, tarefa._id);
+
+    const descricaoCriacao = usuario
+      ? `Tarefa criada e atribuída a ${usuario.nome}`
+      : 'Tarefa criada sem responsável e enviada ao backlog';
+    await logActivity('criacao', descricaoCriacao, req.user.id, tarefa._id);
 
     res.status(201).json(tarefa);
   } catch (err) {
@@ -56,9 +81,52 @@ exports.listarTarefas = async (req, res) => {
 exports.editarTarefa = async (req, res) => {
   try {
     const { descricao, detalhes, dataEntrega, user, equipe, tempoEstimado, urgencia, tags } = req.body;
+
+    const tarefaAtual = await Tarefa.findById(req.params.id);
+    if (!tarefaAtual) {
+      return res.status(404).json({ erro: 'Tarefa não encontrada' });
+    }
+
+    const equipeAlvo = equipe || tarefaAtual.equipe;
+    const equipeDoc = await Equipe.findById(equipeAlvo).select('membros');
+    if (!equipeDoc) {
+      return res.status(400).json({ erro: 'Equipe inválida' });
+    }
+
+    let userAlvo = user;
+    if (userAlvo === '' || userAlvo === null) {
+      userAlvo = null;
+    }
+
+    if (userAlvo) {
+      const usuario = await User.findById(userAlvo);
+      if (!usuario || usuario.tipo !== 'user') {
+        return res.status(400).json({ erro: 'User inválido' });
+      }
+      const pertenceEquipe = equipeDoc.membros.some(
+        (membroId) => String(membroId) === String(usuario._id),
+      );
+      if (!pertenceEquipe) {
+        return res.status(400).json({ erro: 'Usuário não pertence à equipe selecionada' });
+      }
+    }
+
+    const dadosAtualizacao = {
+      descricao,
+      detalhes,
+      dataEntrega,
+      equipe,
+      tempoEstimado,
+      urgencia,
+      tags,
+    };
+    if (user !== undefined) {
+      dadosAtualizacao.user = userAlvo;
+    }
+
     const tarefaAtualizada = await Tarefa.findByIdAndUpdate(
       req.params.id,
-      { descricao, detalhes, dataEntrega, user, equipe, tempoEstimado, urgencia, tags },
+      dadosAtualizacao,
       { new: true }
     );
     
@@ -161,6 +229,74 @@ exports.minhasTarefas = async (req, res) => {
     res.json(tarefas);
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao buscar suas tarefas' });
+  }
+};
+
+// USER: backlog de tarefas sem responsável (apenas equipes do usuário)
+exports.listarBacklog = async (req, res) => {
+  try {
+    const minhasEquipes = await Equipe.find({ membros: req.user.id }).select('_id');
+    const equipeIds = minhasEquipes.map((equipe) => equipe._id);
+
+    if (equipeIds.length === 0) {
+      return res.json([]);
+    }
+
+    const tarefas = await Tarefa.find({
+      equipe: { $in: equipeIds },
+      $or: [{ user: null }, { user: { $exists: false } }],
+    })
+      .populate('equipe', 'nome')
+      .sort({ urgencia: -1, dataEntrega: 1 });
+
+    res.json(tarefas);
+  } catch (err) {
+    res.status(500).json({ erro: 'Erro ao buscar backlog', detalhe: err.message });
+  }
+};
+
+// USER: atribuir tarefa do backlog para si mesmo
+exports.atribuirParaMim = async (req, res) => {
+  try {
+    const tarefa = await Tarefa.findById(req.params.id);
+    if (!tarefa) {
+      return res.status(404).json({ erro: 'Tarefa não encontrada' });
+    }
+
+    if (tarefa.user) {
+      return res.status(409).json({ erro: 'Esta tarefa já possui responsável' });
+    }
+
+    const equipe = await Equipe.findById(tarefa.equipe).select('membros');
+    if (!equipe) {
+      return res.status(400).json({ erro: 'Equipe da tarefa não encontrada' });
+    }
+
+    const pertenceEquipe = equipe.membros.some(
+      (membroId) => String(membroId) === String(req.user.id),
+    );
+
+    if (!pertenceEquipe) {
+      return res.status(403).json({ erro: 'Você não pertence à equipe desta tarefa' });
+    }
+
+    tarefa.user = req.user.id;
+    await tarefa.save();
+
+    await logActivity(
+      'atualizacao_geral',
+      'Tarefa atribuída automaticamente para o colaborador',
+      req.user.id,
+      tarefa._id,
+    );
+
+    const tarefaAtualizada = await Tarefa.findById(tarefa._id)
+      .populate('user', 'nome')
+      .populate('equipe', 'nome');
+
+    res.json({ msg: 'Tarefa atribuída com sucesso', tarefa: tarefaAtualizada });
+  } catch (err) {
+    res.status(500).json({ erro: 'Erro ao atribuir tarefa', detalhe: err.message });
   }
 };
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   FaChartPie, FaUsers, FaTasks, FaSignOutAlt,
-  FaBars, FaTimes, FaPlus, FaClipboardList, FaHome
+  FaBars, FaTimes, FaPlus, FaClipboardList, FaHome, FaInbox, FaComments
 } from 'react-icons/fa';
 import { authUtils } from '../../config/authUtils';
 import '../../styles/components/Sidebar.css';
@@ -45,11 +45,17 @@ const Sidebar = () => {
     navigate('/');
   };
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => {
+    if (location.pathname === path) {
+      return true;
+    }
+    return location.pathname.startsWith(`${path}/`);
+  };
 
   const adminMenuItems = [
     { path: '/admin/geral', icon: <FaChartPie />, label: 'Painel Geral' },
     { path: '/admin', icon: <FaUsers />, label: 'Equipes' },
+    { path: '/admin/chats', icon: <FaComments />, label: 'Chats' },
     { path: '/admin/criar-equipe', icon: <FaPlus />, label: 'Nova Equipe' },
     { path: '/admin/tarefas', icon: <FaClipboardList />, label: 'Tarefas' },
     { path: '/admin/criar-tarefa', icon: <FaPlus />, label: 'Nova Tarefa' },
@@ -58,6 +64,8 @@ const Sidebar = () => {
   const userMenuItems = [
     { path: '/dashboard', icon: <FaHome />, label: 'Meu Painel' },
     { path: '/minhas-tarefas', icon: <FaTasks />, label: 'Kanban Board' },
+    { path: '/backlog', icon: <FaInbox />, label: 'Backlog' },
+    { path: '/chats', icon: <FaComments />, label: 'Chats' },
     { path: '/equipes', icon: <FaUsers />, label: 'Minhas Equipes' },
   ];
 

@@ -41,7 +41,7 @@ function TarefasAdmin() {
     setTempoEstimado(tarefa.tempoEstimado || "");
     setUrgencia(tarefa.urgencia || "baixa");
     buscarMembersDaEquipe(tarefa.equipe?._id);
-    setUserSelecionado(tarefa.user?._id);
+    setUserSelecionado(tarefa.user?._id || '');
   };
 
   const atualizarTarefa = async () => {
@@ -278,10 +278,9 @@ function TarefasAdmin() {
           <select
             value={userSelecionado}
             onChange={(e) => setUserSelecionado(e.target.value)}
-            required
             disabled={!equipeSelecionada}
           >
-            <option value="">Selecione um usuário</option>
+            <option value="">Sem responsável (Backlog)</option>
             {users.map((u) => (
               <option key={u._id} value={u._id}>
                 {u.nome}
@@ -306,7 +305,7 @@ function TarefasAdmin() {
                 <p><strong>Nome da tarefa:</strong> {t.descricao}</p>
                 {t.detalhes && <p><strong>Descrição:</strong> {t.detalhes}</p>}
                 <p><strong>Entrega:</strong> {new Date(t.dataEntrega).toLocaleDateString()}</p>
-                <p><strong>Usuário:</strong> {t.user?.nome}</p>
+                <p><strong>Usuário:</strong> {t.user?.nome || 'Sem responsável (Backlog)'}</p>
                 <p><strong>Equipe:</strong> {t.equipe?.nome}</p>
                 <p><strong>Status:</strong> {formatarStatus(t.status)}</p>
                 <p><strong>Urgência:</strong> {t.urgencia.charAt(0).toUpperCase() + t.urgencia.slice(1)}</p>

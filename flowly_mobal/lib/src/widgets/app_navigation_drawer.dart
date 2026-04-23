@@ -1,77 +1,133 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:meu_app/src/app/flowly_theme.dart';
+import 'package:meu_app/src/core/config/api_config.dart';
+import 'package:meu_app/src/core/constants/storage_keys.dart';
+import 'package:meu_app/src/core/network/api_client.dart';
 
-class AppNavigationDrawer extends StatelessWidget {
+class AppNavigationDrawer extends StatefulWidget {
   const AppNavigationDrawer({
     super.key,
-    required this.userType,
     required this.currentRoute,
     required this.onLogout,
   });
 
-  final String userType;
   final String currentRoute;
   final Future<void> Function() onLogout;
 
   @override
+  State<AppNavigationDrawer> createState() => _AppNavigationDrawerState();
+}
+
+class _AppNavigationDrawerState extends State<AppNavigationDrawer> {
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  String _userName = 'Usuário';
+  String _userPhoto = '';
+  bool _loadingUser = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    String savedName =
+        (await _storage.read(key: StorageKeys.userName))?.trim() ?? '';
+    String savedPhoto =
+        (await _storage.read(key: StorageKeys.userPhoto))?.trim() ?? '';
+
+    try {
+      final response = await ApiClient.instance.dio.get<Map<String, dynamic>>(
+        '/api/users/me',
+      );
+      final Map<String, dynamic> data = response.data ?? <String, dynamic>{};
+      savedName = (data['nome'] ?? savedName).toString().trim();
+      savedPhoto = (data['fotoPerfil'] ?? savedPhoto).toString().trim();
+      if (savedName.isNotEmpty) {
+        await _storage.write(key: StorageKeys.userName, value: savedName);
+      }
+      await _storage.write(key: StorageKeys.userPhoto, value: savedPhoto);
+    } catch (_) {
+      // Mantém fallback dos dados salvos no storage.
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _userName = savedName.isEmpty ? 'Usuário' : savedName;
+      _userPhoto = savedPhoto;
+      _loadingUser = false;
+    });
+  }
+
+  String _buildPhotoUrl() {
+    if (_userPhoto.isEmpty) {
+      return '';
+    }
+    if (_userPhoto.startsWith('http')) {
+      return _userPhoto;
+    }
+    final String normalizedPath = _userPhoto.startsWith('/')
+        ? _userPhoto
+        : '/$_userPhoto';
+    return '${ApiConfig.baseUrl}$normalizedPath';
+  }
+
+  Widget _buildAvatar() {
+    final String photoUrl = _buildPhotoUrl();
+    final String initial = _userName.isNotEmpty
+        ? _userName.substring(0, 1).toUpperCase()
+        : 'U';
+
+    return CircleAvatar(
+      foregroundImage: photoUrl.isEmpty ? null : NetworkImage(photoUrl),
+      child: photoUrl.isEmpty ? Text(initial) : null,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final bool isAdmin = userType == 'admin';
-    final List<_DrawerItem> items = isAdmin
-        ? const <_DrawerItem>[
-            _DrawerItem(
-              title: 'Geral',
-              icon: Icons.dashboard_customize_outlined,
-              route: '/admin/geral',
-            ),
-            _DrawerItem(
-              title: 'Dashboard Admin',
-              icon: Icons.dashboard_outlined,
-              route: '/admin',
-            ),
-            _DrawerItem(
-              title: 'Equipes',
-              icon: Icons.groups_outlined,
-              route: '/admin/equipes',
-            ),
-            _DrawerItem(
-              title: 'Tarefas',
-              icon: Icons.task_outlined,
-              route: '/admin/tarefas',
-            ),
-            _DrawerItem(
-              title: 'Criar Equipe',
-              icon: Icons.group_add_outlined,
-              route: '/admin/equipes/criar',
-            ),
-            _DrawerItem(
-              title: 'Criar Tarefa',
-              icon: Icons.playlist_add_outlined,
-              route: '/admin/tarefas/criar',
-            ),
-          ]
-        : const <_DrawerItem>[
-            _DrawerItem(
-              title: 'Dashboard',
-              icon: Icons.dashboard_outlined,
-              route: '/dashboard',
-            ),
-            _DrawerItem(
-              title: 'Minhas tarefas',
-              icon: Icons.task_alt_outlined,
-              route: '/user/tarefas',
-            ),
-            _DrawerItem(
-              title: 'Minhas Equipes',
-              icon: Icons.groups_outlined,
-              route: '/equipes/minhas',
-            ),
-            _DrawerItem(
-              title: 'Meu Perfil',
-              icon: Icons.person_outline,
-              route: '/perfil',
-            ),
-          ];
+    const List<_DrawerItem> items = <_DrawerItem>[
+      _DrawerItem(
+        title: 'Dashboard',
+        icon: Icons.dashboard_outlined,
+        route: '/dashboard',
+      ),
+      _DrawerItem(
+        title: 'Minhas tarefas',
+        icon: Icons.task_alt_outlined,
+        route: '/user/tarefas',
+      ),
+      _DrawerItem(
+        title: 'Kanban',
+        icon: Icons.view_kanban_outlined,
+        route: '/kanban',
+      ),
+      _DrawerItem(
+        title: 'Backlog',
+        icon: Icons.inbox_outlined,
+        route: '/backlog',
+      ),
+      _DrawerItem(
+        title: 'Chats',
+        icon: Icons.forum_outlined,
+        route: '/chats',
+      ),
+      _DrawerItem(
+        title: 'Minhas Equipes',
+        icon: Icons.groups_outlined,
+        route: '/equipes/minhas',
+      ),
+      _DrawerItem(
+        title: 'Meu Perfil',
+        icon: Icons.person_outline,
+        route: '/perfil',
+      ),
+    ];
 
     return Drawer(
       backgroundColor: flowlySurface,
@@ -87,28 +143,27 @@ class AppNavigationDrawer extends StatelessWidget {
                   colors: <Color>[flowlyPrimary, flowlySecondary],
                 ),
               ),
+              currentAccountPicture: _buildAvatar(),
               accountName: Text(
-                isAdmin ? 'Administrador' : 'Usuário',
+                _loadingUser ? 'Carregando...' : _userName,
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              accountEmail: Text(
-                isAdmin ? 'Painel admin' : 'Painel usuário',
-                style: const TextStyle(color: Color(0xE6FFFFFF)),
-              ),
-              currentAccountPicture: CircleAvatar(
-                child: Icon(
-                  isAdmin ? Icons.admin_panel_settings : Icons.person_outline,
-                ),
+              accountEmail: const Text(
+                'Painel usuário',
+                style: TextStyle(color: Color(0xE6FFFFFF)),
               ),
             ),
             Expanded(
               child: ListView(
                 children: <Widget>[
                   ...items.map((item) {
-                    final bool selected = _isSelected(item.route, currentRoute);
+                    final bool selected = _isSelected(
+                      item.route,
+                      widget.currentRoute,
+                    );
                     return ListTile(
                       leading: Icon(item.icon),
                       title: Text(item.title),
@@ -131,7 +186,7 @@ class AppNavigationDrawer extends StatelessWidget {
               title: const Text('Sair'),
               onTap: () async {
                 Navigator.of(context).pop();
-                await onLogout();
+                await widget.onLogout();
               },
             ),
           ],

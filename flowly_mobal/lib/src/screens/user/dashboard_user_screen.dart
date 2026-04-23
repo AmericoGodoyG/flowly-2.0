@@ -55,7 +55,6 @@ class _DashboardUserScreenState extends State<DashboardUserScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         drawer: AppNavigationDrawer(
-          userType: 'user',
           currentRoute: '/dashboard',
           onLogout: _logout,
         ),
@@ -152,6 +151,7 @@ class _DashboardUserScreenState extends State<DashboardUserScreen> {
                             ),
                             SizedBox(height: compact ? 10 : 14),
                             Card(
+                              margin: EdgeInsets.only(bottom: compact ? 12 : 14),
                               child: ListTile(
                                 leading: const Icon(Icons.task_alt),
                                 title: const Text('Quantidade de tarefas'),
@@ -161,8 +161,8 @@ class _DashboardUserScreenState extends State<DashboardUserScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 12),
                             Card(
+                              margin: EdgeInsets.only(bottom: compact ? 12 : 14),
                               child: ListTile(
                                 leading: const Icon(Icons.arrow_forward),
                                 title: const Text(
@@ -172,16 +172,21 @@ class _DashboardUserScreenState extends State<DashboardUserScreen> {
                                 onTap: () => context.go('/user/tarefas'),
                               ),
                             ),
-                            const SizedBox(height: 16),
                             if (tasks.isEmpty)
-                              const Card(
-                                child: ListTile(
+                              Card(
+                                margin: EdgeInsets.only(
+                                  bottom: compact ? 12 : 14,
+                                ),
+                                child: const ListTile(
                                   title: Text('Nenhuma tarefa atribuída'),
                                 ),
                               )
                             else
                               ...tasks.map(
                                 (Task task) => Card(
+                                  margin: EdgeInsets.only(
+                                    bottom: compact ? 12 : 14,
+                                  ),
                                   child: ListTile(
                                     title: Text(
                                       task.nome.isEmpty

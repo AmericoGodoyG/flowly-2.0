@@ -87,7 +87,6 @@ class _TeamsAdminScreenState extends State<TeamsAdminScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: AppNavigationDrawer(
-        userType: 'admin',
         currentRoute: '/admin/equipes',
         onLogout: _logout,
       ),

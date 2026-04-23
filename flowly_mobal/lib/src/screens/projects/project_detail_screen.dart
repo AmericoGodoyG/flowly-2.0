@@ -94,22 +94,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           length: 3,
           child: Scaffold(
             drawer: AppNavigationDrawer(
-              userType: 'admin',
-              currentRoute: '/admin/projetos/${project.id}',
+              currentRoute: '/projetos/${project.id}',
               onLogout: _logout,
             ),
             appBar: AppBar(
               title: Text(project.nome),
               centerTitle: true,
               elevation: 0,
-              actions: <Widget>[
-                IconButton(
-                  onPressed: () =>
-                      context.go('/admin/projetos/editar/${project.id}'),
-                  icon: const Icon(Icons.edit_outlined),
-                  tooltip: 'Editar projeto',
-                ),
-              ],
               bottom: const TabBar(
                 tabs: [
                   Tab(text: 'Tarefas'),
@@ -130,7 +121,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             ),
             floatingActionButton: FloatingActionButton(
               onPressed: () {
-                context.go('/admin/tarefas/criar?projectId=${project.id}');
+                context.push('/user/tarefas/criar?projectId=${project.id}');
               },
               child: const Icon(Icons.add),
             ),
@@ -169,7 +160,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         return TaskCard(
           task: task,
           onTap: () {
-            context.go('/admin/tarefas/${task.id}');
+            context.push('/user/tarefas/${task.id}');
           },
         );
       },

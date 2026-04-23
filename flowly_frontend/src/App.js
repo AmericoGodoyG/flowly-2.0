@@ -1,9 +1,7 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { publicRoutes, adminRoutes, userRoutes } from "./config/routes";
 import { authUtils } from "./config/authUtils";
-import { USER_TYPES } from "./config/config";
-import ChatPanel from "./components/chat/ChatPanel";
 import FloatingTimer from "./components/timer/FloatingTimer";
 import ColorBendsBackground from "./components/layout/ColorBendsBackground";
 import "./styles/common/App.css";
@@ -17,13 +15,6 @@ function App() {
 }
 
 function AppContent() {
-  const location = useLocation();
-  const isEquipeChatRoute =
-    location.pathname === '/equipes' ||
-    location.pathname === '/admin' ||
-    location.pathname === '/admin/criar-equipe' ||
-    location.pathname.startsWith('/admin/equipe/');
-
   /**
    * Componente para renderizar rotas protegidas
    */
@@ -43,7 +34,6 @@ function AppContent() {
       <>
         <ColorBendsBackground />
         {element}
-        {isEquipeChatRoute && <ChatPanel />}
         <FloatingTimer />
       </>
     );

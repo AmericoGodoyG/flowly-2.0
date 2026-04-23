@@ -87,7 +87,6 @@ class _TasksAdminScreenState extends State<TasksAdminScreen> {
     final bool compact = MediaQuery.of(context).size.width < 390;
     return Scaffold(
       drawer: AppNavigationDrawer(
-        userType: 'admin',
         currentRoute: '/admin/tarefas',
         onLogout: _logout,
       ),

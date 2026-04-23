@@ -9,9 +9,12 @@ import DashboardGeral from '../pages/dashboard/DashboardGeral';
 import DashboardTarefasAdmin from '../pages/admin/DashboardTarefasAdmin';
 import TarefasAdmin from '../pages/admin/TarefasAdmin';
 import TarefasUser from '../pages/user/TarefasUser';
+import BacklogUser from '../pages/user/BacklogUser';
+import BacklogTaskDetailUser from '../pages/user/BacklogTaskDetailUser';
 import EquipesUser from '../pages/user/EquipesUser';
 import PerfilUser from '../pages/user/PerfilUser';
 import Equipes from '../pages/admin/Equipes';
+import ChatsPage from '../pages/common/ChatsPage';
 import { USER_TYPES } from './config';
 
 /**
@@ -68,6 +71,11 @@ export const adminRoutes = [
     requiredRole: USER_TYPES.ADMIN,
   },
   {
+    path: '/admin/chats',
+    element: <ChatsPage />,
+    requiredRole: USER_TYPES.ADMIN,
+  },
+  {
     path: '/perfil',
     element: <PerfilUser />,
   },
@@ -88,8 +96,23 @@ export const userRoutes = [
     requiredRole: USER_TYPES.USER,
   },
   {
+    path: '/backlog',
+    element: <BacklogUser />,
+    requiredRole: USER_TYPES.USER,
+  },
+  {
+    path: '/backlog/:id',
+    element: <BacklogTaskDetailUser />,
+    requiredRole: USER_TYPES.USER,
+  },
+  {
     path: '/equipes',
     element: <EquipesUser />,
+    requiredRole: USER_TYPES.USER,
+  },
+  {
+    path: '/chats',
+    element: <ChatsPage />,
     requiredRole: USER_TYPES.USER,
   },
 ];

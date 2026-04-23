@@ -9,7 +9,12 @@ const tarefaSchema = new mongoose.Schema({
     enum: ['pendente', 'em_andamento', 'concluido'],
     default: 'pendente'
   },
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false,
+    default: null,
+  },
   equipe: { type: mongoose.Schema.Types.ObjectId, ref: 'Equipe', required: true },
   tempoEstimado: { type: Number }, // tempo em minutos
   tempoGasto: { type: Number, default: 0 }, // tempo em minutos

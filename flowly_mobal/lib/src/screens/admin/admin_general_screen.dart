@@ -99,7 +99,6 @@ class _AdminGeneralScreenState extends State<AdminGeneralScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: AppNavigationDrawer(
-        userType: 'admin',
         currentRoute: '/admin/geral',
         onLogout: _logout,
       ),

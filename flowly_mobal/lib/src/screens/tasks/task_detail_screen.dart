@@ -212,25 +212,16 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       );
     }
 
-    final bool isAdmin = widget.userType == 'admin';
+
 
     return Scaffold(
       drawer: AppNavigationDrawer(
-        userType: widget.userType,
-        currentRoute: isAdmin
-            ? '/admin/tarefas/${task.id}'
-            : '/user/tarefas/${task.id}',
+        currentRoute: '/user/tarefas/${task.id}',
         onLogout: _logout,
       ),
       appBar: AppBar(
         title: const Text('Detalhes da Tarefa'),
         actions: <Widget>[
-          if (isAdmin)
-            IconButton(
-              onPressed: () => context.go('/admin/tarefas/editar/${task.id}'),
-              icon: const Icon(Icons.edit_outlined),
-              tooltip: 'Editar tarefa',
-            ),
           IconButton(
             onPressed: _loadDetails,
             icon: const Icon(Icons.refresh_rounded),

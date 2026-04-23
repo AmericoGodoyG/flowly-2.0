@@ -90,8 +90,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
         return Scaffold(
           drawer: AppNavigationDrawer(
-            userType: 'admin',
-            currentRoute: '/admin/equipes/${widget.teamId}/projetos',
+            currentRoute: '/projetos',
             onLogout: _logout,
           ),
           appBar: AppBar(
@@ -169,161 +168,53 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                     ),
                     SizedBox(height: compact ? 10 : 14),
                     ...projects.map(
-                      (Project project) => _ProjectCard(
-                        project: project,
+                      (Project project) => GestureDetector(
                         onTap: () {
-                          context.go('/admin/projetos/${project.id}');
+                          context.push('/projetos/${project.id}');
                         },
-                        onEdit: () {
-                          context.go('/admin/projetos/editar/${project.id}');
-                        },
-                        onDelete: () {
-                          _showDeleteDialog(project);
-                        },
+                        child: Card(
+                          elevation: 1,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  project.nome,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: flowlyText,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  project.descricao,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: flowlyMutedText,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
           floatingActionButton: FloatingActionButton(
             onPressed: () {
-              context.go('/admin/projetos/criar/${widget.teamId}');
+              context.push('/projetos/criar');
             },
             child: const Icon(Icons.add),
           ),
         );
       },
-    );
-  }
-
-  Future<void> _showDeleteDialog(Project project) async {
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Excluir projeto'),
-          content: Text('Tem certeza que deseja excluir "${project.nome}"?'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(dialogContext).pop();
-                try {
-                  await _projectService.excluirProjeto(project.id);
-                  _reloadData();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Projeto excluído!'),
-                        backgroundColor: Color(0xFF0D9C6E),
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Erro: ${e.toString()}')),
-                    );
-                  }
-                }
-              },
-              child: const Text('Excluir', style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _ProjectCard extends StatelessWidget {
-  const _ProjectCard({
-    required this.project,
-    required this.onTap,
-    required this.onEdit,
-    required this.onDelete,
-  });
-
-  final Project project;
-  final VoidCallback onTap;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        elevation: 1,
-        margin: const EdgeInsets.only(bottom: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          project.nome,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: flowlyText,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          project.descricao,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: flowlyMutedText,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  PopupMenuButton(
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        onTap: onEdit,
-                        child: const Row(
-                          children: [
-                            Icon(Icons.edit, size: 18),
-                            SizedBox(width: 8),
-                            Text('Editar'),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        onTap: onDelete,
-                        child: const Row(
-                          children: [
-                            Icon(Icons.delete, size: 18, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text(
-                              'Excluir',
-                              style: TextStyle(color: Colors.red),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

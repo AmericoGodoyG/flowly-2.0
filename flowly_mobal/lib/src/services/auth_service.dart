@@ -72,7 +72,6 @@ class AuthService {
     required String nome,
     required String email,
     required String senha,
-    required String tipo,
   }) async {
     try {
       final response = await ApiClient.instance.dio.post<Map<String, dynamic>>(
@@ -81,7 +80,7 @@ class AuthService {
           'nome': nome,
           'email': email,
           'senha': senha,
-          'tipo': tipo,
+          'tipo': 'user',
         },
       );
 
