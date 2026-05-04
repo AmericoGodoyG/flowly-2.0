@@ -28,7 +28,7 @@ exports.criarEquipe = async (req, res) => {
     }
 
     // Criar a equipe
-    const novaEquipe = new Equipe({ nome, membros: membrosUnicos });
+    const novaEquipe = new Equipe({ nome, membros: membrosUnicos, createdBy: req.user.id });
     await novaEquipe.save();
 
     // Retornar a equipe criada com os dados populados

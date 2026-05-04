@@ -4,6 +4,7 @@ const Equipe = require('../models/Equipe');
 const Comment = require('../models/Comment');
 const ActivityLog = require('../models/ActivityLog');
 const logActivity = require('../utils/activityLogger');
+const { notifyUsers } = require('../utils/notificationService');
 
 // ADMIN creates task for user
 exports.criarTarefa = async (req, res) => {
@@ -39,6 +40,7 @@ exports.criarTarefa = async (req, res) => {
       descricao, 
       detalhes,
       dataEntrega, 
+      createdBy: req.user.id,
       user: userId,
       equipe,
       tempoEstimado,
@@ -267,7 +269,7 @@ exports.atribuirParaMim = async (req, res) => {
       return res.status(409).json({ erro: 'Esta tarefa já possui responsável' });
     }
 
-    const equipe = await Equipe.findById(tarefa.equipe).select('membros');
+    const equipe = await Equipe.findById(tarefa.equipe).select('membros createdBy nome');
     if (!equipe) {
       return res.status(400).json({ erro: 'Equipe da tarefa não encontrada' });
     }
@@ -290,6 +292,18 @@ exports.atribuirParaMim = async (req, res) => {
       tarefa._id,
     );
 
+    const notificarAdmin = tarefa.createdBy || equipe.createdBy;
+    if (notificarAdmin && String(notificarAdmin) !== String(req.user.id)) {
+      const usuario = await User.findById(req.user.id).select('nome');
+      await notifyUsers({
+        userIds: [notificarAdmin],
+        texto: `${usuario?.nome || 'Um colaborador'} pegou a tarefa "${tarefa.descricao}" do backlog`,
+        tipo: 'task',
+        origemId: tarefa._id,
+        metadata: { tarefaId: tarefa._id, acao: 'atribuir_para_mim' },
+      });
+    }
+
     const tarefaAtualizada = await Tarefa.findById(tarefa._id)
       .populate('user', 'nome')
       .populate('equipe', 'nome');
@@ -309,7 +323,7 @@ exports.atualizarStatusUser = async (req, res) => {
       return res.status(400).json({ erro: "Status inválido" });
     }
 
-    const tarefa = await Tarefa.findOne({ _id: req.params.id, user: req.user.id });
+    const tarefa = await Tarefa.findOne({ _id: req.params.id, user: req.user.id }).populate('equipe', 'createdBy nome');
 
     if (!tarefa) {
       return res.status(403).json({ erro: 'Você não pode editar essa tarefa' });
@@ -319,6 +333,24 @@ exports.atualizarStatusUser = async (req, res) => {
     await tarefa.save();
 
     await logActivity('atualizacao_status', `Status alterado para ${status}`, req.user.id, tarefa._id);
+
+    const notificarAdmin = tarefa.createdBy || tarefa.equipe?.createdBy;
+    if (notificarAdmin && String(notificarAdmin) !== String(req.user.id)) {
+      const usuario = await User.findById(req.user.id).select('nome');
+      const statusLegivel = status === 'em_andamento'
+        ? 'em andamento'
+        : status === 'concluido'
+        ? 'concluída'
+        : status;
+
+      await notifyUsers({
+        userIds: [notificarAdmin],
+        texto: `${usuario?.nome || 'Um colaborador'} marcou a tarefa "${tarefa.descricao}" como ${statusLegivel}`,
+        tipo: 'task',
+        origemId: tarefa._id,
+        metadata: { tarefaId: tarefa._id, status },
+      });
+    }
 
     res.json({ msg: 'Status atualizado com sucesso', tarefa });
   } catch (err) {

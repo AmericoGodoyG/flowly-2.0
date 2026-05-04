@@ -4,6 +4,7 @@ const tarefaSchema = new mongoose.Schema({
   descricao: { type: String, required: true },
   detalhes: { type: String }, // descrição detalhada
   dataEntrega: { type: Date, required: true },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false, default: null },
   status: {
     type: String,
     enum: ['pendente', 'em_andamento', 'concluido'],

@@ -11,6 +11,32 @@ exports.listarUsers = async (req, res) => {
   }
 };
 
+exports.searchUsers = async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q || q.trim().length === 0) {
+      return res.json([]);
+    }
+
+    const searchQuery = q.trim();
+    const users = await User.find({
+      tipo: 'user',
+      $or: [
+        { nome: { $regex: searchQuery, $options: 'i' } },
+        { email: { $regex: searchQuery, $options: 'i' } },
+      ],
+    })
+      .select('_id nome email fotoPerfil')
+      .limit(10);
+
+    res.json(users);
+  } catch (error) {
+    console.error('Erro ao buscar usuarios:', error);
+    res.status(500).json({ error: 'Erro ao buscar usuarios' });
+  }
+};
+
 exports.me = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('nome email tipo fotoPerfil');

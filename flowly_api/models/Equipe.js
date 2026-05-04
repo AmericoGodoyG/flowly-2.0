@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const equipeSchema = new mongoose.Schema({
   nome: { type: String, required: true },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false, default: null },
   code: {
     type: String,
     required: true,

@@ -6,6 +6,7 @@ const userController = require('../controllers/userController');
 
 router.use(auth);
 
+router.get('/search', userController.searchUsers);
 router.get('/', userController.listarUsers);
 router.get('/me', userController.me);
 router.put('/me', upload.single('fotoPerfil'), userController.atualizarPerfil);
