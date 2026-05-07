@@ -3,6 +3,7 @@
  */
 
 import AuthPage from '../pages/auth/AuthPage';
+import Verify from '../pages/auth/Verify';
 import DashboardAdmin from '../pages/admin/DashboardAdmin';
 import DashboardUser from '../pages/user/DashboardUser';
 import DashboardGeral from '../pages/dashboard/DashboardGeral';
@@ -29,6 +30,10 @@ export const publicRoutes = [
   {
     path: '/register',
     element: <AuthPage />,
+  },
+  {
+    path: '/verificar-2fa',
+    element: <Verify />,
   },
 ];
 

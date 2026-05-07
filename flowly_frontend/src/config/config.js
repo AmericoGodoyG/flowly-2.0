@@ -8,6 +8,10 @@ export const API_ENDPOINTS = {
   // Auth
   LOGIN: `${API_BASE_URL}/auth/login`,
   REGISTER: `${API_BASE_URL}/auth/registrar`,
+  // 2FA / Verificação por email
+  SEND_2FA: `${API_BASE_URL}/auth/2fa/enviar-codigo`,
+  VALIDATE_2FA_CODE: `${API_BASE_URL}/auth/2fa/validar-codigo`,
+  VALIDATE_2FA_TOKEN: `${API_BASE_URL}/auth/2fa/validar-token`,
   LIST_USERS: `${API_BASE_URL}/users`,
 
   // Tarefas

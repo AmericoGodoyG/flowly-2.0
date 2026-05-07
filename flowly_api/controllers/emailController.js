@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const Convite = require("../models/Convite.js");
 const Equipe = require("../models/Equipe.js");
 const User = require("../models/User.js");
 const TwoFactorToken = require("../models/TwoFactorToken.js");
@@ -84,6 +83,7 @@ exports.notificarEntradaEquipe = async (equipeId, emailNovoMembro, nomeEquipe) =
     .head{background:linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);color:#fff;padding:18px 24px;font-size:20px;font-weight:bold}
     .content{padding:24px}
     .code{display:inline-block;background:#F3E8FF;color:#2D1B3D;border:1px dashed #8B5CF6;border-radius:8px;font-size:24px;letter-spacing:2px;padding:12px 16px}
+    a.button{display:inline-block;background:#8B5CF6;color:#fff;text-decoration:none;padding:14px 32px;border-radius:6px;font-weight:600;border:1px solid #8B5CF6;font-size:16px;line-height:1.5}
     </style></head><body>
     <div class="wrap">
       <div class="head">Flowly • Adicionado à equipe</div>
@@ -108,87 +108,103 @@ exports.notificarEntradaEquipe = async (equipeId, emailNovoMembro, nomeEquipe) =
   }
 };
 
+/**
+ * Função interna para enviar código de verificação
+ * Reutilizável em múltiplos contextos (rotas, outros controllers, etc)
+ */
+const _enviarCodigoVerificacaoEmail = async (email) => {
+  if (!email) {
+    throw new Error("Email é obrigatório.");
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new Error("Usuário não encontrado.");
+  }
+
+  // Gerar código de 6 dígitos
+  const codigo = Math.floor(100000 + Math.random() * 900000).toString();
+  
+  // Gerar token único para link de confirmação
+  const token = crypto.randomBytes(32).toString('hex');
+
+  // Remover tokens antigos do mesmo usuário
+  await TwoFactorToken.deleteMany({ userId: user._id });
+
+  // Criar novo token de verificação
+  const twoFactorToken = new TwoFactorToken({
+    userId: user._id,
+    codigo,
+    token
+  });
+
+  await twoFactorToken.save();
+
+  // URL para confirmação por link (ajuste conforme seu ambiente)
+  const baseURL = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const linkConfirmacao = `${baseURL}/verificar-2fa?token=${token}`;
+
+  // HTML do email com código e botão
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
+  <style>
+  body{background:linear-gradient(135deg, #9F7AEA 0%, #6B21A8 50%, #1F1F1F 100%);margin:0;font-family:Arial,sans-serif;color:#2D1B3D}
+  .wrap{max-width:600px;margin:24px auto;background:#fff;border:1px solid #8B5CF6;border-radius:12px;overflow:hidden}
+  .head{background:linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);color:#fff;padding:18px 24px;font-size:20px;font-weight:bold}
+  .content{padding:24px}
+  .code{display:inline-block;background:#F3E8FF;color:#2D1B3D;border:1px dashed #8B5CF6;border-radius:8px;font-size:28px;letter-spacing:4px;padding:12px 20px;font-weight:bold;margin:20px 0}
+  .button{display:inline-block;background:#8B5CF6;color:#fff;text-decoration:none;padding:14px 32px;border-radius:6px;margin-top:20px;font-weight:600;border:1px solid #8B5CF6;font-size:16px;line-height:1.5}
+  .divider{border-top:1px solid #E5D4FF;margin:20px 0}
+  .footer{color:#6B4889;font-size:12px;text-align:center;margin-top:20px}
+  </style></head><body>
+  <div class="wrap">
+    <div class="head">Flowly • Verificação em Dois Fatores</div>
+    <div class="content">
+      <p>Olá <strong>${user.nome}</strong>,</p>
+      <p>Você solicitou um código de verificação para acessar sua conta. Use o código abaixo:</p>
+      <div class="code">${codigo}</div>
+      <p style="color:#6B4889;margin:5px 0">Este código expira em 15 minutos.</p>
+      
+      <div class="divider"></div>
+      
+      <p>Ou clique no botão abaixo para verificar sua conta automaticamente:</p>
+      <center>
+        <a href="${linkConfirmacao}" class="button">Verificar Conta</a>
+      </center>
+      
+      <div class="footer">
+        <p>Se você não solicitou este código, ignore este email. Sua conta está segura.</p>
+      </div>
+    </div>
+  </div>
+  </body></html>`;
+
+  await sendEmail(email, 'Código de Verificação - Flowly', null, html);
+
+  return {
+    message: "Código de verificação enviado com sucesso!",
+    userId: user._id
+  };
+};
+
+/**
+ * Rota HTTP para enviar código de verificação
+ */
 exports.enviarCodigoVerificacao = async (req, res) => {
   try {
     const { email } = req.body;
-    
-    if (!email) {
-      return res.status(400).json({ message: "Email é obrigatório." });
-    }
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "Usuário não encontrado." });
-    }
-
-    // Gerar código de 6 dígitos
-    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
-    
-    // Gerar token único para link de confirmação
-    const token = crypto.randomBytes(32).toString('hex');
-
-    // Remover tokens antigos do mesmo usuário
-    await TwoFactorToken.deleteMany({ userId: user._id });
-
-    // Criar novo token de verificação
-    const twoFactorToken = new TwoFactorToken({
-      userId: user._id,
-      codigo,
-      token
-    });
-
-    await twoFactorToken.save();
-
-    // URL para confirmação por link (ajuste conforme seu ambiente)
-    const baseURL = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const linkConfirmacao = `${baseURL}/verificar-2fa?token=${token}`;
-
-    // HTML do email com código e botão
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
-    <style>
-    body{background:linear-gradient(135deg, #9F7AEA 0%, #6B21A8 50%, #1F1F1F 100%);margin:0;font-family:Arial,sans-serif;color:#2D1B3D}
-    .wrap{max-width:600px;margin:24px auto;background:#fff;border:1px solid #8B5CF6;border-radius:12px;overflow:hidden}
-    .head{background:linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);color:#fff;padding:18px 24px;font-size:20px;font-weight:bold}
-    .content{padding:24px}
-    .code{display:inline-block;background:#F3E8FF;color:#2D1B3D;border:1px dashed #8B5CF6;border-radius:8px;font-size:28px;letter-spacing:4px;padding:12px 20px;font-weight:bold;margin:20px 0}
-    .button{display:inline-block;background:#8B5CF6;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;margin-top:20px;font-weight:bold}
-    .divider{border-top:1px solid #E5D4FF;margin:20px 0}
-    .footer{color:#6B4889;font-size:12px;text-align:center;margin-top:20px}
-    </style></head><body>
-    <div class="wrap">
-      <div class="head">Flowly • Verificação em Dois Fatores</div>
-      <div class="content">
-        <p>Olá <strong>${user.nome}</strong>,</p>
-        <p>Você solicitou um código de verificação para acessar sua conta. Use o código abaixo:</p>
-        <div class="code">${codigo}</div>
-        <p style="color:#6B4889;margin:5px 0">Este código expira em 15 minutos.</p>
-        
-        <div class="divider"></div>
-        
-        <p>Ou clique no botão abaixo para verificar sua conta automaticamente:</p>
-        <center>
-          <a href="${linkConfirmacao}" class="button">Verificar Conta</a>
-        </center>
-        
-        <div class="footer">
-          <p>Se você não solicitou este código, ignore este email. Sua conta está segura.</p>
-        </div>
-      </div>
-    </div>
-    </body></html>`;
-
-    await sendEmail(email, 'Código de Verificação - Flowly', null, html);
-
-    res.status(200).json({ 
-      message: "Código de verificação enviado com sucesso!",
-      userId: user._id
-    });
-
+    const result = await _enviarCodigoVerificacaoEmail(email);
+    res.status(200).json(result);
   } catch (err) {
     console.error('Erro ao enviar código de verificação:', err.message);
-    res.status(500).json({ message: err.message });
+    const statusCode = err.message.includes('não encontrado') ? 404 : 400;
+    res.status(statusCode).json({ message: err.message });
   }
 };
+
+/**
+ * Exportar função interna para uso em outros controllers
+ */
+exports.enviarCodigoVerificacaoEmail = _enviarCodigoVerificacaoEmail;
 
 exports.validarCodigoVerificacao = async (req, res) => {
   try {
@@ -224,9 +240,15 @@ exports.validarCodigoVerificacao = async (req, res) => {
     twoFactorToken.validado = true;
     await twoFactorToken.save();
 
+    const user = await User.findById(userId);
+    if (user && !user.verificado) {
+      user.verificado = true;
+      await user.save();
+    }
+
     // Gerar JWT ou sessão aqui
     const token = jwt.sign(
-      { userId, email: (await User.findById(userId)).email },
+      { userId, email: user?.email },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -266,6 +288,10 @@ exports.validarTokenVerificacao = async (req, res) => {
 
     // Gerar JWT ou sessão aqui
     const user = await User.findById(twoFactorToken.userId);
+    if (user && !user.verificado) {
+      user.verificado = true;
+      await user.save();
+    }
     const jwtToken = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.JWT_SECRET,

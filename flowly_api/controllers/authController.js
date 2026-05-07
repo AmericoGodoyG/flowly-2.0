@@ -2,6 +2,7 @@ const User = require('../models/User');
 const argon2 = require('argon2');
 const jwt = require('jsonwebtoken');
 const config = require('../config/config');
+const { enviarCodigoVerificacaoEmail } = require('./emailController');
 
 exports.registrar = async (req, res) => {
   try {
@@ -11,7 +12,17 @@ exports.registrar = async (req, res) => {
     const novoUsuario = new User({ nome, email, senha: hash, tipo });
     await novoUsuario.save();
 
-    res.status(201).json({ msg: 'Usuário registrado com sucesso!' });
+    // Enviar código de verificação por email após registro bem-sucedido
+    try {
+      await enviarCodigoVerificacaoEmail(email);
+    } catch (emailErr) {
+      console.warn('Aviso: código de verificação não foi enviado:', emailErr.message);
+      // Não falha o registro se o email não for enviado, apenas registra o aviso
+    }
+
+    res.status(201).json({ 
+      msg: 'Usuário registrado com sucesso! Verifique o e-mail para receber o código de verificação.' 
+    });
   } catch (err) {
     res.status(400).json({ erro: 'Erro ao registrar', detalhe: err.message });
   }
@@ -23,6 +34,13 @@ exports.login = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) return res.status(404).json({ erro: 'Usuário não encontrado' });
+
+    if (!user.verificado || user.verificado === false) {
+      return res.status(401).json({ 
+        erro: 'Usuário não verificado',
+        redirectTo: `/verificar-2fa?email=${encodeURIComponent(email)}`
+      });
+    }
 
     const senhaValida = await argon2.verify(user.senha, senha);
     if (!senhaValida) return res.status(401).json({ erro: 'Senha inválida' });

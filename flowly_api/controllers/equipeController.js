@@ -1,7 +1,6 @@
 const Equipe = require('../models/Equipe');
 const User = require('../models/User');
-const Message = require('../models/Message');
-const 
+const Message = require('../models/Message'); 
 const mongoose = require('mongoose');
 
 exports.criarEquipe = async (req, res) => {

@@ -10,7 +10,7 @@ module.exports = async (email, subject, text, html) => {
             secure: process.env.SECURE, // true para SSL (465), false para TLS
             auth: {
                 user: process.env.AUTH_EMAIL,
-                pass: process.env.AUTH_PASS
+                pass: process.env.AUTH_PASSWORD
             }
         });
 
