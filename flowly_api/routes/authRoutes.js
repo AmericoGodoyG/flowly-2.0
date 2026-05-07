@@ -10,7 +10,7 @@ router.get('/users', authController.listarUsers);
 // Rotas de autenticação em dois fatores
 router.post('/2fa/enviar-codigo', emailController.enviarCodigoVerificacao);
 router.post('/2fa/validar-codigo', emailController.validarCodigoVerificacao);
-router.get('verificar-2fa', emailController.validarTokenVerificacao);
+router.get('/2fa/validar-token', emailController.validarTokenVerificacao);
 
 module.exports = router;
 

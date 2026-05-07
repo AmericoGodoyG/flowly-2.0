@@ -35,7 +35,7 @@ exports.login = async (req, res) => {
 
     if (!user) return res.status(404).json({ erro: 'Usuário não encontrado' });
 
-    if (!user.verificado || user.verificado === false) {
+    if (user.verificado === false) {
       return res.status(401).json({ 
         erro: 'Usuário não verificado',
         redirectTo: `/verificar-2fa?email=${encodeURIComponent(email)}`

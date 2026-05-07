@@ -36,7 +36,21 @@ function Login() {
         window.location.href = "/dashboard";
       }
     } catch (err) {
-      setErro(err.response?.data?.error || err.response?.data?.erro || "Erro ao fazer login");
+      const errorMessage = err.response?.data?.error || err.response?.data?.erro || "Erro ao fazer login";
+      const redirectTo = err.response?.data?.redirectTo;
+      const normalizedError = errorMessage.toLowerCase();
+
+      if (redirectTo) {
+        navigate(redirectTo, { replace: true });
+        return;
+      }
+
+      if (normalizedError.includes("usuário não verificado") || normalizedError.includes("usuario nao verificado")) {
+        navigate(`/verificar-2fa?email=${encodeURIComponent(email)}`);
+        return;
+      }
+
+      setErro(errorMessage);
     } finally {
       setLoading(false);
     }

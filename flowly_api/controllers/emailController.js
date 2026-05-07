@@ -288,7 +288,7 @@ exports.validarTokenVerificacao = async (req, res) => {
 
     // Gerar JWT ou sessão aqui
     const user = await User.findById(twoFactorToken.userId);
-    if (user && !user.verificado) {
+    if (user && !user.verificado || user.verificado === false) {
       user.verificado = true;
       await user.save();
     }
@@ -302,7 +302,7 @@ exports.validarTokenVerificacao = async (req, res) => {
       message: "Verificação bem-sucedida!",
       token: jwtToken,
       userId: user._id,
-      redirect: '/dashboard'
+      redirect: "/dashboard"
     });
 
   } catch (err) {

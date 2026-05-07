@@ -107,7 +107,7 @@ function Verify() {
 
       setStatusMsg('Verificação bem-sucedida! Redirecionando...');
       setTimeout(() => {
-        const redirect = res.data.redirect || '/dashboard';
+        const redirect = res.data.redirect || "/dashboard";
         window.location.href = redirect;
       }, 900);
     } catch (err) {
