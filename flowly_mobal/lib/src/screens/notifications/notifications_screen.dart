@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:meu_app/src/app/flowly_theme.dart';
 import 'package:meu_app/src/models/notification_item.dart';

@@ -21,7 +21,8 @@ exports.registrar = async (req, res) => {
     }
 
     res.status(201).json({ 
-      msg: 'Usuário registrado com sucesso! Verifique o e-mail para receber o código de verificação.' 
+      msg: 'Usuário registrado com sucesso! Verifique o e-mail para receber o código de verificação.',
+      redirectTo: `/verificar-2fa?email=${encodeURIComponent(email)}`
     });
   } catch (err) {
     res.status(400).json({ erro: 'Erro ao registrar', detalhe: err.message });
@@ -35,15 +36,15 @@ exports.login = async (req, res) => {
 
     if (!user) return res.status(404).json({ erro: 'Usuário não encontrado' });
 
+    const senhaValida = await argon2.verify(user.senha, senha);
+    if (!senhaValida) return res.status(401).json({ erro: 'Senha inválida' });
+
     if (user.verificado === false) {
-      return res.status(401).json({ 
+      return res.status(403).json({ 
         erro: 'Usuário não verificado',
         redirectTo: `/verificar-2fa?email=${encodeURIComponent(email)}`
       });
     }
-
-    const senhaValida = await argon2.verify(user.senha, senha);
-    if (!senhaValida) return res.status(401).json({ erro: 'Senha inválida' });
 
     const token = jwt.sign({ id: user._id, tipo: user.tipo }, config.jwt.secret, { expiresIn: '1d' });
 

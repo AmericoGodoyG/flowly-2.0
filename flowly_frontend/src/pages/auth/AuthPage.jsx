@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   FaEnvelope, FaLock, FaSignInAlt, FaEye, FaEyeSlash,
@@ -32,6 +32,19 @@ function AuthPage() {
   const [mostrarSenhaReg, setMostrarSenhaReg] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const fromRegister = query.get("fromRegister");
+    const email = query.get("email");
+
+    if (fromRegister === "1" && email) {
+      setIsRegistering(false);
+      setLoginEmail(email);
+      navigate(`/verificar-2fa?email=${encodeURIComponent(email)}`, { replace: true });
+    }
+  }, [location.search, navigate]);
 
   // Switch to Register
   const goToRegister = () => {
@@ -79,7 +92,7 @@ function AuthPage() {
     }
   };
 
-  // Register handler — auto-login after success
+  // Register handler
   const handleRegister = async (e) => {
     e.preventDefault();
     setRegLoading(true);
@@ -93,18 +106,7 @@ function AuthPage() {
         tipo: regTipo,
       });
 
-      const res = await axios.post(API_ENDPOINTS.LOGIN, {
-        email: regEmail,
-        senha: regSenha,
-      });
-
-      authUtils.saveAuthData(res.data.token, res.data.user);
-
-      if (res.data.user.tipo === "admin") {
-        window.location.href = "/admin";
-      } else {
-        window.location.href = "/dashboard";
-      }
+      navigate(`/?fromRegister=1&email=${encodeURIComponent(regEmail)}`, { replace: true });
     } catch (err) {
       setRegErro(
         err.response?.data?.error || err.response?.data?.erro || "Erro ao cadastrar"

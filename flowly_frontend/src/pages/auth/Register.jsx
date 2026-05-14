@@ -17,14 +17,19 @@ function Register() {
     e.preventDefault();
 
     try {
-      await axios.post("http://localhost:5000/api/auth/registrar", {
+      const res = await axios.post("http://localhost:5000/api/auth/registrar", {
         nome,
         email,
         senha,
         tipo,
       });
 
-      navigate("/");
+      if (res.data?.redirectTo) {
+        navigate(res.data.redirectTo, { replace: true });
+        return;
+      }
+
+      navigate(`/verificar-2fa?email=${encodeURIComponent(email)}`, { replace: true });
     } catch (err) {
       setErro(err.response?.data?.erro || "Erro ao cadastrar");
     }

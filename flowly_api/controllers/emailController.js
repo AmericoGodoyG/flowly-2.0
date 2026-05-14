@@ -208,14 +208,23 @@ exports.enviarCodigoVerificacaoEmail = _enviarCodigoVerificacaoEmail;
 
 exports.validarCodigoVerificacao = async (req, res) => {
   try {
-    const { userId, codigo } = req.body;
+    const { userId, email, codigo } = req.body;
 
-    if (!userId || !codigo) {
-      return res.status(400).json({ message: "UserId e código são obrigatórios." });
+    if ((!userId && !email) || !codigo) {
+      return res.status(400).json({ message: "Email ou UserId e código são obrigatórios." });
+    }
+
+    let resolvedUserId = userId;
+    if (!resolvedUserId && email) {
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado." });
+      }
+      resolvedUserId = user._id;
     }
 
     const twoFactorToken = await TwoFactorToken.findOne({ 
-      userId, 
+      userId: resolvedUserId, 
       codigo,
       validado: false 
     });
@@ -223,7 +232,7 @@ exports.validarCodigoVerificacao = async (req, res) => {
     if (!twoFactorToken) {
       // Incrementar tentativas
       await TwoFactorToken.updateOne(
-        { userId, validado: false },
+        { userId: resolvedUserId, validado: false },
         { $inc: { tentativas: 1 } }
       );
       
@@ -240,7 +249,7 @@ exports.validarCodigoVerificacao = async (req, res) => {
     twoFactorToken.validado = true;
     await twoFactorToken.save();
 
-    const user = await User.findById(userId);
+    const user = await User.findById(resolvedUserId);
     if (user && !user.verificado) {
       user.verificado = true;
       await user.save();
@@ -248,7 +257,7 @@ exports.validarCodigoVerificacao = async (req, res) => {
 
     // Gerar JWT ou sessão aqui
     const token = jwt.sign(
-      { userId, email: user?.email },
+      { userId: resolvedUserId, email: user?.email },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -256,7 +265,7 @@ exports.validarCodigoVerificacao = async (req, res) => {
     res.status(200).json({ 
       message: "Verificação bem-sucedida!",
       token,
-      userId
+      userId: resolvedUserId
     });
 
   } catch (err) {
@@ -288,7 +297,7 @@ exports.validarTokenVerificacao = async (req, res) => {
 
     // Gerar JWT ou sessão aqui
     const user = await User.findById(twoFactorToken.userId);
-    if (user && !user.verificado || user.verificado === false) {
+    if (user && user.verificado === false) {
       user.verificado = true;
       await user.save();
     }

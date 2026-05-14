@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { FaEnvelope, FaPaperPlane, FaKey, FaCheck } from 'react-icons/fa';
 import { API_ENDPOINTS } from "../../config/config";
@@ -14,34 +14,30 @@ function Verify() {
   const query = useQuery();
   const tokenFromUrl = query.get("token");
   const emailFromUrl = query.get("email") || "";
-  const navigate = useNavigate();
 
   const [email, setEmail] = useState(emailFromUrl);
   const [userId, setUserId] = useState("");
   const [codigo, setCodigo] = useState("");
-  const [statusMsg, setStatusMsg] = useState("");
+  const [status, setStatus] = useState({ type: "", message: "" });
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState(tokenFromUrl ? "token-verify" : "request");
+  const [step, setStep] = useState(tokenFromUrl ? "token-verify" : (emailFromUrl ? "enter-code" : "request"));
 
   useEffect(() => {
     if (emailFromUrl) {
       setEmail(emailFromUrl);
+      if (!tokenFromUrl) {
+        setStep("enter-code");
+        setStatus({ type: "success", message: "Código de verificação já foi enviado para o seu email." });
+      }
     }
-  }, [emailFromUrl]);
-
-  useEffect(() => {
-    if (!tokenFromUrl && emailFromUrl && step === "request" && !loading) {
-      handleSendCodeFromEmail(emailFromUrl);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tokenFromUrl, emailFromUrl]);
+  }, [emailFromUrl, tokenFromUrl]);
 
   useEffect(() => {
     if (tokenFromUrl) {
       // Validar token vindo por link
       (async () => {
         setLoading(true);
-        setStatusMsg("");
+        setStatus({ type: "", message: "" });
         try {
           const res = await axios.get(`${API_ENDPOINTS.VALIDATE_2FA_TOKEN}?token=${encodeURIComponent(tokenFromUrl)}`);
           const jwt = res.data.token;
@@ -58,7 +54,7 @@ function Verify() {
           const redirect = res.data.redirect || '/dashboard';
           window.location.href = redirect;
         } catch (err) {
-          setStatusMsg(err.response?.data?.message || 'Token inválido ou expirado.');
+          setStatus({ type: "error", message: err.response?.data?.message || 'Token inválido ou expirado.' });
           setStep('request');
         } finally {
           setLoading(false);
@@ -75,15 +71,15 @@ function Verify() {
 
   const handleSendCodeFromEmail = async (emailToSend) => {
     setLoading(true);
-    setStatusMsg("");
+    setStatus({ type: "", message: "" });
 
     try {
       const res = await axios.post(API_ENDPOINTS.SEND_2FA, { email: emailToSend });
       setUserId(res.data.userId || res.data.user_id || "");
-      setStatusMsg('Código enviado. Verifique seu email.');
+      setStatus({ type: "success", message: 'Código enviado. Verifique seu email.' });
       setStep('enter-code');
     } catch (err) {
-      setStatusMsg(err.response?.data?.message || 'Erro ao enviar código.');
+      setStatus({ type: "error", message: err.response?.data?.message || 'Erro ao enviar código.' });
     } finally {
       setLoading(false);
     }
@@ -92,10 +88,10 @@ function Verify() {
   const handleValidateCode = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setStatusMsg("");
+    setStatus({ type: "", message: "" });
 
     try {
-      const res = await axios.post(API_ENDPOINTS.VALIDATE_2FA_CODE, { userId, codigo });
+      const res = await axios.post(API_ENDPOINTS.VALIDATE_2FA_CODE, { userId, email, codigo });
       const jwt = res.data.token;
       localStorage.setItem('token', jwt);
       try {
@@ -105,27 +101,50 @@ function Verify() {
         console.warn('Não foi possível obter user/me após validação do código.');
       }
 
-      setStatusMsg('Verificação bem-sucedida! Redirecionando...');
+      setStatus({ type: "success", message: 'Verificação bem-sucedida! Redirecionando...' });
       setTimeout(() => {
         const redirect = res.data.redirect || "/dashboard";
         window.location.href = redirect;
       }, 900);
     } catch (err) {
-      setStatusMsg(err.response?.data?.message || 'Código inválido ou expirado.');
+      setStatus({ type: "error", message: err.response?.data?.message || 'Código inválido ou expirado.' });
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!status.message || status.type === "") {
+      return undefined;
+    }
+
+    const timeout = setTimeout(() => {
+      setStatus((current) => (current.message === status.message ? { type: "", message: "" } : current));
+    }, 4500);
+
+    return () => clearTimeout(timeout);
+  }, [status.message, status.type]);
 
   return (
     <div className="auth-container">
       <div className="auth-card glass-panel">
         <div className="auth-header">
           <h2>Verificação de Email</h2>
-          <p>Verifique sua conta usando o código enviado ao seu email</p>
+          <p>Digite o código recebido no email para ativar sua conta</p>
         </div>
 
-        {statusMsg && <div className="erro-container" style={{color: '#2b2b2b'}}>{statusMsg}</div>}
+        {status.message && (
+          <div
+            className="erro-container"
+            style={{
+              background: status.type === "success" ? 'rgba(34, 197, 94, 0.12)' : 'rgba(244, 63, 94, 0.12)',
+              borderLeft: `4px solid ${status.type === "success" ? '#22c55e' : '#f43f5e'}`,
+              color: status.type === "success" ? '#bbf7d0' : '#fecdd3'
+            }}
+          >
+            {status.message}
+          </div>
+        )}
 
         {step === 'request' && (
           <form className="auth-form" onSubmit={handleSendCode}>
@@ -165,6 +184,16 @@ function Verify() {
 
             <button type="submit" className="glass-btn primary" disabled={loading}>
               <FaCheck /> {loading ? 'Verificando...' : 'Verificar código'}
+            </button>
+
+            <button
+              type="button"
+              className="glass-btn"
+              onClick={() => handleSendCodeFromEmail(email)}
+              disabled={loading}
+              style={{ marginTop: '12px' }}
+            >
+              <FaPaperPlane /> Reenviar código
             </button>
           </form>
         )}
