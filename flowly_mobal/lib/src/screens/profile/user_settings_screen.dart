@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
@@ -30,6 +31,8 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
   String _userEmail = '';
   String _fotoPerfil = '';
   XFile? _novaFoto;
+  Uint8List? _novaFotoBytes;
+  bool _avatarLoadFailed = false;
   bool _isLoadingUserData = false;
   bool _isChangingPassword = false;
   bool _obscureCurrentPassword = true;
@@ -62,6 +65,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
         _nameController.text = name;
         _userEmail = email;
         _fotoPerfil = fotoPerfil;
+        _avatarLoadFailed = false;
       });
     } catch (e) {
       _showMessage('Erro ao carregar dados', isError: true);
@@ -126,11 +130,27 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
 
     setState(() => _isLoadingUserData = true);
     try {
+      if (_novaFoto != null) {
+        final String loweredName = _novaFoto!.name.toLowerCase();
+        final bool allowedImage =
+            loweredName.endsWith('.jpg') ||
+            loweredName.endsWith('.jpeg') ||
+            loweredName.endsWith('.png');
+        if (!allowedImage) {
+          _showMessage(
+            'Formato de imagem não suportado. Use JPG ou PNG.',
+            isError: true,
+          );
+          setState(() => _isLoadingUserData = false);
+          return;
+        }
+      }
+
       final FormData formData = FormData.fromMap(<String, dynamic>{
         'nome': nome,
         if (_novaFoto != null)
-          'fotoPerfil': await MultipartFile.fromFile(
-            _novaFoto!.path,
+          'fotoPerfil': MultipartFile.fromBytes(
+            _novaFotoBytes ?? await _novaFoto!.readAsBytes(),
             filename: _novaFoto!.name,
           ),
       });
@@ -150,10 +170,15 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
       setState(() {
         _fotoPerfil = fotoPerfil;
         _novaFoto = null;
+        _novaFotoBytes = null;
+        _avatarLoadFailed = false;
       });
       _showMessage('Perfil atualizado com sucesso!', isError: false);
     } catch (error) {
-      _showMessage(ApiClient.mapError(error).message, isError: true);
+      final String message = error is DioException
+          ? ApiClient.mapError(error).message
+          : 'Erro ao processar imagem. Tente selecionar outra foto.';
+      _showMessage(message, isError: true);
     } finally {
       if (mounted) {
         setState(() => _isLoadingUserData = false);
@@ -170,7 +195,37 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
     if (picked == null || !mounted) {
       return;
     }
-    setState(() => _novaFoto = picked);
+
+    final String loweredName = picked.name.toLowerCase();
+    final bool allowedImage =
+        loweredName.endsWith('.jpg') ||
+        loweredName.endsWith('.jpeg') ||
+        loweredName.endsWith('.png');
+
+    if (!allowedImage) {
+      _showMessage(
+        'Formato de imagem não suportado. Use JPG ou PNG.',
+        isError: true,
+      );
+      return;
+    }
+
+    try {
+      final Uint8List bytes = await picked.readAsBytes();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _novaFoto = picked;
+        _novaFotoBytes = bytes;
+        _avatarLoadFailed = false;
+      });
+    } catch (_) {
+      _showMessage(
+        'Não foi possível carregar a foto selecionada.',
+        isError: true,
+      );
+    }
   }
 
   String _buildFotoUrl() {
@@ -184,6 +239,9 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
   }
 
   ImageProvider<Object>? _buildFotoProvider() {
+    if (_novaFotoBytes != null) {
+      return MemoryImage(_novaFotoBytes!);
+    }
     if (_novaFoto != null) {
       return FileImage(File(_novaFoto!.path));
     }
@@ -263,9 +321,10 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                 TextField(
                   enabled: false,
                   controller: TextEditingController(text: _userEmail),
+                  style: const TextStyle(color: flowlyText),
                   decoration: InputDecoration(
                     labelText: 'E-mail',
-                    prefixIcon: const Icon(Icons.email),
+                    prefixIcon: const Icon(Icons.email, color: flowlyMutedText),
                     filled: true,
                     fillColor: flowlySurfaceAlt,
                   ),
@@ -281,9 +340,11 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                 const SizedBox(height: 8),
                 TextField(
                   controller: _nameController,
+                  style: const TextStyle(color: flowlyText),
+                  cursorColor: flowlyPrimary,
                   decoration: const InputDecoration(
                     labelText: 'Nome',
-                    prefixIcon: Icon(Icons.person),
+                    prefixIcon: Icon(Icons.person, color: flowlyMutedText),
                     hintText: 'Digite seu nome completo',
                   ),
                 ),
@@ -295,31 +356,44 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Row(
-                  children: <Widget>[
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundColor: flowlyPrimary,
-                      backgroundImage: _buildFotoProvider(),
-                      child: _buildFotoProvider() == null
-                          ? Text(
-                              _nameController.text.isNotEmpty
-                                  ? _nameController.text[0].toUpperCase()
-                                  : 'U',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            )
-                          : null,
-                    ),
-                    const SizedBox(width: 12),
-                    OutlinedButton.icon(
-                      onPressed: _selecionarFoto,
-                      icon: const Icon(Icons.photo_camera_outlined),
-                      label: const Text('Escolher foto'),
-                    ),
-                  ],
+                Builder(
+                  builder: (BuildContext context) {
+                    final ImageProvider<Object>? avatarProvider =
+                        _avatarLoadFailed ? null : _buildFotoProvider();
+                    return Row(
+                      children: <Widget>[
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: flowlyPrimary,
+                          backgroundImage: avatarProvider,
+                          onBackgroundImageError: avatarProvider == null
+                              ? null
+                              : (Object exception, StackTrace? stackTrace) {
+                                  if (mounted) {
+                                    setState(() => _avatarLoadFailed = true);
+                                  }
+                                },
+                          child: avatarProvider == null
+                              ? Text(
+                                  _nameController.text.isNotEmpty
+                                      ? _nameController.text[0].toUpperCase()
+                                      : 'U',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 12),
+                        OutlinedButton.icon(
+                          onPressed: _selecionarFoto,
+                          icon: const Icon(Icons.photo_camera_outlined),
+                          label: const Text('Escolher foto'),
+                        ),
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 32),
                 // Info Message
@@ -397,9 +471,14 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
           TextField(
             controller: _currentPasswordController,
             obscureText: _obscureCurrentPassword,
+            style: const TextStyle(color: flowlyText),
+            cursorColor: flowlyPrimary,
             decoration: InputDecoration(
               labelText: 'Senha atual',
-              prefixIcon: const Icon(Icons.lock_outline),
+              prefixIcon: const Icon(
+                Icons.lock_outline,
+                color: flowlyMutedText,
+              ),
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscureCurrentPassword
@@ -424,9 +503,11 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
           TextField(
             controller: _newPasswordController,
             obscureText: _obscureNewPassword,
+            style: const TextStyle(color: flowlyText),
+            cursorColor: flowlyPrimary,
             decoration: InputDecoration(
               labelText: 'Nova senha',
-              prefixIcon: const Icon(Icons.lock),
+              prefixIcon: const Icon(Icons.lock, color: flowlyMutedText),
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscureNewPassword
@@ -450,9 +531,11 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
           TextField(
             controller: _confirmPasswordController,
             obscureText: _obscureConfirmPassword,
+            style: const TextStyle(color: flowlyText),
+            cursorColor: flowlyPrimary,
             decoration: InputDecoration(
               labelText: 'Confirmar senha',
-              prefixIcon: const Icon(Icons.lock),
+              prefixIcon: const Icon(Icons.lock, color: flowlyMutedText),
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscureConfirmPassword

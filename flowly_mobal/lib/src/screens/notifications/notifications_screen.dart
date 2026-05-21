@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:meu_app/src/app/flowly_theme.dart';
 import 'package:meu_app/src/models/notification_item.dart';
+import 'package:meu_app/src/services/auth_service.dart';
 import 'package:meu_app/src/services/notification_service.dart';
+import 'package:meu_app/src/widgets/app_navigation_drawer.dart';
+import 'package:meu_app/src/widgets/auth_background.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -13,6 +17,7 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   final NotificationService _service = NotificationService();
+  final AuthService _authService = AuthService();
   List<NotificationItem> _notifications = <NotificationItem>[];
   bool _loading = true;
   String _error = '';
@@ -31,6 +36,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         });
       },
     );
+  }
+
+  Future<void> _logout() async {
+    await _authService.logout();
+    if (!mounted) {
+      return;
+    }
+    context.go('/login');
   }
 
   @override
@@ -77,17 +90,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       }
       setState(() {
         _notifications = _notifications
-            .map((item) => item.id == notification.id
-                ? NotificationItem(
-                    id: item.id,
-                    text: item.text,
-                    read: true,
-                    type: item.type,
-                    createdAt: item.createdAt,
-                    originId: item.originId,
-                    metadata: item.metadata,
-                  )
-                : item)
+            .map(
+              (item) => item.id == notification.id
+                  ? NotificationItem(
+                      id: item.id,
+                      text: item.text,
+                      read: true,
+                      type: item.type,
+                      createdAt: item.createdAt,
+                      originId: item.originId,
+                      metadata: item.metadata,
+                    )
+                  : item,
+            )
             .toList();
       });
     } catch (_) {
@@ -108,15 +123,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       }
       setState(() {
         _notifications = _notifications
-            .map((item) => NotificationItem(
-                  id: item.id,
-                  text: item.text,
-                  read: true,
-                  type: item.type,
-                  createdAt: item.createdAt,
-                  originId: item.originId,
-                  metadata: item.metadata,
-                ))
+            .map(
+              (item) => NotificationItem(
+                id: item.id,
+                text: item.text,
+                read: true,
+                type: item.type,
+                createdAt: item.createdAt,
+                originId: item.originId,
+                metadata: item.metadata,
+              ),
+            )
             .toList();
       });
     } catch (_) {
@@ -124,53 +141,64 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Falha ao marcar notificações como lidas')),
+        const SnackBar(
+          content: Text('Falha ao marcar notificações como lidas'),
+        ),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notificações'),
-        centerTitle: true,
-        actions: [
-          TextButton(
-            onPressed: _marcarTodasComoLidas,
-            child: const Text(
-              'Ler todas',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _loadNotifications,
-        child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  if (_error.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Text(
-                        _error,
-                        style: const TextStyle(color: Colors.redAccent),
-                      ),
-                    ),
-                  if (_notifications.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 120),
-                      child: Center(
-                        child: Text('Nenhuma notificação no momento.'),
-                      ),
-                    )
-                  else
-                    ..._notifications.map((notification) => _buildCard(notification)),
-                ],
+    return AuthBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        drawer: AppNavigationDrawer(
+          currentRoute: '/notificacoes',
+          onLogout: _logout,
+        ),
+        appBar: AppBar(
+          title: const Text('Notificações'),
+          centerTitle: true,
+          actions: [
+            TextButton(
+              onPressed: _marcarTodasComoLidas,
+              child: const Text(
+                'Ler todas',
+                style: TextStyle(color: Colors.white),
               ),
+            ),
+          ],
+        ),
+        body: RefreshIndicator(
+          onRefresh: _loadNotifications,
+          child: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    if (_error.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Text(
+                          _error,
+                          style: const TextStyle(color: Colors.redAccent),
+                        ),
+                      ),
+                    if (_notifications.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 120),
+                        child: Center(
+                          child: Text('Nenhuma notificação no momento.'),
+                        ),
+                      )
+                    else
+                      ..._notifications.map(
+                        (notification) => _buildCard(notification),
+                      ),
+                  ],
+                ),
+        ),
       ),
     );
   }
@@ -201,7 +229,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             color: flowlySurface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: notification.read ? flowlyBorder : accentColor.withValues(alpha: 0.4),
+              color: notification.read
+                  ? flowlyBorder
+                  : accentColor.withValues(alpha: 0.4),
             ),
           ),
           padding: const EdgeInsets.all(16),
@@ -211,7 +241,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: accentColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(999),

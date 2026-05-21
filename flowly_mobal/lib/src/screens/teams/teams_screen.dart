@@ -59,9 +59,13 @@ class _TeamsScreenState extends State<TeamsScreen> {
             controller: codeController,
             keyboardType: TextInputType.number,
             maxLength: 4,
+            style: const TextStyle(color: flowlyText),
+            cursorColor: flowlyPrimary,
             decoration: const InputDecoration(
               hintText: 'Código de 4 dígitos',
               counterText: '',
+              hintStyle: TextStyle(color: flowlyMutedText),
+              counterStyle: TextStyle(color: flowlyMutedText),
             ),
           ),
           actions: <Widget>[

@@ -107,6 +107,10 @@ class _ValidatedTextFieldState extends State<ValidatedTextField> {
               controller: widget.controller,
               obscureText: widget.obscureText,
               keyboardType: widget.keyboardType,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: flowlyText),
+              cursorColor: flowlyPrimary,
               decoration: InputDecoration(
                 labelText: widget.label,
                 hintText: widget.hint,

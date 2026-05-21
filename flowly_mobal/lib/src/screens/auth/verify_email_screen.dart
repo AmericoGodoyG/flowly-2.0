@@ -156,16 +156,25 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                         decoration: InputDecoration(
                           labelText: 'Código de verificação',
                           hintText: 'Ex: 123456',
-                          prefixIcon: const Icon(Icons.lock_outline),
+                          prefixIcon: const Icon(
+                            Icons.lock_outline,
+                            color: flowlyMutedText,
+                          ),
                           helperText: 'Verifique sua caixa de entrada e spam',
+                          labelStyle: const TextStyle(color: flowlyMutedText),
+                          hintStyle: const TextStyle(color: flowlyMutedText),
+                          helperStyle: const TextStyle(color: flowlyMutedText),
+                          counterStyle: const TextStyle(color: flowlyMutedText),
                         ),
                         keyboardType: TextInputType.number,
                         maxLength: 6,
                         textAlign: TextAlign.center,
+                        cursorColor: flowlyPrimary,
                         style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(
                               letterSpacing: 2.0,
                               fontWeight: FontWeight.w600,
+                              color: flowlyText,
                             ),
                       ),
                       const SizedBox(height: 20),

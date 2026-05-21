@@ -172,8 +172,11 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                     controller: _messageController,
                     minLines: 1,
                     maxLines: 4,
+                    style: const TextStyle(color: flowlyText),
+                    cursorColor: flowlyPrimary,
                     decoration: const InputDecoration(
                       hintText: 'Escreva uma mensagem... ',
+                      hintStyle: TextStyle(color: flowlyMutedText),
                     ),
                     onSubmitted: (_) => _sendMessage(),
                   ),

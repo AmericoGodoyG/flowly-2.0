@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:meu_app/src/app/flowly_theme.dart';
 import 'package:meu_app/src/models/team.dart';
 import 'package:meu_app/src/core/network/api_client.dart';
 import 'package:meu_app/src/services/team_service.dart';
@@ -230,6 +231,8 @@ class _CreateTaskAdminScreenState extends State<CreateTaskAdminScreen> {
                   children: <Widget>[
                     TextFormField(
                       controller: _nameController,
+                      style: const TextStyle(color: flowlyText),
+                      cursorColor: flowlyPrimary,
                       decoration: const InputDecoration(
                         labelText: 'Nome da tarefa',
                       ),
@@ -243,6 +246,8 @@ class _CreateTaskAdminScreenState extends State<CreateTaskAdminScreen> {
                     SizedBox(height: sectionGap),
                     TextFormField(
                       controller: _detailsController,
+                      style: const TextStyle(color: flowlyText),
+                      cursorColor: flowlyPrimary,
                       decoration: const InputDecoration(
                         labelText: 'Descrição detalhada',
                       ),
@@ -263,6 +268,8 @@ class _CreateTaskAdminScreenState extends State<CreateTaskAdminScreen> {
                       controller: _dateController,
                       readOnly: true,
                       onTap: _pickDate,
+                      style: const TextStyle(color: flowlyText),
+                      cursorColor: flowlyPrimary,
                       decoration: const InputDecoration(
                         labelText: 'Data de entrega',
                         suffixIcon: Icon(Icons.calendar_today_outlined),
@@ -271,6 +278,8 @@ class _CreateTaskAdminScreenState extends State<CreateTaskAdminScreen> {
                     SizedBox(height: sectionGap),
                     TextFormField(
                       controller: _timeController,
+                      style: const TextStyle(color: flowlyText),
+                      cursorColor: flowlyPrimary,
                       decoration: const InputDecoration(
                         labelText: 'Tempo estimado em minutos',
                       ),
@@ -289,6 +298,8 @@ class _CreateTaskAdminScreenState extends State<CreateTaskAdminScreen> {
                     DropdownButtonFormField<String>(
                       initialValue: _urgencia,
                       isExpanded: true,
+                      style: const TextStyle(color: flowlyText),
+                      dropdownColor: flowlySurface,
                       decoration: const InputDecoration(labelText: 'Urgência'),
                       items: const <DropdownMenuItem<String>>[
                         DropdownMenuItem(
@@ -311,6 +322,8 @@ class _CreateTaskAdminScreenState extends State<CreateTaskAdminScreen> {
                     DropdownButtonFormField<String>(
                       initialValue: _selectedTeamId,
                       isExpanded: true,
+                      style: const TextStyle(color: flowlyText),
+                      dropdownColor: flowlySurface,
                       decoration: const InputDecoration(labelText: 'Equipe'),
                       items: _teams
                           .map(
@@ -337,6 +350,8 @@ class _CreateTaskAdminScreenState extends State<CreateTaskAdminScreen> {
                     DropdownButtonFormField<String>(
                       initialValue: _selectedUserId,
                       isExpanded: true,
+                      style: const TextStyle(color: flowlyText),
+                      dropdownColor: flowlySurface,
                       decoration: const InputDecoration(
                         labelText: 'Usuário responsável',
                       ),
