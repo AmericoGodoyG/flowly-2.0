@@ -143,12 +143,14 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
               // Name
               TextFormField(
                 controller: _nameController,
+                style: const TextStyle(color: flowlyText),
+                cursorColor: flowlyPrimary,
                 decoration: InputDecoration(
                   labelText: 'Nome da Equipe',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  prefixIcon: const Icon(Icons.group),
+                  prefixIcon: const Icon(Icons.group, color: flowlyMutedText),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {

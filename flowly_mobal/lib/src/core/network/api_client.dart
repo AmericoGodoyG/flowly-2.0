@@ -16,13 +16,16 @@ class ApiClient {
 
     _dio.interceptors.add(
       InterceptorsWrapper(
-        onRequest: (RequestOptions options, RequestInterceptorHandler handler) async {
-          final String? token = await _storage.read(key: StorageKeys.jwtToken);
-          if (token != null && token.isNotEmpty) {
-            options.headers['Authorization'] = 'Bearer $token';
-          }
-          handler.next(options);
-        },
+        onRequest:
+            (RequestOptions options, RequestInterceptorHandler handler) async {
+              final String? token = await _storage.read(
+                key: StorageKeys.jwtToken,
+              );
+              if (token != null && token.isNotEmpty) {
+                options.headers['Authorization'] = 'Bearer $token';
+              }
+              handler.next(options);
+            },
       ),
     );
   }
@@ -39,10 +42,18 @@ class ApiClient {
       final Object? data = error.response?.data;
       if (data is Map<String, dynamic>) {
         final String? erro = data['erro']?.toString();
+        final String? errorMsg = data['error']?.toString();
         final String? detalhe = data['detalhe']?.toString();
         final String? mensagem = data['mensagem']?.toString();
         final String? message = data['message']?.toString();
-        return ApiException(erro ?? detalhe ?? mensagem ?? message ?? 'Erro de requisição.');
+        return ApiException(
+          erro ??
+              errorMsg ??
+              detalhe ??
+              mensagem ??
+              message ??
+              'Erro de requisição.',
+        );
       }
       if (data is String && data.trim().isNotEmpty) {
         return ApiException(data);

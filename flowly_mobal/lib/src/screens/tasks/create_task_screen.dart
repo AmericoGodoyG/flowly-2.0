@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:meu_app/src/app/flowly_theme.dart';
 import 'package:meu_app/src/models/task.dart';
 import 'package:meu_app/src/services/task_service.dart';
 import 'package:meu_app/src/widgets/flowly_button.dart';
@@ -142,12 +143,14 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
             children: [
               TextFormField(
                 controller: _nameController,
+                style: const TextStyle(color: flowlyText),
+                cursorColor: flowlyPrimary,
                 decoration: InputDecoration(
                   labelText: 'Título da Tarefa',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  prefixIcon: const Icon(Icons.task),
+                  prefixIcon: const Icon(Icons.task, color: flowlyMutedText),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -159,12 +162,17 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _descriptionController,
+                style: const TextStyle(color: flowlyText),
+                cursorColor: flowlyPrimary,
                 decoration: InputDecoration(
                   labelText: 'Descrição',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  prefixIcon: const Icon(Icons.description),
+                  prefixIcon: const Icon(
+                    Icons.description,
+                    color: flowlyMutedText,
+                  ),
                 ),
                 minLines: 3,
                 maxLines: 5,
@@ -179,12 +187,16 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    prefixIcon: const Icon(Icons.calendar_today),
+                    prefixIcon: const Icon(
+                      Icons.calendar_today,
+                      color: flowlyMutedText,
+                    ),
                   ),
                   child: Text(
                     _selectedDate != null
                         ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
                         : 'Selecionar data',
+                    style: const TextStyle(color: flowlyText),
                   ),
                 ),
               ),
@@ -193,12 +205,17 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
               DropdownButtonFormField<TaskDifficulty>(
                 initialValue: _selectedDifficulty,
                 isExpanded: true,
+                style: const TextStyle(color: flowlyText),
+                dropdownColor: flowlySurface,
                 decoration: InputDecoration(
                   labelText: 'Dificuldade',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  prefixIcon: const Icon(Icons.trending_up),
+                  prefixIcon: const Icon(
+                    Icons.trending_up,
+                    color: flowlyMutedText,
+                  ),
                 ),
                 items: TaskDifficulty.values.map((difficulty) {
                   return DropdownMenuItem(
@@ -220,12 +237,14 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
               DropdownButtonFormField<TaskPriority>(
                 initialValue: _selectedPriority,
                 isExpanded: true,
+                style: const TextStyle(color: flowlyText),
+                dropdownColor: flowlySurface,
                 decoration: InputDecoration(
                   labelText: 'Prioridade',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  prefixIcon: const Icon(Icons.flag),
+                  prefixIcon: const Icon(Icons.flag, color: flowlyMutedText),
                 ),
                 items: TaskPriority.values.map((priority) {
                   return DropdownMenuItem(

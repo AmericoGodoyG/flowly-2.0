@@ -212,8 +212,6 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       );
     }
 
-
-
     return Scaffold(
       drawer: AppNavigationDrawer(
         currentRoute: '/user/tarefas/${task.id}',
@@ -353,8 +351,11 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                         Expanded(
                           child: TextField(
                             controller: _subtaskController,
+                            style: const TextStyle(color: flowlyText),
+                            cursorColor: flowlyPrimary,
                             decoration: const InputDecoration(
                               hintText: 'Adicionar subtarefa',
+                              hintStyle: TextStyle(color: flowlyMutedText),
                             ),
                           ),
                         ),
@@ -401,8 +402,11 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                           child: TextField(
                             controller: _commentController,
                             maxLines: 2,
+                            style: const TextStyle(color: flowlyText),
+                            cursorColor: flowlyPrimary,
                             decoration: const InputDecoration(
                               hintText: 'Escreva um comentário',
+                              hintStyle: TextStyle(color: flowlyMutedText),
                             ),
                           ),
                         ),

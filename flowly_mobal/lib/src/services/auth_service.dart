@@ -37,6 +37,14 @@ class AuthService {
         );
       }
 
+      if (userType == 'admin') {
+        await logout();
+        return const AuthResult(
+          success: false,
+          message: 'Administradores estão disponíveis apenas no desktop.',
+        );
+      }
+
       await _storage.write(key: StorageKeys.jwtToken, value: token);
       await _storage.write(key: StorageKeys.userEmail, value: email);
       await _storage.write(key: StorageKeys.userType, value: userType);
@@ -86,7 +94,8 @@ class AuthService {
 
       final Map<String, dynamic> data = response.data ?? <String, dynamic>{};
       final String message =
-          (data['mensagem'] ??
+          (data['msg'] ??
+                  data['mensagem'] ??
                   data['message'] ??
                   'Usuário registrado com sucesso!')
               .toString();
@@ -113,11 +122,7 @@ class AuthService {
     required String email,
     required String code,
   }) async {
-    const List<String> endpoints = <String>[
-      '/api/auth/verificar-codigo',
-      '/api/auth/verify-code',
-      '/api/auth/verificar-email',
-    ];
+    const List<String> endpoints = <String>['/api/auth/2fa/validar-codigo'];
 
     for (final String endpoint in endpoints) {
       try {
@@ -160,10 +165,7 @@ class AuthService {
   }
 
   Future<AuthResult> resendCode({required String email}) async {
-    const List<String> endpoints = <String>[
-      '/api/auth/reenviar-codigo',
-      '/api/auth/resend-code',
-    ];
+    const List<String> endpoints = <String>['/api/auth/2fa/enviar-codigo'];
 
     for (final String endpoint in endpoints) {
       try {
@@ -274,10 +276,17 @@ class AuthService {
 
   bool _messageIndicatesVerification(String message) {
     final String normalized = message.toLowerCase();
-    return normalized.contains('verific') &&
+    final bool hasVerificationContext =
+        normalized.contains('verific') ||
+        normalized.contains('nao verificado') ||
+        normalized.contains('não verificado');
+
+    return hasVerificationContext &&
         (normalized.contains('email') ||
             normalized.contains('e-mail') ||
-            normalized.contains('codigo'));
+            normalized.contains('codigo') ||
+            normalized.contains('código') ||
+            normalized.contains('usuario'));
   }
 
   bool _extractRequiresVerification(
@@ -289,6 +298,12 @@ class AuthService {
     if (explicit is bool) {
       return explicit;
     }
+
+    final String redirectTo = (data['redirectTo'] ?? '').toString();
+    if (redirectTo.contains('verificar-2fa')) {
+      return true;
+    }
+
     return _messageIndicatesVerification(fallbackMessage);
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:meu_app/src/app/flowly_theme.dart';
 import 'package:meu_app/src/services/project_service.dart';
 import 'package:meu_app/src/widgets/flowly_button.dart';
 
@@ -38,9 +39,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       _resolvedTeamId = widget.teamId ?? project.equipeId;
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro: ${e.toString()}')));
       }
     }
   }
@@ -79,7 +80,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              widget.projectId == null ? 'Projeto criado!' : 'Projeto atualizado!',
+              widget.projectId == null
+                  ? 'Projeto criado!'
+                  : 'Projeto atualizado!',
             ),
             backgroundColor: const Color(0xFF0D9C6E),
           ),
@@ -92,9 +95,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro: ${e.toString()}')));
       }
     } finally {
       if (mounted) {
@@ -114,7 +117,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.projectId == null ? 'Criar Projeto' : 'Editar Projeto'),
+        title: Text(
+          widget.projectId == null ? 'Criar Projeto' : 'Editar Projeto',
+        ),
         centerTitle: true,
       ),
       body: Form(
@@ -125,12 +130,14 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
             children: [
               TextFormField(
                 controller: _nameController,
+                style: const TextStyle(color: flowlyText),
+                cursorColor: flowlyPrimary,
                 decoration: InputDecoration(
                   labelText: 'Nome do Projeto',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  prefixIcon: const Icon(Icons.folder),
+                  prefixIcon: const Icon(Icons.folder, color: flowlyMutedText),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -142,12 +149,17 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _descriptionController,
+                style: const TextStyle(color: flowlyText),
+                cursorColor: flowlyPrimary,
                 decoration: InputDecoration(
                   labelText: 'Descrição',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  prefixIcon: const Icon(Icons.description),
+                  prefixIcon: const Icon(
+                    Icons.description,
+                    color: flowlyMutedText,
+                  ),
                 ),
                 minLines: 3,
                 maxLines: 5,
