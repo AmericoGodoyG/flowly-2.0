@@ -3,8 +3,10 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Instalar dependências do sistema
-RUN apt-get update && apt-get install -y \
-    portaudio-dev \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    python3-dev \
+    portaudio19-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar requirements
