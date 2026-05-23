@@ -98,8 +98,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
                         Image.asset(
-                          'assets/images/logo_flowly_png.png',
-                          height: 62,
+                          'assets/images/flowly_logo.png',
+                          height: 150,
                         ),
                         const SizedBox(height: 20),
                         Text(
