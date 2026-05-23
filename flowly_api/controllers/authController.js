@@ -2,13 +2,21 @@ const User = require('../models/User');
 const argon2 = require('argon2');
 const jwt = require('jsonwebtoken');
 const config = require('../config/config');
+const validatePassword = require('../utils/validatePassword.js');
 const { enviarCodigoVerificacaoEmail } = require('./emailController');
 
 exports.registrar = async (req, res) => {
   try {
     const { nome, email, senha, tipo } = req.body;
-    const hash = await argon2.hash(senha);
 
+    const passwordValidationResult = validatePassword(senha);
+
+    if (passwordValidationResult !== true) {
+      return res.status(400).json({ erro: passwordValidationResult });
+    }
+
+    const hash = await argon2.hash(senha);
+    
     const novoUsuario = new User({ nome, email, senha: hash, tipo });
     await novoUsuario.save();
 

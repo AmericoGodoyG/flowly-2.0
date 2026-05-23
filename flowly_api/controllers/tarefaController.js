@@ -5,6 +5,8 @@ const Comment = require('../models/Comment');
 const ActivityLog = require('../models/ActivityLog');
 const logActivity = require('../utils/activityLogger');
 const { notifyUsers } = require('../utils/notificationService');
+const bucket = require('../services/storage');
+
 
 // ADMIN creates task for user
 exports.criarTarefa = async (req, res) => {
@@ -36,10 +38,10 @@ exports.criarTarefa = async (req, res) => {
       }
     }
 
-    const tarefa = new Tarefa({ 
-      descricao, 
+    const tarefa = new Tarefa({
+      descricao,
       detalhes,
-      dataEntrega, 
+      dataEntrega,
       createdBy: req.user.id,
       user: userId,
       equipe,
@@ -131,7 +133,7 @@ exports.editarTarefa = async (req, res) => {
       dadosAtualizacao,
       { new: true }
     );
-    
+
     await logActivity('atualizacao_geral', 'Detalhes da tarefa foram atualizados', req.user.id, tarefaAtualizada._id);
     res.json(tarefaAtualizada);
   } catch (err) {
@@ -155,12 +157,12 @@ exports.detalhesTarefa = async (req, res) => {
     const tarefa = await Tarefa.findById(req.params.id)
       .populate('user', 'nome')
       .populate('equipe', 'nome');
-      
+
     if (!tarefa) return res.status(404).json({ erro: 'Tarefa não encontrada' });
-    
+
     const comentarios = await Comment.find({ tarefa: req.params.id }).populate('user', 'nome').sort({ createdAt: 1 });
     const logs = await ActivityLog.find({ tarefa: req.params.id }).populate('user', 'nome').sort({ createdAt: -1 });
-    
+
     res.json({ tarefa, comentarios, logs });
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao buscar detalhes da tarefa', detalhe: err.message });
@@ -172,15 +174,15 @@ exports.adicionarComentario = async (req, res) => {
   try {
     const { texto } = req.body;
     if (!texto) return res.status(400).json({ erro: 'Texto do comentário vazio' });
-    
+
     const comentario = new Comment({ texto, user: req.user.id, tarefa: req.params.id });
     await comentario.save();
-    
+
     await logActivity('comentario', 'Comentário adicionado', req.user.id, req.params.id);
-    
+
     const populateComentario = await Comment.findById(comentario._id).populate('user', 'nome');
     res.status(201).json(populateComentario);
-  } catch(err) {
+  } catch (err) {
     res.status(500).json({ erro: 'Erro ao adicionar comentário', detalhe: err.message });
   }
 };
@@ -192,15 +194,15 @@ exports.adicionarSubtarefa = async (req, res) => {
     if (!descricao) return res.status(400).json({ erro: 'Obrigatório fornecer descrição' });
 
     const tarefa = await Tarefa.findById(req.params.id);
-    if(!tarefa) return res.status(404).json({ erro: 'Tarefa não encontrada' });
+    if (!tarefa) return res.status(404).json({ erro: 'Tarefa não encontrada' });
 
     tarefa.subtarefas.push({ descricao, concluida: false });
     await tarefa.save();
 
     await logActivity('nova_subtarefa', `Subtarefa '${descricao}' adicionada`, req.user.id, req.params.id);
     res.status(201).json(tarefa);
-  } catch(err) {
-    res.status(500).json({erro: 'Erro ao adicionar subtarefa'});
+  } catch (err) {
+    res.status(500).json({ erro: 'Erro ao adicionar subtarefa' });
   }
 };
 
@@ -209,7 +211,7 @@ exports.toggleSubtarefa = async (req, res) => {
   try {
     const { subId } = req.params;
     const tarefa = await Tarefa.findById(req.params.id);
-    if(!tarefa) return res.status(404).json({ erro: 'Tarefa não encontrada' });
+    if (!tarefa) return res.status(404).json({ erro: 'Tarefa não encontrada' });
 
     const sub = tarefa.subtarefas.id(subId);
     if (!sub) return res.status(404).json({ erro: 'Subtarefa não encontrada' });
@@ -218,8 +220,8 @@ exports.toggleSubtarefa = async (req, res) => {
     await tarefa.save();
 
     res.json(tarefa);
-  } catch(err) {
-    res.status(500).json({erro: 'Erro ao alterar subtarefa'});
+  } catch (err) {
+    res.status(500).json({ erro: 'Erro ao alterar subtarefa' });
   }
 };
 
@@ -340,8 +342,8 @@ exports.atualizarStatusUser = async (req, res) => {
       const statusLegivel = status === 'em_andamento'
         ? 'em andamento'
         : status === 'concluido'
-        ? 'concluída'
-        : status;
+          ? 'concluída'
+          : status;
 
       await notifyUsers({
         userIds: [notificarAdmin],
@@ -363,8 +365,8 @@ exports.controlarCronometro = async (req, res) => {
   try {
     const { acao } = req.body; // 'iniciar' ou 'pausar'
     const tarefa = await Tarefa.findOne({ _id: req.params.id, user: req.user.id });
-    
-    if(!tarefa) return res.status(403).json({ erro: 'Acesso negado à tarefa' });
+
+    if (!tarefa) return res.status(403).json({ erro: 'Acesso negado à tarefa' });
 
     if (acao === 'iniciar') {
       if (tarefa.cronometroAtivo) {
@@ -389,8 +391,8 @@ exports.controlarCronometro = async (req, res) => {
     }
 
     await tarefa.save();
-    res.json({ 
-      msg: `Cronômetro ${acao}do com sucesso`, 
+    res.json({
+      msg: `Cronômetro ${acao}do com sucesso`,
       tarefa,
       tempoExcedido: tarefa.tempoExcedido
     });
@@ -409,24 +411,61 @@ exports.adicionarAnexo = async (req, res) => {
       return res.status(400).json({ erro: 'Nenhum arquivo enviado' });
     }
 
-    const { originalname, filename, size } = req.file;
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
 
-    // A url do arquivo pra acesso público via nosso app.js
-    const fileUrl = `/uploads/${filename}`;
+    const extension = path.extname(req.file.originalname);
+    const filename = `tarefas/${tarefa._id}/${uniqueSuffix}${extension}`;
 
-    const novoAnexo = {
-      url: fileUrl,
-      nomeOriginal: originalname,
-      mimetype: req.file.mimetype,
-      size,
-    };
+    const blob = bucket.file(filename);
 
-    tarefa.anexos.push(novoAnexo);
-    await tarefa.save();
+    const blobStream = blob.createWriteStream({
+      resumable: false,
+      metadata: {
+        contentType: req.file.mimetype
+      }
+    });
 
-    await logActivity('novo_anexo', `Arquivo anexado: ${originalname}`, req.user.id, tarefa._id);
+    blobStream.on('error', (err) => {
+      console.error('Erro ao fazer upload para o Google Cloud Storage:', err);
+      if (!res.headersSent) {
+        res.status(500).json({ erro: 'Erro ao fazer upload do anexo' });
+      }
+    });
 
-    res.status(201).json({ msg: 'Anexo adicionado com sucesso', anexo: novoAnexo });
+    blobStream.on('finish', async () => {
+      try {
+        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+
+        const novoAnexo = {
+          url: publicUrl,
+          nomeOriginal: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size
+        };
+
+        tarefa.anexos.push(novoAnexo);
+        await tarefa.save();
+
+        await logActivity(
+          'novo_anexo',
+          `Arquivo anexado: ${req.file.originalname}`,
+          req.user.id,
+          tarefa._id
+        );
+
+        res.status(201).json({
+          msg: 'Anexo adicionado com sucesso',
+          anexo: novoAnexo
+        });
+      } catch (err) {
+        console.error('Erro ao processar anexo após upload:', err);
+        if (!res.headersSent) {
+          res.status(500).json({ erro: 'Erro ao processar anexo', detalhe: err.message });
+        }
+      }
+    });
+
+    blobStream.end(req.file.buffer);
   } catch (err) {
     res.status(500).json({ erro: 'Erro no upload de anexo', detalhe: err.message });
   }
