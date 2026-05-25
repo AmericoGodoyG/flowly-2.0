@@ -411,62 +411,70 @@ exports.adicionarAnexo = async (req, res) => {
       return res.status(400).json({ erro: 'Nenhum arquivo enviado' });
     }
 
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    // Arquivo foi validado pela middleware, agora fazer upload
+    const publicUrl = await uploadAnexoParaGCS(tarefa._id, req.file);
 
-    const extension = path.extname(req.file.originalname);
-    const filename = `tarefas/${tarefa._id}/${uniqueSuffix}${extension}`;
+    const novoAnexo = {
+      url: publicUrl,
+      nomeOriginal: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size
+    };
+
+    tarefa.anexos.push(novoAnexo);
+    await tarefa.save();
+
+    await logActivity(
+      'novo_anexo',
+      `Arquivo anexado: ${req.file.originalname}`,
+      req.user.id,
+      tarefa._id
+    );
+
+    res.status(201).json({
+      msg: 'Anexo adicionado com sucesso',
+      anexo: novoAnexo
+    });
+  } catch (err) {
+    console.error('Erro ao fazer upload de anexo para Google Cloud Storage:', err);
+    if (err.message.includes('timeout')) {
+      return res.status(504).json({ erro: 'Timeout ao conectar com Cloud Storage' });
+    }
+    res.status(500).json({ erro: 'Erro ao fazer upload de anexo', detalhe: err.message });
+  }
+};
+
+/**
+ * Função auxiliar para upload de anexo usando bucket.file().save()
+ * Armazena em: arquivos/{tarefaId}/{timestamp}-{random}.{ext}
+ * @param {string} tarefaId - ID da tarefa
+ * @param {Object} file - Objeto do arquivo (req.file)
+ * @returns {Promise<string>} URL pública do arquivo
+ */
+const uploadAnexoParaGCS = async (tarefaId, file) => {
+  try {
+    const path = require('path');
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const extension = path.extname(file.originalname);
+    // Organizar em pasta: arquivos/{tarefaId}/{arquivo}
+    const filename = `arquivos/${tarefaId}/${uniqueSuffix}${extension}`;
 
     const blob = bucket.file(filename);
 
-    const blobStream = blob.createWriteStream({
-      resumable: false,
+    // Usar save() em vez de createWriteStream() para evitar race conditions
+    await blob.save(file.buffer, {
       metadata: {
-        contentType: req.file.mimetype
-      }
+        contentType: file.mimetype,
+        cacheControl: 'public, max-age=31536000'
+      },
+      timeout: 60000 // 60 segundos de timeout
     });
 
-    blobStream.on('error', (err) => {
-      console.error('Erro ao fazer upload para o Google Cloud Storage:', err);
-      if (!res.headersSent) {
-        res.status(500).json({ erro: 'Erro ao fazer upload do anexo' });
-      }
-    });
-
-    blobStream.on('finish', async () => {
-      try {
-        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
-
-        const novoAnexo = {
-          url: publicUrl,
-          nomeOriginal: req.file.originalname,
-          mimetype: req.file.mimetype,
-          size: req.file.size
-        };
-
-        tarefa.anexos.push(novoAnexo);
-        await tarefa.save();
-
-        await logActivity(
-          'novo_anexo',
-          `Arquivo anexado: ${req.file.originalname}`,
-          req.user.id,
-          tarefa._id
-        );
-
-        res.status(201).json({
-          msg: 'Anexo adicionado com sucesso',
-          anexo: novoAnexo
-        });
-      } catch (err) {
-        console.error('Erro ao processar anexo após upload:', err);
-        if (!res.headersSent) {
-          res.status(500).json({ erro: 'Erro ao processar anexo', detalhe: err.message });
-        }
-      }
-    });
-
-    blobStream.end(req.file.buffer);
-  } catch (err) {
-    res.status(500).json({ erro: 'Erro no upload de anexo', detalhe: err.message });
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+    console.log('✅ Upload de anexo concluído em:', filename);
+    return publicUrl;
+  } catch (error) {
+    console.error('❌ Erro ao fazer upload de anexo:', error.message);
+    throw error;
   }
 };

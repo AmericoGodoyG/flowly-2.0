@@ -68,21 +68,11 @@ exports.atualizarPerfil = async (req, res) => {
     }
 
     // Se arquivo foi fornecido, fazer upload
+    // A validação de tipo e tamanho já foi feita pela middleware
     if (req.file) {
-      // Validação do arquivo
-      const maxFileSize = 5 * 1024 * 1024; // 5MB
-      if (req.file.size > maxFileSize) {
-        return res.status(400).json({ erro: 'Arquivo muito grande (máximo 5MB)' });
-      }
-
-      const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-      if (!allowedMimeTypes.includes(req.file.mimetype)) {
-        return res.status(400).json({ erro: 'Tipo de arquivo não permitido' });
-      }
-
       try {
         // Upload para Cloud Storage
-        const publicUrl = await uploadFotoParaGCS(req.file);
+        const publicUrl = await uploadFotoParaGCS(req.file, user._id.toString());
         user.fotoPerfil = publicUrl;
       } catch (uploadError) {
         console.error('Erro ao fazer upload para Google Cloud Storage:', uploadError);
@@ -122,79 +112,40 @@ exports.atualizarPerfil = async (req, res) => {
 };
 
 /**
- * Função auxiliar para upload de foto com timeout
+ * Função auxiliar para upload de foto usando bucket.file().save()
+ * Armazena em: fotos/{userId}/{timestamp}-{random}.{ext}
  * @param {Object} file - Objeto do arquivo (req.file)
+ * @param {string} userId - ID do usuário
  * @returns {Promise<string>} URL pública do arquivo
  */
-const uploadFotoParaGCS = (file) => {
-  return new Promise((resolve, reject) => {
-    let uploadTimeout;
-    let isResolved = false;
-    let blobStream;
+const uploadFotoParaGCS = async (file, userId) => {
+  try {
+    const uniqueName =
+      Date.now() +
+      '-' +
+      Math.round(Math.random() * 1e9) +
+      path.extname(file.originalname);
 
-    try {
-      const uniqueName =
-        Date.now() +
-        '-' +
-        Math.round(Math.random() * 1e9) +
-        path.extname(file.originalname);
+    // Organizar em pasta: fotos/{userId}/{arquivo}
+    const filePath = `fotos/${userId}/${uniqueName}`;
+    const blob = bucket.file(filePath);
 
-      const blob = bucket.file(uniqueName);
+    // Usar save() em vez de createWriteStream() para evitar race conditions
+    await blob.save(file.buffer, {
+      metadata: {
+        contentType: file.mimetype,
+        cacheControl: 'public, max-age=31536000'
+      },
+      timeout: 60000 // 60 segundos de timeout
+    });
 
-      blobStream = blob.createWriteStream({
-        resumable: false,
-        metadata: {
-          contentType: file.mimetype
-        }
-      });
-
-      // Timeout de 30 segundos
-      uploadTimeout = setTimeout(() => {
-        if (!isResolved) {
-          isResolved = true;
-          // Destruir o stream se ainda estiver ativo
-          if (blobStream && !blobStream.destroyed) {
-            blobStream.destroy();
-          }
-          reject(new Error('timeout: Upload excedeu o tempo limite de 30 segundos'));
-        }
-      }, 30000);
-
-      blobStream.on('error', (err) => {
-        if (!isResolved) {
-          isResolved = true;
-          clearTimeout(uploadTimeout);
-          reject(err);
-        }
-      });
-
-      blobStream.on('finish', () => {
-        if (!isResolved) {
-          isResolved = true;
-          clearTimeout(uploadTimeout);
-          const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
-          resolve(publicUrl);
-        }
-      });
-
-      // Escrever apenas se o stream não foi destruído
-      if (blobStream && !blobStream.destroyed) {
-        blobStream.end(file.buffer);
-      } else {
-        throw new Error('Stream foi destruído antes de iniciar o upload');
-      }
-    } catch (error) {
-      if (uploadTimeout) clearTimeout(uploadTimeout);
-      if (!isResolved) {
-        isResolved = true;
-        // Destruir o stream se existir
-        if (blobStream && !blobStream.destroyed) {
-          blobStream.destroy();
-        }
-        reject(error);
-      }
-    }
-  });
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+    console.log('✅ Upload de foto concluído em:', filePath);
+    return publicUrl;
+  } catch (error) {
+    console.error('❌ Erro ao fazer upload:', error.message);
+    throw error;
+  }
 };
 
 exports.atualizarSenha = async (req, res) => {
