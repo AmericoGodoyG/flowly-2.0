@@ -321,7 +321,7 @@ sistema. O Administrador atua sobre equipes, tarefas e dashboards; o Usuário ac
 tarefas, atualiza status, controla tempo e colabora por chat.
 <p align="center">
    <img width="620" height="887" alt="casl" src="https://github.com/user-attachments/assets/70bdbd9a-0cca-479a-b92c-037c41c487a6" />
-</p>P
+</p>
 ---
 
 # Fluxo
