@@ -17,7 +17,8 @@ def _get_bool(name: str, default: bool) -> bool:
 
 @dataclass(frozen=True)
 class Settings:
-    api_base_url: str = os.getenv("FLOWLY_API_BASE_URL", "http://localhost:5000/api").rstrip("/")
+    base_url: str = os.getenv("FLOWLY_API_BASE_URL", "http://localhost:5000/api").rstrip("/")
+    api_base_url: str = f"{base_url}/api"
     api_token: str = os.getenv("FLOWLY_API_TOKEN", "").strip()
 
     api_timeout_sec: float = float(os.getenv("FLOWLY_API_TIMEOUT_SEC", os.getenv("FLOWLY_API_TIMEOUT", "20")))
