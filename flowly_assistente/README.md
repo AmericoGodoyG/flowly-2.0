@@ -4,13 +4,13 @@ Compatível com **Google Cloud Functions** para frontend web/mobile.
 
 Assistente virtual que interpreta comandos em linguagem natural (pt-BR) e executa ações no backend Flowly.
 
-## 📋 Requisitos
+## Requisitos
 
 - **Python 3.11+**
 - Backend Flowly rodando (ex.: `http://localhost:5000/api`)
 - Token JWT válido
 
-## 🚀 Quick Start (5 minutos)
+## Quick Start (5 minutos)
 
 ### 1. Instalar
 ```bash
@@ -48,12 +48,9 @@ curl -X POST http://localhost:8080/ \
 
 | Arquivo | Descrição |
 |---------|-----------|
-| [QUICKSTART.md](QUICKSTART.md) | Setup rápido (5 min) |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | Deploy em Google Cloud (completo) |
-| [CHANGELOG.md](CHANGELOG.md) | O que mudou da v1 para v2 |
 | [API_EXAMPLES.md](API_EXAMPLES.md) | Exemplos de requests/responses |
 
-## 🎯 Casos de Uso
+## Casos de Uso
 
 ### Mode CLI (Desktop/Terminal)
 ```bash
@@ -74,7 +71,7 @@ const response = await fetch('https://seu-cloud-function/', {
 });
 ```
 
-## 🔄 Arquitetura
+## Arquitetura
 
 ```
 ┌─────────────────┐
@@ -100,7 +97,7 @@ const response = await fetch('https://seu-cloud-function/', {
 └──────────────────┘
 ```
 
-## 🗣️ Comandos Disponíveis
+## Comandos Disponíveis
 
 ### Usuário
 - "meu perfil" → Mostrar dados
@@ -123,7 +120,7 @@ const response = await fetch('https://seu-cloud-function/', {
 - "adicionar comentario" → Comentário
 - "cronometro" → Timer
 
-## 🔐 Autenticação
+## Autenticação
 
 ### Método 1: No corpo (JSON)
 ```json
@@ -145,7 +142,7 @@ export FLOWLY_API_TOKEN="seu_token"
 python main.py --cli
 ```
 
-## 🌍 CORS & Cloud Deploy
+## CORS & Cloud Deploy
 
 ### CORS Automático
 Headers adicionados automaticamente:
@@ -172,7 +169,7 @@ gcloud functions deploy flowly_assistente \
   --entry-point trigger_http
 ```
 
-## 🧪 Testes
+## Testes
 
 ```bash
 # Suite completa
@@ -184,7 +181,7 @@ curl -X POST http://localhost:8080/ \
   -d '{"utterance": "minhas equipes", "token": "TOKEN"}'
 ```
 
-## ⚙️ Configuração
+## Configuração
 
 ### Variáveis Principais
 
@@ -204,7 +201,7 @@ FLOWLY_DEBUG=false
 
 **Ver todas**: `.env.example`
 
-## 📁 Estrutura
+## Estrutura
 
 ```
 flowly_assistente/
@@ -216,14 +213,10 @@ flowly_assistente/
 ├── commands.py             # Lista de comandos
 ├── requirements.txt        # Dependências
 ├── Dockerfile              # Para Google Cloud Run
-├── deploy.sh               # Deploy automatizado
-├── DEPLOYMENT.md           # Guia completo
-├── QUICKSTART.md           # Setup rápido
-├── CHANGELOG.md            # O que mudou
 └── API_EXAMPLES.md         # Documentação API
 ```
 
-## 🔊 Voz (Opcional)
+## Voz (Opcional)
 
 ### Google Speech Recognition (padrão)
 ```bash
@@ -236,7 +229,7 @@ FLOWLY_TTS_ENABLED=false
 FLOWLY_TEXT_ONLY=true
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 | Problema | Solução |
 |----------|---------|
@@ -246,13 +239,13 @@ FLOWLY_TEXT_ONLY=true
 | "Não consegui identificar" | Abaixe `FLOWLY_MATCH_THRESHOLD` |
 | "API não encontrada" | Verifique se backend está rodando |
 
-## 📊 Performance
+## Performance
 
 - **Latência típica**: 200-500ms (HTTP + API backend)
 - **Memory**: ~100MB por requisição
 - **Concorrência**: Ilimitada (Google Cloud Auto-scaling)
 
-## 🛡️ Segurança
+## Segurança
 
 ✅ Autenticação via JWT token obrigatória
 ✅ CORS headers configuráveis
@@ -260,22 +253,7 @@ FLOWLY_TEXT_ONLY=true
 ✅ Erros sanitizados (sem stack traces)
 ✅ Validação de entrada
 
-## 📞 Próximos Passos
-
-1. Ler [DEPLOYMENT.md](DEPLOYMENT.md) para produção
-2. Executar `python test_api.py` para validar setup
-3. Fazer deploy com `bash deploy.sh`
-4. Integrar com seu frontend
-
-## 📝 Licença
-
-Parte do sistema Flowly.
-
 ---
-
-**Versão**: 2.0 (Google Cloud Functions Ready)
-**Status**: ✅ Pronto para produção
-**Última atualização**: 2026-05-22
 
 ## Diagnóstico de travamentos
 
