@@ -1,12 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from 'react'; //useMemo
+import apiClient, { getFullApiUrl } from '../../config/apiClient';
 import Sidebar from '../../components/layout/Sidebar';
 import { API_ENDPOINTS, LOCAL_STORAGE_KEYS } from '../../config/config';
-import { authUtils } from '../../config/authUtils';
+//import { authUtils } from '../../config/authUtils';
 import '../../styles/pages/admin/DashboardAdmin.css';
 import '../../styles/pages/user/PerfilUser.css';
-
-const API_PUBLIC_BASE = process.env.REACT_APP_API_PUBLIC_URL || 'http://localhost:5000';
 
 function PerfilUser() {
   const [loading, setLoading] = useState(true);
@@ -28,16 +26,11 @@ function PerfilUser() {
   const [mensagemSenha, setMensagemSenha] = useState('');
   const [erro, setErro] = useState('');
 
-  const authHeaders = useMemo(
-    () => ({ headers: { Authorization: `Bearer ${authUtils.getToken()}` } }),
-    []
-  );
-
   const carregarPerfil = async () => {
     setLoading(true);
     setErro('');
     try {
-      const res = await axios.get(API_ENDPOINTS.USER_ME, authHeaders);
+      const res = await apiClient.get(API_ENDPOINTS.USER_ME);
       setNome(res.data.nome || '');
       setEmail(res.data.email || '');
       setTipo(res.data.tipo || '');
@@ -55,8 +48,7 @@ function PerfilUser() {
 
   const resolverFoto = (url) => {
     if (!url) return '';
-    if (url.startsWith('http')) return url;
-    return `${API_PUBLIC_BASE}${url}`;
+    return getFullApiUrl(url);
   };
 
   const salvarPerfil = async (e) => {
@@ -72,12 +64,7 @@ function PerfilUser() {
         formData.append('fotoPerfil', arquivoFoto);
       }
 
-      const res = await axios.put(API_ENDPOINTS.USER_ME, formData, {
-        headers: {
-          Authorization: `Bearer ${authUtils.getToken()}`,
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const res = await apiClient.put(API_ENDPOINTS.USER_ME, formData);
 
       const usuarioAtualizado = res.data.user;
       localStorage.setItem(LOCAL_STORAGE_KEYS.USER_NAME, usuarioAtualizado.nome);
@@ -110,10 +97,9 @@ function PerfilUser() {
     setSavingSenha(true);
 
     try {
-      await axios.put(
+      await apiClient.put(
         API_ENDPOINTS.USER_ME_PASSWORD,
-        { senhaAtual, novaSenha },
-        authHeaders
+        { senhaAtual, novaSenha }
       );
 
       setSenhaAtual('');

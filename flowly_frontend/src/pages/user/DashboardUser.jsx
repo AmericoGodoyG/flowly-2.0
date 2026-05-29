@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import apiClient from "../../config/apiClient";
 import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
-import { FaTasks, FaFileDownload, FaBell } from 'react-icons/fa';
+//import { useNavigate } from "react-router-dom";
+import { FaFileDownload, FaBell } from 'react-icons/fa'; //FaTasks
 import { API_ENDPOINTS } from "../../config/config";
 import { formatarStatus } from "../../config/statusUtils";
 import "../../styles/pages/user/DashboardUser.css";
@@ -46,25 +46,21 @@ function DashboardUser() {
     return () => clearInterval(interval);
   }, [tarefas, cronometrosAtivos]);
 
-  const navigate = useNavigate();
+  /*const navigate = useNavigate();
 
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("nome");
     navigate("/");
-  };
+  };*/
 
   const buscarTarefas = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/tarefas/minhas", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      setTarefas(res.data);
+      const response = await apiClient.get(API_ENDPOINTS.TAREFAS_MINHAS);
+      setTarefas(response.data);
       
       const cronometros = {};
-      res.data.forEach(tarefa => {
+      response.data.forEach(tarefa => {
         if (tarefa.cronometroAtivo) {
           const tempoDecorridoSegundos = Math.floor((new Date() - new Date(tarefa.ultimaAtualizacaoCronometro)) / 1000);
           cronometros[tarefa._id] = (tarefa.tempoGasto ? tarefa.tempoGasto * 60 : 0) + tempoDecorridoSegundos;
@@ -78,11 +74,7 @@ function DashboardUser() {
 
   const buscarNotificationCount = async () => {
     try {
-      const res = await axios.get(API_ENDPOINTS.NOTIFICATIONS_COUNT, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const res = await apiClient.get(API_ENDPOINTS.NOTIFICATIONS_COUNT);
       setNotificationCount(res.data?.count || 0);
     } catch (err) {
       console.error('Erro ao buscar notificações:', err);
@@ -91,14 +83,9 @@ function DashboardUser() {
 
   const controlarCronometro = async (tarefaId, acao) => {
     try {
-      const res = await axios.put(
-        `http://localhost:5000/api/tarefas/${tarefaId}/cronometro`,
-        { acao },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
+      const res = await apiClient.put(
+        `/tarefas/${tarefaId}/cronometro`,
+        { acao }
       );
 
       const tarefasAtualizadas = tarefas.map(t => {
@@ -143,14 +130,9 @@ function DashboardUser() {
   try {
     console.log("Atualizando status da tarefa:", tarefaSelecionada._id, "->", statusAtualizado);
 
-    await axios.put(
-      `http://localhost:5000/api/tarefas/${tarefaSelecionada._id}/status`,
-      { status: statusAtualizado },
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      }
+    await apiClient.put(
+      `/tarefas/${tarefaSelecionada._id}/status`,
+      { status: statusAtualizado }
     );
     buscarTarefas();
     setTarefaSelecionada(null);

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import apiClient from "../../config/apiClient";
+import { API_ENDPOINTS } from "../../config/config";
 import { Link, useNavigate } from "react-router-dom";
 import { formatarStatus } from "../../config/statusUtils";
 import "../../styles/pages/admin/DashboardAdmin.css";
@@ -13,11 +14,7 @@ function DashboardTarefasAdmin() {
   useEffect(() => {
     const fetchTarefas = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/tarefas", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        const res = await apiClient.get(API_ENDPOINTS.TAREFAS);
         setTarefas(res.data);
         setLoading(false);
       } catch (err) {
@@ -31,11 +28,7 @@ function DashboardTarefasAdmin() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/tarefas/${id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      await apiClient.delete(API_ENDPOINTS.DELETE_TAREFA(id));
       setTarefas(tarefas.filter((tarefa) => tarefa._id !== id));
     } catch (err) {
       console.error("Erro ao excluir tarefa", err);

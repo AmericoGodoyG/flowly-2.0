@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useParams, Link, useLocation } from "react-router-dom";
+import apiClient from "../../config/apiClient";
+import { API_ENDPOINTS } from "../../config/config";
 import "../../styles/pages/admin/DashboardAdmin.css";
 import "../../styles/pages/admin/Equipes.css";
 import Sidebar from "../../components/layout/Sidebar";
@@ -9,15 +10,11 @@ export default function Equipes() {
   const [equipes, setEquipes] = useState([]);
   const [nome, setNome] = useState("");
   const [membros, setMembros] = useState([]); // Array de objetos completos
-  const [users, setUsers] = useState([]);
   const [editandoId, setEditandoId] = useState(null);
   const [mensagemErro, setMensagemErro] = useState("");
   const [mensagemSucesso, setMensagemSucesso] = useState("");
   const { id } = useParams();
   const location = useLocation();
-  const navigate = useNavigate();
-
-  const token = localStorage.getItem("token");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -35,9 +32,7 @@ export default function Equipes() {
   if (id) {
     const carregarEquipePorId = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/equipes/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await apiClient.get(API_ENDPOINTS.EQUIPES_BY_ID(id));
         const equipe = res.data;
         setNome(equipe.nome);
         setMembros(equipe.membros);
@@ -54,9 +49,7 @@ export default function Equipes() {
 
   const carregarEquipes = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/equipes", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiClient.get(API_ENDPOINTS.EQUIPES);
       setEquipes(res.data);
     } catch (err) {
       console.error("Erro ao buscar equipes", err);
@@ -65,10 +58,7 @@ export default function Equipes() {
 
   const carregarUsers = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/users", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setUsers(res.data);
+      await apiClient.get(API_ENDPOINTS.USERS);
     } catch (err) {
       console.error("Erro ao buscar usuários", err);
     }
@@ -83,9 +73,7 @@ export default function Equipes() {
     }
 
     try {
-      const res = await axios.get(`http://localhost:5000/api/users/search?q=${encodeURIComponent(termo)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiClient.get(`/users/search?q=${encodeURIComponent(termo)}`);
       // Excluir admins e já selecionados
       const resultados = res.data.filter((u) => u.tipo !== "admin" && !membros.find((m) => m._id === u._id));
       setSearchResults(resultados);
@@ -136,14 +124,10 @@ export default function Equipes() {
       const dados = { nome, membros: Array.from(new Set(membrosIds)) };
 
       if (editandoId) {
-        await axios.put(`http://localhost:5000/api/equipes/${editandoId}`, dados, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await apiClient.put(API_ENDPOINTS.UPDATE_EQUIPE(editandoId), dados);
         setMensagemSucesso("Equipe editada com sucesso!");
       } else {
-        await axios.post("http://localhost:5000/api/equipes", dados, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await apiClient.post(API_ENDPOINTS.CREATE_EQUIPE, dados);
         setMensagemSucesso("Equipe criada com sucesso!");
       }
 
@@ -161,9 +145,7 @@ export default function Equipes() {
 
   const excluirEquipe = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/equipes/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await apiClient.delete(API_ENDPOINTS.DELETE_EQUIPE(id));
       carregarEquipes();
     } catch (err) {
       console.error("Erro ao excluir equipe", err);

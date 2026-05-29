@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
+import apiClient from '../../config/apiClient';
 import Sidebar from '../../components/layout/Sidebar';
-import { authUtils } from '../../config/authUtils';
 import { API_ENDPOINTS } from '../../config/config';
 import '../../styles/pages/admin/DashboardAdmin.css';
 import '../../styles/pages/user/EquipesUser.css';
@@ -17,11 +16,7 @@ function EquipesUser() {
       setError('');
 
       try {
-        const response = await axios.get(API_ENDPOINTS.MINHAS_EQUIPES, {
-          headers: {
-            Authorization: `Bearer ${authUtils.getToken()}`,
-          },
-        });
+        const response = await apiClient.get(API_ENDPOINTS.MINHAS_EQUIPES);
         setEquipes(response.data);
       } catch (err) {
         setError('Nao foi possivel carregar suas equipes.');

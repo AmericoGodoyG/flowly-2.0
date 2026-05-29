@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
+import apiClient from "../../config/apiClient";
+import { API_ENDPOINTS } from "../../config/config";
 import "../../styles/pages/auth/Login.css";
 import { FaUser, FaEnvelope, FaLock, FaUserGraduate, FaUserPlus, FaEye, FaEyeSlash } from 'react-icons/fa';
 
@@ -17,7 +18,7 @@ function Register() {
     e.preventDefault();
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/registrar", {
+      const res = await apiClient.post(API_ENDPOINTS.REGISTER, {
         nome,
         email,
         senha,

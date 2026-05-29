@@ -19,6 +19,8 @@ export const API_ENDPOINTS = {
   CREATE_TAREFA: `${API_BASE_URL}/tarefas`,
   UPDATE_TAREFA: (id) => `${API_BASE_URL}/tarefas/${id}`,
   DELETE_TAREFA: (id) => `${API_BASE_URL}/tarefas/${id}`,
+  TAREFAS_MINHAS: `${API_BASE_URL}/tarefas/minhas`,
+  
 
   // Equipes
   EQUIPES: `${API_BASE_URL}/equipes`,
@@ -57,8 +59,10 @@ export const USER_TYPES = {
   USER: 'user',
 };
 
-export default {
+const config = {
   API_ENDPOINTS,
   LOCAL_STORAGE_KEYS,
   USER_TYPES,
 };
+
+export default config;

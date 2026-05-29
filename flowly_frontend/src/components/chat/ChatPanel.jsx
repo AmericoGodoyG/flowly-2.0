@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import io from 'socket.io-client';
-import axios from 'axios';
+import createSocketConnection from '../../config/socketClient';
+import apiClient from '../../config/apiClient';
 import { authUtils } from '../../config/authUtils';
 import { API_ENDPOINTS } from '../../config/config';
 import '../../styles/components/ChatPanel.css';
@@ -20,9 +20,7 @@ const ChatPanel = () => {
   useEffect(() => {
     const fetchEquipes = async () => {
       try {
-        const res = await axios.get(API_ENDPOINTS.MINHAS_EQUIPES, {
-          headers: { Authorization: `Bearer ${authUtils.getToken()}` }
-        });
+        const res = await apiClient.get(API_ENDPOINTS.MINHAS_EQUIPES);
         setEquipes(res.data);
         if (res.data.length > 0) {
           setSelectedEquipe(res.data[0]._id);
@@ -39,7 +37,7 @@ const ChatPanel = () => {
     if (!selectedEquipe) return;
 
     // Conectar ao socket do Backend
-    const newSocket = io('http://localhost:5000');
+    const newSocket = createSocketConnection();
     setSocket(newSocket);
 
     // Entrar na sala da Equipe
@@ -48,9 +46,7 @@ const ChatPanel = () => {
     // Carregar histórico via HTTP
     const fetchHistory = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/equipes/${selectedEquipe}/messages`, {
-          headers: { Authorization: `Bearer ${authUtils.getToken()}` }
-        });
+        const res = await apiClient.get(`/equipes/${selectedEquipe}/messages`);
         setMessages(res.data);
       } catch (error) {
         console.error('Erro ao buscar histórico de mensagens');

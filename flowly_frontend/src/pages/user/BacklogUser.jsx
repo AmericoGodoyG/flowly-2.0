@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import apiClient from '../../config/apiClient';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/layout/Sidebar';
 import '../../styles/pages/user/BacklogUser.css';
@@ -11,17 +11,14 @@ const BacklogUser = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const getAuthConfig = () => ({
+  /*const getAuthConfig = () => ({
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-  });
+  });*/
 
   const carregarBacklog = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        'http://localhost:5000/api/tarefas/backlog',
-        getAuthConfig(),
-      );
+      const response = await apiClient.get('/tarefas/backlog');
       setTarefas(response.data || []);
     } catch (error) {
       setTipoMensagem('erro');

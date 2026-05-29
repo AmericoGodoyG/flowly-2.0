@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import axios from "axios";
-import { FaEnvelope, FaPaperPlane, FaKey, FaCheck } from 'react-icons/fa';
+import apiClient from "../../config/apiClient";
 import { API_ENDPOINTS } from "../../config/config";
 import { authUtils } from "../../config/authUtils";
 import "../../styles/pages/auth/Login.css";
+import {
+  FaEnvelope, FaPaperPlane, FaKey, FaCheck
+} from "react-icons/fa";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -39,12 +41,12 @@ function Verify() {
         setLoading(true);
         setStatus({ type: "", message: "" });
         try {
-          const res = await axios.get(`${API_ENDPOINTS.VALIDATE_2FA_TOKEN}?token=${encodeURIComponent(tokenFromUrl)}`);
+          const res = await apiClient.get(`${API_ENDPOINTS.VALIDATE_2FA_TOKEN}?token=${encodeURIComponent(tokenFromUrl)}`);
           const jwt = res.data.token;
           // armazenar token temporariamente e buscar dados do usuário
           localStorage.setItem('token', jwt);
           try {
-            const userRes = await axios.get(API_ENDPOINTS.USER_ME, { headers: { Authorization: `Bearer ${jwt}` } });
+            const userRes = await apiClient.get(API_ENDPOINTS.USER_ME);
             authUtils.saveAuthData(jwt, userRes.data);
           } catch (err) {
             // Se não conseguir buscar user/me, apenas salvar token
@@ -74,7 +76,7 @@ function Verify() {
     setStatus({ type: "", message: "" });
 
     try {
-      const res = await axios.post(API_ENDPOINTS.SEND_2FA, { email: emailToSend });
+      const res = await apiClient.post(API_ENDPOINTS.SEND_2FA, { email: emailToSend });
       setUserId(res.data.userId || res.data.user_id || "");
       setStatus({ type: "success", message: 'Código enviado. Verifique seu email.' });
       setStep('enter-code');
@@ -91,11 +93,11 @@ function Verify() {
     setStatus({ type: "", message: "" });
 
     try {
-      const res = await axios.post(API_ENDPOINTS.VALIDATE_2FA_CODE, { userId, email, codigo });
+      const res = await apiClient.post(API_ENDPOINTS.VALIDATE_2FA_CODE, { userId, email, codigo });
       const jwt = res.data.token;
       localStorage.setItem('token', jwt);
       try {
-        const userRes = await axios.get(API_ENDPOINTS.USER_ME, { headers: { Authorization: `Bearer ${jwt}` } });
+        const userRes = await apiClient.get(API_ENDPOINTS.USER_ME);
         authUtils.saveAuthData(jwt, userRes.data);
       } catch (err) {
         console.warn('Não foi possível obter user/me após validação do código.');

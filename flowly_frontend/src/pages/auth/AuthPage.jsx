@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
+import apiClient from "../../config/apiClient";
+import { API_ENDPOINTS } from "../../config/config";
+import { authUtils } from "../../config/authUtils";
 import {
   FaEnvelope, FaLock, FaSignInAlt, FaEye, FaEyeSlash,
   FaUser, FaUserGraduate, FaUserPlus
 } from "react-icons/fa";
-import { API_ENDPOINTS } from "../../config/config";
-import { authUtils } from "../../config/authUtils";
 import LightPillar from "../../components/backgrounds/LightPillar";
 import "../../styles/pages/auth/Auth.css";
 
@@ -71,7 +71,7 @@ function AuthPage() {
     setLoginErro("");
 
     try {
-      const res = await axios.post(API_ENDPOINTS.LOGIN, {
+      const res = await apiClient.post(API_ENDPOINTS.LOGIN, {
         email: loginEmail,
         senha: loginSenha,
       });
@@ -99,7 +99,7 @@ function AuthPage() {
     setRegErro("");
 
     try {
-      await axios.post(API_ENDPOINTS.REGISTER, {
+      await apiClient.post(API_ENDPOINTS.REGISTER, {
         nome: regNome,
         email: regEmail,
         senha: regSenha,

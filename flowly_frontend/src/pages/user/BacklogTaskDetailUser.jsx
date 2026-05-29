@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState, useCallback } from 'react';
+import apiClient from '../../config/apiClient';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from '../../components/layout/Sidebar';
 import '../../styles/pages/user/BacklogTaskDetailUser.css';
@@ -14,17 +14,14 @@ const BacklogTaskDetailUser = () => {
   const [tipoMensagem, setTipoMensagem] = useState('sucesso');
   const [tarefa, setTarefa] = useState(null);
 
-  const getAuthConfig = () => ({
+  /*const getAuthConfig = () => ({
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-  });
+  });*/
 
-  const carregarDetalhes = async () => {
+  const carregarDetalhes = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        `http://localhost:5000/api/tarefas/${id}/detalhes`,
-        getAuthConfig(),
-      );
+      const response = await apiClient.get(`/tarefas/${id}/detalhes`);
       const tarefaApi = response?.data?.tarefa || null;
       if (!tarefaApi) {
         setTipoMensagem('erro');
@@ -42,13 +39,13 @@ const BacklogTaskDetailUser = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     if (id) {
       carregarDetalhes();
     }
-  }, [id]);
+  }, [id, carregarDetalhes]);
 
   const atribuirParaMim = async () => {
     if (!tarefa?._id || atribuindo) {
@@ -57,11 +54,7 @@ const BacklogTaskDetailUser = () => {
 
     try {
       setAtribuindo(true);
-      await axios.put(
-        `http://localhost:5000/api/tarefas/${tarefa._id}/atribuir-para-mim`,
-        {},
-        getAuthConfig(),
-      );
+      await apiClient.put(`/tarefas/${tarefa._id}/atribuir-para-mim`, {});
 
       setTipoMensagem('sucesso');
       setMensagem('Tarefa atribuída para você com sucesso! Redirecionando para o Kanban...');

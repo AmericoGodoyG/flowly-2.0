@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import apiClient from "../../config/apiClient";
+import { API_ENDPOINTS } from "../../config/config";
 import { Link, useLocation, useParams } from "react-router-dom";
 import "../../styles/pages/admin/DashboardAdmin.css";
 import "../../styles/pages/admin/TarefasAdmin.css";
@@ -31,11 +32,7 @@ function TarefasAdmin() {
 
     const carregarTarefa = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/tarefas/${id}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        const res = await apiClient.get(API_ENDPOINTS.TAREFAS_BY_ID(id));
 
         const tarefa = res.data;
         setModoEdicao(true);
@@ -61,11 +58,7 @@ function TarefasAdmin() {
 
   const buscarEquipes = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/equipes", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const res = await apiClient.get(API_ENDPOINTS.EQUIPES);
       setEquipes(res.data);
     } catch (err) {
       console.error("Erro ao buscar equipes:", err);
@@ -74,11 +67,7 @@ function TarefasAdmin() {
 
   const buscarMembersDaEquipe = async (equipeId) => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/equipes/${equipeId}/membros`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const res = await apiClient.get(API_ENDPOINTS.EQUIPE_MEMBROS(equipeId));
       setUsers(res.data);
     } catch (err) {
       console.error("Erro ao buscar membros da equipe:", err);
@@ -111,8 +100,8 @@ function TarefasAdmin() {
 
   const atualizarTarefa = async () => {
     try {
-      await axios.put(
-        `http://localhost:5000/api/tarefas/${idTarefaEditando}`,
+      await apiClient.put(
+        API_ENDPOINTS.UPDATE_TAREFA(idTarefaEditando),
         {
           descricao,
           detalhes,
@@ -121,11 +110,6 @@ function TarefasAdmin() {
           user: userSelecionado,
           tempoEstimado: parseInt(tempoEstimado) || null,
           urgencia,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
         }
       );
 
@@ -157,8 +141,8 @@ function TarefasAdmin() {
       if (modoEdicao) {
         await atualizarTarefa();
       } else {
-        await axios.post(
-          "http://localhost:5000/api/tarefas",
+        await apiClient.post(
+          API_ENDPOINTS.CREATE_TAREFA,
           {
             descricao,
             detalhes,
@@ -167,11 +151,6 @@ function TarefasAdmin() {
             user: userSelecionado,
             tempoEstimado: parseInt(tempoEstimado) || null,
             urgencia,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
           }
         );
 

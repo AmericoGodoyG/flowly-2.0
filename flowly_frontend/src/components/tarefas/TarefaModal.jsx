@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { authUtils } from '../../config/authUtils';
+import React, { useState, useEffect, useCallback } from 'react';
+import apiClient, { getFullApiUrl } from '../../config/apiClient';
+//import { authUtils } from '../../config/authUtils';
 import { formatarStatus } from '../../config/statusUtils';
 import '../../styles/components/TarefaModal.css';
 
@@ -13,28 +13,28 @@ const TarefaModal = ({ tarefaId, onClose }) => {
   const [arquivo, setArquivo] = useState(null);
   const [uploading, setUploading] = useState(false);
 
-  const getAuthConfig = () => ({
+  /*const getAuthConfig = () => ({
     headers: { Authorization: `Bearer ${authUtils.getToken()}` }
-  });
+  });*/
 
-  const carregarDetalhes = async () => {
+  const carregarDetalhes = useCallback(async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/tarefas/${tarefaId}/detalhes`, getAuthConfig());
+      const res = await apiClient.get(`/tarefas/${tarefaId}/detalhes`);
       setData(res.data);
       setLoading(false);
     } catch (err) {
       console.error(err);
       setLoading(false);
     }
-  };
+  }, [tarefaId]);
 
   useEffect(() => {
     carregarDetalhes();
-  }, [tarefaId]);
+  }, [carregarDetalhes, tarefaId]);
 
   const toggleSub = async (subId) => {
     try {
-      await axios.put(`http://localhost:5000/api/tarefas/${tarefaId}/subtarefas/${subId}`, {}, getAuthConfig());
+      await apiClient.put(`/tarefas/${tarefaId}/subtarefas/${subId}`, {});
       carregarDetalhes(); // Recarrega
     } catch (err) {
       console.error(err);
@@ -44,7 +44,7 @@ const TarefaModal = ({ tarefaId, onClose }) => {
   const addSubtarefa = async () => {
     if(!novaSubtarefa.trim()) return;
     try {
-      await axios.post(`http://localhost:5000/api/tarefas/${tarefaId}/subtarefas`, { descricao: novaSubtarefa }, getAuthConfig());
+      await apiClient.post(`/tarefas/${tarefaId}/subtarefas`, { descricao: novaSubtarefa });
       setNovaSubtarefa('');
       carregarDetalhes();
     } catch (err) {
@@ -55,7 +55,7 @@ const TarefaModal = ({ tarefaId, onClose }) => {
   const addComentario = async () => {
     if(!novoComentario.trim()) return;
     try {
-      await axios.post(`http://localhost:5000/api/tarefas/${tarefaId}/comentarios`, { texto: novoComentario }, getAuthConfig());
+      await apiClient.post(`/tarefas/${tarefaId}/comentarios`, { texto: novoComentario });
       setNovoComentario('');
       carregarDetalhes();
     } catch (err) {
@@ -70,12 +70,7 @@ const TarefaModal = ({ tarefaId, onClose }) => {
       const formData = new FormData();
       formData.append('file', arquivo);
 
-      await axios.post(`http://localhost:5000/api/tarefas/${tarefaId}/anexos`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${authUtils.getToken()}`
-        }
-      });
+      await apiClient.post(`/tarefas/${tarefaId}/anexos`, formData);
       setArquivo(null);
       carregarDetalhes();
     } catch (err) {
@@ -180,7 +175,7 @@ const TarefaModal = ({ tarefaId, onClose }) => {
               <div className="anexos-list">
                 {tarefa.anexos?.map((anexo, i) => (
                   <div key={i} className="anexo-item">
-                    📄 <a href={`http://localhost:5000${anexo.url}`} target="_blank" rel="noreferrer">{anexo.nomeOriginal || anexo.nome || 'Arquivo'}</a>
+                    📄 <a href={getFullApiUrl(anexo.url)} target="_blank" rel="noreferrer">{anexo.nomeOriginal || anexo.nome || 'Arquivo'}</a>
                     <span className="anexo-size">({Math.round((anexo.size || anexo.tamanho || 0) / 1024)} KB)</span>
                   </div>
                 ))}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { authUtils } from '../../config/authUtils';
+import apiClient from '../../config/apiClient';
+//import { authUtils } from '../../config/authUtils';
 import '../../styles/components/FloatingTimer.css';
 
 const FloatingTimer = () => {
@@ -10,9 +10,7 @@ const FloatingTimer = () => {
   useEffect(() => {
     const fetchAtivas = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/tarefas/minhas', {
-          headers: { Authorization: `Bearer ${authUtils.getToken()}` }
-        });
+        const res = await apiClient.get('/tarefas/minhas');
         const ativas = res.data.filter(t => t.cronometroAtivo);
         setTarefasAtivas(ativas);
       } catch (err) {

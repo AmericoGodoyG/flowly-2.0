@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
-import { FaEnvelope, FaLock, FaSignInAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
+import apiClient from "../../config/apiClient";
 import { API_ENDPOINTS } from "../../config/config";
 import { authUtils } from "../../config/authUtils";
+import { FaEnvelope, FaLock, FaSignInAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
 import LightPillar from "../../components/backgrounds/LightPillar";
 import "../../styles/pages/auth/Login.css";
 
@@ -21,7 +21,7 @@ function Login() {
     setErro("");
 
     try {
-      const res = await axios.post(API_ENDPOINTS.LOGIN, {
+      const res = await apiClient.post(API_ENDPOINTS.LOGIN, {
         email,
         senha,
       });

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import apiClient from "../../config/apiClient";
+import { API_ENDPOINTS } from "../../config/config";
 import { Link } from "react-router-dom";
 import "../../styles/pages/admin/DashboardAdmin.css"; 
 import Sidebar from "../../components/layout/Sidebar";
@@ -14,11 +15,7 @@ function DashboardAdmin() {
       if (nomeSalvo) setAdminNome(nomeSalvo);
     const fetchEquipes = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/equipes", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        const res = await apiClient.get(API_ENDPOINTS.EQUIPES);
         setEquipes(res.data);
         setLoading(false);
       } catch (err) {
@@ -32,11 +29,7 @@ function DashboardAdmin() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/equipes/${id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      await apiClient.delete(API_ENDPOINTS.DELETE_EQUIPE(id));
       setEquipes(equipes.filter((equipe) => equipe._id !== id));
     } catch (err) {
       console.error("Erro ao excluir equipe", err);

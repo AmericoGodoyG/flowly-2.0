@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import axios from 'axios';
+import apiClient from '../../config/apiClient';
+import { API_ENDPOINTS } from '../../config/config';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import Sidebar from '../../components/layout/Sidebar';
 import TarefaModal from '../../components/tarefas/TarefaModal';
@@ -15,15 +16,9 @@ const TarefasUser = () => {
     carregarTarefas();
   }, []);
 
-  const getAuthConfig = () => {
-    return {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    };
-  };
-
   const carregarTarefas = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/tarefas/minhas', getAuthConfig());
+      const response = await apiClient.get(API_ENDPOINTS.TAREFAS_MINHAS);
       setTarefas(response.data);
     } catch (error) {
       setMensagem('Erro ao carregar tarefas');
@@ -32,7 +27,7 @@ const TarefasUser = () => {
 
   const atualizarStatusTarefa = async (id, novoStatus) => {
     try {
-      await axios.put(`http://localhost:5000/api/tarefas/${id}/status`, { status: novoStatus }, getAuthConfig());
+      await apiClient.put(API_ENDPOINTS.UPDATE_TAREFA(id) + '/status', { status: novoStatus });
       carregarTarefas();
     } catch (err) {
       setMensagem('Erro ao atualizar status');
@@ -41,7 +36,7 @@ const TarefasUser = () => {
 
   const controlarCronometro = async (id, acao) => {
     try {
-      const response = await axios.put(`http://localhost:5000/api/tarefas/${id}/cronometro`, { acao }, getAuthConfig());
+      const response = await apiClient.put(API_ENDPOINTS.UPDATE_TAREFA(id) + '/cronometro', { acao });
       carregarTarefas();
       if (response.data.tempoExcedido) {
         setMensagem('Atenção: O tempo estimado para esta tarefa foi excedido!');
@@ -53,10 +48,10 @@ const TarefasUser = () => {
     }
   };
 
-  const baixarPDF = async (tarefa) => {
+  /*const baixarPDF = async (tarefa) => {
     // Mantendo estrutura original para PDF caso tenha. Backend precisaria devolver isso.
     alert("Função de gerar PDF em progresso");
-  };
+  };*/
 
   const getUrgenciaClass = (urgencia) => {
     if(!urgencia) return '';

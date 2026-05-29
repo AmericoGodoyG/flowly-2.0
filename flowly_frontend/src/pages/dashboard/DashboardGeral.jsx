@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import apiClient from "../../config/apiClient";
 import { Link } from 'react-router-dom';
 import { FaBell } from 'react-icons/fa';
 import { Bar } from 'react-chartjs-2';
@@ -74,11 +74,7 @@ function DashboardGeral() {
 
   const buscarEquipes = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/equipes", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const res = await apiClient.get(API_ENDPOINTS.EQUIPES);
       setEquipes(res.data);
     } catch (err) {
       console.error("Erro ao buscar equipes:", err);
@@ -87,11 +83,7 @@ function DashboardGeral() {
 
   const buscarTarefas = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/tarefas", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const res = await apiClient.get(API_ENDPOINTS.TAREFAS);
       setTarefas(res.data);
     } catch (err) {
       console.error("Erro ao buscar tarefas:", err);
@@ -100,11 +92,7 @@ function DashboardGeral() {
 
   const buscarNotificationCount = async () => {
     try {
-      const res = await axios.get(API_ENDPOINTS.NOTIFICATIONS_COUNT, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const res = await apiClient.get(API_ENDPOINTS.NOTIFICATIONS_COUNT);
       setNotificationCount(res.data?.count || 0);
     } catch (err) {
       console.error('Erro ao buscar notificações:', err);

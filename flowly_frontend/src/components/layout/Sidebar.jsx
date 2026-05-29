@@ -5,6 +5,7 @@ import {
   FaBars, FaTimes, FaPlus, FaClipboardList, FaHome, FaInbox, FaComments, FaBell
 } from 'react-icons/fa';
 import { authUtils } from '../../config/authUtils';
+import { getFullApiUrl } from '../../config/apiClient';
 import '../../styles/components/Sidebar.css';
 
 const Sidebar = () => {
@@ -17,12 +18,7 @@ const Sidebar = () => {
   const isAdmin = userType === 'admin';
   const userName = localStorage.getItem('nome') || 'Usuário';
   const userPhoto = localStorage.getItem('fotoPerfil') || '';
-  const apiPublicBase = process.env.REACT_APP_API_PUBLIC_URL || 'http://localhost:5000';
-  const userPhotoUrl = userPhoto
-    ? userPhoto.startsWith('http')
-      ? userPhoto
-      : `${apiPublicBase}${userPhoto}`
-    : '';
+  const userPhotoUrl = userPhoto ? getFullApiUrl(userPhoto) : '';
 
   // Close mobile menu on route change
   useEffect(() => {

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import apiClient from '../../config/apiClient';
 import Sidebar from '../../components/layout/Sidebar';
-import { authUtils } from '../../config/authUtils';
 import { API_ENDPOINTS } from '../../config/config';
 import '../../styles/pages/common/NotificationsPage.css';
 
@@ -13,9 +12,7 @@ const NotificationsPage = () => {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(API_ENDPOINTS.NOTIFICATIONS, {
-        headers: { Authorization: `Bearer ${authUtils.getToken()}` },
-      });
+      const res = await apiClient.get(API_ENDPOINTS.NOTIFICATIONS);
       setNotifications(res.data || []);
     } catch (err) {
       setError('Erro ao carregar notificações.');
@@ -30,9 +27,7 @@ const NotificationsPage = () => {
 
   const markAsRead = async (id) => {
     try {
-      await axios.put(API_ENDPOINTS.NOTIFICATIONS_MARK_READ(id), {}, {
-        headers: { Authorization: `Bearer ${authUtils.getToken()}` },
-      });
+      await apiClient.put(API_ENDPOINTS.NOTIFICATIONS_MARK_READ(id), {});
       setNotifications((prev) => prev.map((item) => (item._id === id ? { ...item, lida: true } : item)));
     } catch (_) {
       setError('Erro ao marcar notificação como lida.');
@@ -41,9 +36,7 @@ const NotificationsPage = () => {
 
   const markAllAsRead = async () => {
     try {
-      await axios.put(API_ENDPOINTS.NOTIFICATIONS_MARK_ALL_READ, {}, {
-        headers: { Authorization: `Bearer ${authUtils.getToken()}` },
-      });
+      await apiClient.put(API_ENDPOINTS.NOTIFICATIONS_MARK_ALL_READ, {});
       setNotifications((prev) => prev.map((item) => ({ ...item, lida: true })));
     } catch (_) {
       setError('Erro ao marcar notificações como lidas.');

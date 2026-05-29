@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import io from 'socket.io-client';
-import axios from 'axios';
+import createSocketConnection from '../../config/socketClient';
+import apiClient from '../../config/apiClient';
 import Sidebar from '../../components/layout/Sidebar';
 import { authUtils } from '../../config/authUtils';
 import { API_ENDPOINTS } from '../../config/config';
@@ -35,9 +35,7 @@ const ChatsPage = () => {
     const fetchEquipes = async () => {
       try {
         setLoadingEquipes(true);
-        const res = await axios.get(API_ENDPOINTS.MINHAS_EQUIPES, {
-          headers: { Authorization: `Bearer ${authUtils.getToken()}` },
-        });
+        const res = await apiClient.get(API_ENDPOINTS.MINHAS_EQUIPES);
         setEquipes(res.data || []);
         if ((res.data || []).length > 0) {
           setSelectedEquipe(res.data[0]._id);
@@ -60,10 +58,7 @@ const ChatsPage = () => {
     const loadHistory = async () => {
       setLoadingMensagens(true);
       try {
-        const res = await axios.get(
-          `http://localhost:5000/api/equipes/${selectedEquipe}/messages`,
-          { headers: { Authorization: `Bearer ${authUtils.getToken()}` } },
-        );
+        const res = await apiClient.get(`/equipes/${selectedEquipe}/messages`);
         setMessages(res.data || []);
       } catch (error) {
         setErro('Erro ao carregar mensagens do chat.');
@@ -74,7 +69,7 @@ const ChatsPage = () => {
 
     socketRef.current?.disconnect();
 
-    const socket = io('http://localhost:5000');
+    const socket = createSocketConnection();
     socketRef.current = socket;
 
     socket.on('connect', () => {
