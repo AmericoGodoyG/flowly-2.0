@@ -35,6 +35,7 @@ flowly-2.0/
 ├── kubernetes/         # Manifests Kubernetes
 └── .github/            # Pipelines CI/CD
 ```
+<img width="1304" height="586" alt="arquitetura" src="https://github.com/user-attachments/assets/af18d19d-bb61-4780-91c2-bbf94df10381" />
 
 ---
 
@@ -311,6 +312,110 @@ PATCH /api/notificacoes/:id/read
 * WebSocket
 * Atualização otimista
 * Polling eficiente
+
+---
+
+# Casos de uso
+> O diagrama abaixo resume as interações principais dos perfis Administrador e Usuário com o 
+sistema. O Administrador atua sobre equipes, tarefas e dashboards; o Usuário acompanha suas 
+tarefas, atualiza status, controla tempo e colabora por chat.
+<p align="center">
+   <img width="620" height="887" alt="casl" src="https://github.com/user-attachments/assets/70bdbd9a-0cca-479a-b92c-037c41c487a6" />
+</p>
+---
+
+# Fluxo
+> O fluxo da aplicação inicia na autenticação. A partir do tipo de usuário armazenado no 
+token/sessão, o sistema direciona o acesso para áreas de administrador ou usuário comum.
+<p align="center">
+ <img width="683" height="872" alt="fluxo" src="https://github.com/user-attachments/assets/9c8f201d-44dc-4559-9e16-fbf1aad1fe8c" />
+</p>
+---
+
+# Design
+> A interface do Flowly deve priorizar clareza visual, produtividade e organização de tarefas. O 
+repositório web utiliza React com componentes para dashboards, tarefas, equipes, chat, 
+notificações e perfil. O módulo mobile Flutter documenta uma identidade visual moderna, com 
+Google Fonts/Poppins, cartões, botões customizados, telas de autenticação, equipes, tarefas e 
+perfil. O design atual é uma evolução do último protótipo, focado apenas em mobile, além de possuir
+novidades e melhorias visuais adequadas paras as plataformas que serão usadas pelo app. Você pode encontrar
+nosso design Figma e ver a evolução [aqui](https://www.figma.com/design/bAzWl5WbbMZV22b4faw7uH/Flowly?node-id=0-1&t=78oIDFaUWRSZeyul-1).
+
+## Telas da aplicação
+<table>
+  <tr>
+    <td align="center">
+      <img width="1920" height="956" alt="login" src="https://github.com/user-attachments/assets/47b0d0f2-4427-4899-8922-583be9fa69c9" />
+      <strong>Login</strong>
+    </td>
+    <td align="center">
+      <img width="1920" height="961" alt="cadastro" src="https://github.com/user-attachments/assets/17575934-ee96-4ab9-b16c-0fcfda38c1f6" />
+      <strong>Cadastro</strong>
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center">
+      <img width="1920" height="953" alt="verificacao" src="https://github.com/user-attachments/assets/10a58afc-2cd9-40ce-8b74-8060af72f7dd" />
+      <strong>Verificação de Usuário</strong>
+    </td>
+    <td align="center">
+      <img width="1920" height="948" alt="tarefas_user" src="https://github.com/user-attachments/assets/b3661ab2-daec-484e-8a80-9d17760c9fa0" />
+      <strong>Tarefas de Usuários</strong>
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center">
+      <img width="1920" height="950" alt="kanban_user" src="https://github.com/user-attachments/assets/20a0cc0b-fdef-48b4-94dd-260609cb64ed" />
+      <strong>Kanban Usuário</strong>
+    </td>
+    <td align="center">
+      <img width="1920" height="957" alt="backlog_user" src="https://github.com/user-attachments/assets/ed352d25-ec3f-43dc-97df-4b18f04fc101" />
+      <strong>Backlog do Usuário</strong>
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center">
+      <img width="1920" height="956" alt="chats" src="https://github.com/user-attachments/assets/eaddde9c-71c6-4273-bb8e-4af279a880f5" />
+      <strong>Chats</strong>
+    </td>
+    <td align="center">
+      <img width="1920" height="951" alt="notificacoes" src="https://github.com/user-attachments/assets/97ac4086-95cf-4fe8-bfe1-3aeda42dd4a1" />
+      <strong>Notificações</strong>
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center">
+      <img width="1920" height="959" alt="equipes_user" src="https://github.com/user-attachments/assets/a4e21202-2b16-4ec3-909b-3cb507128d55" />
+      <strong>Equipes</strong>
+    </td>
+    <td align="center">
+      <img width="1920" height="953" alt="perfil" src="https://github.com/user-attachments/assets/f5f7e751-124c-436a-96e8-f99ae8209dd6" />
+      <strong>Perfil</strong>
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center">
+      <img width="1903" height="958" alt="dashboard_adm" src="https://github.com/user-attachments/assets/75daecb4-ce31-4c73-8eda-ea7e122d0d79" />
+      <strong>Dashboard ADM</strong>
+    </td>
+    <td align="center">
+      <img width="1920" height="940" alt="crar_equipe" src="https://github.com/user-attachments/assets/3f95afcd-05c4-4aca-9974-943f5375fd5f" />
+      <strong>Criar Equipe</strong>
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center">
+      <img width="1920" height="949" alt="criar_tarefa" src="https://github.com/user-attachments/assets/60ce2020-a8d7-4de7-b713-57d75d5b3977" />
+      <strong>Criar Tarefa</strong>
+    </td>
+  </tr>
+</table>
 
 ---
 
@@ -598,6 +703,7 @@ Curso de Desenvolvimento de Software Multiplataforma
 - TESTING LIBRARY. React Testing Library Documentation. Disponível em: https://testing-library.com/docs/react-testing-library/intro/.<br>
 - THREE.JS. Three.js Documentation. Disponível em: https://threejs.org/docs/.<br>
 - FATEC-MOBILE-GROUP. flowly-2.0. Repositório GitHub. Disponível em: https://github.com/FATEC-Mobile-Group/flowly-2.0.<br>
+- FATEC-MOBILE-GROUP. Flowly. Repositório GitHub. Disponível em: https://github.com/FATEC-Mobile-Group/Flowly.<br>
 - ISO25000. ISO/IEC 25010 – Systems and software Quality Requirements and Evaluation (SQuaRE). Disponível em: https://iso25000.com/index.php/en/iso-25000-standards/iso-25010.<br>
 
 ---
