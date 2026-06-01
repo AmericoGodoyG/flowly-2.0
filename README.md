@@ -1,4 +1,17 @@
+> **Projeto Interdisciplinar 1S2026**<br>
+> **6º Semestre de DSM**<br>
+> **Instituição:** FATEC Jahu / Centro Paula Souza<br>
+> **Curso:** Desenvolvimento de Software Multiplataforma<br>
+> **Alunos:** Clique em cada nome para acessar o perfil no Github de cada um.<br>
+> **[Américo Godoy](https://github.com/AmericoGodoyG)** <br>
+> **[Cássia Helena Voltolin](https://github.com/CassiaVoltolin)** <br>
+> **[Gabriel Defende](https://github.com/gabrieldefende)** <br>
+> **[Pedro Vasconcellos](https://github.com/pedrobvasconcellos)** <br>
+> **[Pedro Lucas dos Santos Hernandes](https://github.com/pedro-ls-hernandes)** <br>
+
 # Flowly
+
+---
 
 Sistema web e mobile de gerenciamento de tarefas, equipes e colaboração em tempo real.
 O projeto é uma evolução direta de seu modelo anterior, que pode ser encontrado [aqui](https://github.com/FATEC-Mobile-Group/Flowly)
@@ -26,7 +39,7 @@ A aplicação é composta por:
 ```text
 flowly-2.0/
 │
-├── flowly_api/          # API REST Node.js + Express
+├── flowly_api/         # API REST Node.js + Express
 ├── flowly_frontend/    # Frontend Web React
 ├── flowly_mobal/       # Aplicativo Flutter
 ├── flowly_assistente/  # Assistente e mineração de dados em Python
@@ -279,7 +292,7 @@ PATCH /api/notificacoes/:id/read
 * React Testing Library
 * GitHub Actions
 
-## Fluxos já testados
+## Fluxos testados
 
 * Login
 * Cadastro
@@ -652,16 +665,6 @@ O módulo de mineração de dados será responsável por:
 * Separação de responsabilidades
 * Componentização
 * Versionamento com GitHub
-
----
-
-# Equipe
-
-* Américo Godoy
-* Cássia Helena Voltolin
-* Gabriel Defende
-* Pedro Vasconcellos
-* Pedro Lucas dos Santos Hernandes
 
 ---
 
