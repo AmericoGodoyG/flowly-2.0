@@ -162,15 +162,15 @@ function AuthPage() {
   };
 
   return (
-    <div className="auth-fullscreen">
+    <div className="auth-fullscreen" data-theme="dark">
       {/* ========== FULLSCREEN BACKGROUND — LightRays ========== */}
       <div className="auth-bg-layer">
         <LightRays
           raysOrigin="top-center"
-          raysColor="#ffffff"
+          raysColor="#b734e9"
           raysSpeed={1}
-          lightSpread={0.5}
-          rayLength={3}
+          lightSpread={1.5}
+          rayLength={5}
           followMouse={true}
           mouseInfluence={0.1}
           noiseAmount={0}
