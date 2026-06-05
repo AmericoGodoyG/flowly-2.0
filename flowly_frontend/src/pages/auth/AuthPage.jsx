@@ -162,15 +162,15 @@ function AuthPage() {
   };
 
   return (
-    <div className="auth-fullscreen">
+    <div className="auth-fullscreen" data-theme="dark">
       {/* ========== FULLSCREEN BACKGROUND — LightRays ========== */}
       <div className="auth-bg-layer">
         <LightRays
           raysOrigin="top-center"
-          raysColor="#ffffff"
+          raysColor="#b734e9"
           raysSpeed={1}
-          lightSpread={0.5}
-          rayLength={3}
+          lightSpread={1.5}
+          rayLength={5}
           followMouse={true}
           mouseInfluence={0.1}
           noiseAmount={0}
@@ -181,16 +181,6 @@ function AuthPage() {
         />
       </div>
 
-      {/* ========== HEADER NAV ========== */}
-      <nav className="auth-header-nav">
-        <ul className="auth-nav-links">
-          <li><a href="#home">Home</a></li>
-          <li><a href="#about">About</a></li>
-          <li><a href="#services">Services</a></li>
-          <li><a href="#contact">Contact</a></li>
-        </ul>
-      </nav>
-
       {/* ========== BRAND — Above card ========== */}
       <div className="auth-brand-above">
         <span className="brand-name">Flowly</span>
@@ -199,7 +189,7 @@ function AuthPage() {
       {/* ========== CENTERED CARD ========== */}
       <div className="auth-center-card">
 
-      {/* ========== FORM CAROUSEL ========== */}
+        {/* ========== FORM CAROUSEL ========== */}
         <div className={`auth-carousel-wrapper ${slideDirection}`}>
           {!isRegistering ? (
             /* ========== LOGIN FORM ========== */
@@ -347,7 +337,7 @@ function AuthPage() {
       {/* ========== CURVED LOOP FOOTER ========== */}
       <div className="auth-curved-footer">
         <CurvedLoop
-          marqueeText="Crie ✦ Defina ✦ Gerencie ✦ Entregue! ✦ "
+          marqueeText="Crie  ✦  Defina  ✦  Gerencie  ✦  Entregue  ✦  "
           speed={1}
           curveAmount={0}
           direction="left"
