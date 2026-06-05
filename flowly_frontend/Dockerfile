@@ -4,6 +4,16 @@ FROM node:18 AS build
 # Define o diretório de trabalho dentro do container
 WORKDIR /app
 
+ARG REACT_APP_API_URL
+ARG REACT_APP_API_PUBLIC_URL
+ARG REACT_APP_SOCKET_URL
+ARG REACT_APP_ASSISTANT_URL
+
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
+ENV REACT_APP_API_PUBLIC_URL=$REACT_APP_API_PUBLIC_URL
+ENV REACT_APP_SOCKET_URL=$REACT_APP_SOCKET_URL
+ENV REACT_APP_ASSISTANT_URL=$REACT_APP_ASSISTANT_URL
+
 # Copia os arquivos package.json e package-lock.json
 # Isso permite instalar as dependências antes de copiar o restante do código (cache otimizado)
 COPY package*.json ./
