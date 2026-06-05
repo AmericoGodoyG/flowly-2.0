@@ -1,7 +1,7 @@
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(0, 0, 0, 0.75);
+  background-color: var(--overlay-bg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   display: flex;
@@ -24,13 +24,13 @@
   flex-direction: column;
   overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .modal-header {
   padding: 20px 25px;
-  background: rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--surface-bg);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -39,24 +39,24 @@
 .modal-header h2 {
   margin: 0;
   font-size: 1.4rem;
-  color: #fff;
+  color: var(--text-primary);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
-.close-btn {
-  background: rgba(255, 255, 255, 0.1);
+.modal-content .close-btn {
+  background: var(--surface-hover);
   width: 36px; height: 36px;
   border-radius: 50%;
   border: none;
   font-size: 1.2rem;
   cursor: pointer;
-  color: #fff;
+  color: var(--text-primary);
   display: flex; align-items: center; justify-content: center;
   transition: all 0.2s ease;
 }
 
-.close-btn:hover {
+.modal-content .close-btn:hover {
   background: rgba(255, 51, 102, 0.8);
   color: white;
   transform: rotate(90deg);
@@ -64,8 +64,8 @@
 
 .modal-tabs {
   display: flex;
-  background: rgba(0,0,0,0.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--input-bg);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .modal-tabs button {
@@ -76,20 +76,20 @@
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
-  color: var(--light-text);
+  color: var(--text-secondary);
   border-bottom: 2px solid transparent;
   transition: all 0.3s;
 }
 
 .modal-tabs button.active {
-  color: #fff;
+  color: var(--text-primary);
   border-bottom-color: var(--primary-color);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-bg);
 }
 
 .modal-tabs button:hover:not(.active) {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-primary);
+  background: var(--surface-bg);
 }
 
 .modal-body {
@@ -102,17 +102,17 @@
   width: 8px;
 }
 .modal-body::-webkit-scrollbar-track {
-  background: rgba(0,0,0,0.2);
+  background: var(--input-bg);
 }
 .modal-body::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.2);
+  background: var(--surface-hover);
   border-radius: 4px;
 }
 
 .tab-detalhes p {
   margin-bottom: 12px;
   font-size: 1.05rem;
-  color: #e0e0e0;
+  color: var(--text-desc);
 }
 
 .tags-list {
@@ -132,6 +132,12 @@
   font-weight: 500;
 }
 
+[data-theme="light"] .tag-badge {
+  background: rgba(109, 66, 181, 0.1);
+  border-color: rgba(109, 66, 181, 0.25);
+  color: #5e35b1;
+}
+
 .subtarefas-list {
   margin-bottom: 20px;
 }
@@ -141,16 +147,17 @@
   align-items: center;
   gap: 12px;
   padding: 12px 15px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255,255,255,0.05);
+  background: var(--surface-bg);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
   margin-bottom: 10px;
   cursor: pointer;
   transition: background 0.2s;
+  color: var(--text-primary);
 }
 
 .subtarefa-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--surface-hover);
 }
 
 .subtarefa-item .concluida {
@@ -166,10 +173,10 @@
 .add-form input, .add-form textarea {
   flex: 1;
   padding: 12px 15px;
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: 8px;
-  color: #fff;
+  color: var(--input-text);
   resize: vertical;
   font-family: inherit;
 }
@@ -204,7 +211,7 @@
 }
 
 .comentario-item {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-bg);
   padding: 15px;
   border-radius: 12px;
   border-left: 4px solid var(--primary-color);
@@ -215,12 +222,12 @@
   justify-content: space-between;
   margin-bottom: 8px;
   font-size: 0.85rem;
-  color: #b0bec5;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .comentario-body {
-  color: #fff;
+  color: var(--text-primary);
   font-size: 1rem;
 }
 
@@ -231,7 +238,7 @@
 
 .anexo-item {
   padding: 10px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-bg);
   border-radius: 8px;
   margin-bottom: 8px;
   display: flex;
@@ -239,12 +246,12 @@
   gap: 10px;
 }
 
-.anexo-item a { color: #82b1ff; font-weight: 500; }
+.anexo-item a { color: var(--text-link); font-weight: 500; }
 .anexo-item a:hover { text-decoration: underline; color: #448aff; }
-.anexo-size { color: #b0bec5; font-size: 0.85rem; margin-left: auto; }
+.anexo-size { color: var(--text-secondary); font-size: 0.85rem; margin-left: auto; }
 
 .upload-form { display: flex; gap: 10px; align-items: center; margin-top: 15px; }
-.upload-form input[type="file"] { color: #b0bec5; }
+.upload-form input[type="file"] { color: var(--text-secondary); }
 .upload-form button {
   background: var(--primary-color);
   color: white; border: none; border-radius: 8px; padding: 10px 15px; cursor: pointer;
@@ -257,17 +264,17 @@
 
 .logs-list li {
   padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--border-subtle);
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   font-size: 0.9rem;
 }
 
-.log-time { color: #90a4ae; width: 140px; }
+.log-time { color: var(--text-secondary); width: 140px; }
 .log-user { font-weight: 600; color: #64b5f6; }
-.log-action { background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; color: #fff;}
-.log-detail { flex: 1; color: #cfd8dc; }
+.log-action { background: var(--surface-hover); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; color: var(--text-primary);}
+.log-detail { flex: 1; color: var(--text-desc); }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: scale(0.98); }

@@ -2,15 +2,19 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { publicRoutes, adminRoutes, userRoutes } from "./config/routes";
 import { authUtils } from "./config/authUtils";
+import { ThemeProvider } from "./config/ThemeContext";
+import ThemeToggle from "./components/layout/ThemeToggle";
 import FloatingTimer from "./components/timer/FloatingTimer";
 import ColorBendsBackground from "./components/layout/ColorBendsBackground";
 import "./styles/common/App.css";
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </ThemeProvider>
   );
 }
 
@@ -33,6 +37,7 @@ function AppContent() {
     return (
       <>
         <ColorBendsBackground />
+        <ThemeToggle />
         {element}
         <FloatingTimer />
       </>
@@ -41,7 +46,6 @@ function AppContent() {
 
   return (
     <>
-      <ColorBendsBackground />
       <Routes>
         {/* Rotas públicas */}
         {publicRoutes.map((route) => (

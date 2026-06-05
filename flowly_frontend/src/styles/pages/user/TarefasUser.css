@@ -25,12 +25,12 @@
 }
 
 .tarefas-container h2 {
-  color: #fff;
+  color: var(--text-primary);
   margin-bottom: 30px;
   text-align: center;
   font-size: 2.2rem;
   font-weight: 800;
-  text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  text-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
 .kanban-board {
@@ -60,35 +60,35 @@
 .kanban-column h3 {
   margin-bottom: 20px;
   font-size: 1.2rem;
-  color: #fff;
+  color: var(--text-primary);
   text-transform: uppercase;
   letter-spacing: 1px;
   text-align: center;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid var(--border-color);
   padding-bottom: 10px;
 }
 
 .tarefa-item {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface-bg);
+  border: 1px solid var(--border-subtle);
   padding: 18px;
   margin-bottom: 15px;
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s;
   user-select: none;
-  color: #fff;
+  color: var(--text-primary);
   position: relative;
 }
 
 .tarefa-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  background: var(--surface-hover);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .tarefa-dragging {
   transform: rotate(2deg) scale(1.01);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
   background: rgba(126, 87, 194, 0.3);
   border: 1px solid var(--primary-color);
 }
@@ -98,7 +98,7 @@
 .urgencia-baixa { border-left: 4px solid #00d48d; }
 
 .tarefa-item h4 {
-  color: #fff;
+  color: var(--text-primary);
   margin-bottom: 8px;
   font-size: 1.15rem;
   font-weight: 600;
@@ -106,7 +106,7 @@
 
 .tarefa-item p {
   margin: 5px 0;
-  color: #b0bec5;
+  color: var(--text-secondary);
   font-size: 0.95rem;
 }
 
@@ -137,8 +137,8 @@
 .finalizar-btn { background: linear-gradient(135deg, var(--primary-color), #4527a0); color: white; }
 .finalizar-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(126,87,194,0.4); }
 
-.pdf-btn { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
-.pdf-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
+.pdf-btn { background: var(--surface-hover); color: var(--text-primary); border: 1px solid var(--border-color); }
+.pdf-btn:hover { background: var(--card-hover-bg); transform: translateY(-2px); }
 
 .mensagem {
   padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;
@@ -154,6 +154,10 @@
 .mensagem.sucesso { background-color: rgba(76, 175, 80, 0.2); color: #81c784; border: 1px solid rgba(76, 175, 80, 0.3); }
 .mensagem.erro { background-color: rgba(255, 51, 102, 0.2); color: #ffb3c6; border: 1px solid rgba(255, 51, 102, 0.3); }
 .mensagem.alerta { background-color: rgba(251, 192, 45, 0.2); color: #ffe082; border: 1px solid rgba(251, 192, 45, 0.3); }
+
+[data-theme="light"] .mensagem.sucesso { background-color: rgba(46, 125, 50, 0.06); color: #2e7d32; border-color: rgba(46, 125, 50, 0.2); }
+[data-theme="light"] .mensagem.erro { background-color: rgba(211, 47, 47, 0.06); color: #c62828; border-color: rgba(211, 47, 47, 0.18); }
+[data-theme="light"] .mensagem.alerta { background-color: rgba(245, 124, 0, 0.06); color: #e65100; border-color: rgba(245, 124, 0, 0.18); }
 
 @media (max-width: 768px) {
   .tarefas-content {

@@ -13,7 +13,7 @@
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  color: #fff;
+  color: var(--text-primary);
   border: 1px solid rgba(0, 212, 141, 0.4);
   padding: 12px 18px;
   border-radius: 12px;
@@ -35,11 +35,11 @@
 }
 
 .time-badge {
-  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+  background: linear-gradient(135deg, var(--surface-bg), var(--surface-hover));
   padding: 4px 10px;
   border-radius: 8px;
   font-weight: 700;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--border-color);
   letter-spacing: 0.5px;
 }
 
@@ -47,6 +47,7 @@
   background: linear-gradient(135deg, #ff3366, #d81b60);
   border: none;
   box-shadow: 0 2px 8px rgba(255, 51, 102, 0.4);
+  color: #fff;
 }
 
 @keyframes slideInRight {

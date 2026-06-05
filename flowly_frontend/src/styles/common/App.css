@@ -1,23 +1,168 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
 
-:root {
-  /* Globais Premium Wix-Style */
+/* =============================================
+   DARK THEME (default)
+   ============================================= */
+:root,
+[data-theme="dark"] {
+  /* Brand Colors */
   --primary-color: #7e57c2;
   --secondary-color: #ff3366;
-  --bg-color: transparent; /* O fundo agora vem do ColorBends */
-  --text-color: #ffffff;
-  --light-text: #b0bec5;
-  --border-color: rgba(255, 255, 255, 0.1);
   --error-color: #ff3366;
   --success-color: #4caf50;
-  
-  /* Glassmorphism Variables */
+
+  /* Backgrounds */
+  --bg-body: #0d0c13;
+  --bg-color: transparent;
+  --color-bends-base: #0d0c13;
+
+  /* Text */
+  --text-primary: #ffffff;
+  --text-secondary: #b0bec5;
+  --text-muted: rgba(255, 255, 255, 0.45);
+  --text-label: rgba(255, 255, 255, 0.35);
+
+  /* Glassmorphism */
   --glass-bg: rgba(20, 20, 30, 0.55);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-blur: blur(24px);
   --glass-shadow: 0 16px 32px 0 rgba(0, 0, 0, 0.4);
+
+  /* Surfaces */
+  --surface-bg: rgba(255, 255, 255, 0.05);
+  --surface-hover: rgba(255, 255, 255, 0.1);
+  --surface-active: rgba(126, 87, 194, 0.15);
+
+  /* Inputs */
+  --input-bg: rgba(0, 0, 0, 0.3);
+  --input-border: rgba(255, 255, 255, 0.1);
+  --input-text: #ffffff;
+  --input-placeholder: rgba(255, 255, 255, 0.3);
+  --input-focus-bg: rgba(0, 0, 0, 0.4);
+
+  /* Cards */
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-hover-bg: rgba(255, 255, 255, 0.1);
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --border-hover: rgba(255, 255, 255, 0.16);
+
+  /* Auth Page */
+  --auth-bg: #080816;
+  --auth-panel-bg: rgba(12, 12, 28, 0.95);
+  --auth-glow: rgba(82, 39, 255, 0.15);
+
+  /* Sidebar */
+  --sidebar-section-label: rgba(255, 255, 255, 0.35);
+
+  /* Chat */
+  --chat-panel-bg: rgba(16, 22, 33, 0.7);
+  --chat-mine-bg: rgba(79, 140, 255, 0.85);
+  --chat-theirs-bg: rgba(255, 255, 255, 0.1);
+
+  /* Dropdown / Overlay */
+  --dropdown-bg: rgba(17, 17, 22, 0.97);
+  --overlay-bg: rgba(0, 0, 0, 0.75);
+
+  /* Specific text colors for light safety */
+  --text-on-dark-surface: #ffffff;
+  --text-desc: #e0e0e0;
+  --text-meta: #b9b6c8;
+  --text-meta-light: #c9c6d8;
+  --text-link: #82b1ff;
+  --text-info-blue: #9db5ff;
+  --text-subtitle: #b8c3d1;
+
+  /* Blobs opacity */
+  --blob-opacity: 0.8;
 }
 
+/* =============================================
+   LIGHT THEME
+   ============================================= */
+[data-theme="light"] {
+  /* Brand Colors — slightly adjusted for contrast */
+  --primary-color: #6d42b5;
+  --secondary-color: #e91e63;
+  --error-color: #d32f2f;
+  --success-color: #2e7d32;
+
+  /* Backgrounds */
+  --bg-body: #f0f2f5;
+  --bg-color: transparent;
+  --color-bends-base: #e8eaf0;
+
+  /* Text */
+  --text-primary: #1a1a2e;
+  --text-secondary: #5a6175;
+  --text-muted: rgba(26, 26, 46, 0.55);
+  --text-label: rgba(26, 26, 46, 0.5);
+
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-blur: blur(24px);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+
+  /* Surfaces */
+  --surface-bg: rgba(0, 0, 0, 0.03);
+  --surface-hover: rgba(0, 0, 0, 0.06);
+  --surface-active: rgba(109, 66, 181, 0.1);
+
+  /* Inputs */
+  --input-bg: rgba(0, 0, 0, 0.04);
+  --input-border: rgba(0, 0, 0, 0.12);
+  --input-text: #1a1a2e;
+  --input-placeholder: rgba(26, 26, 46, 0.4);
+  --input-focus-bg: rgba(0, 0, 0, 0.06);
+
+  /* Cards */
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --card-border: rgba(0, 0, 0, 0.08);
+  --card-hover-bg: rgba(0, 0, 0, 0.04);
+
+  /* Borders */
+  --border-subtle: rgba(0, 0, 0, 0.06);
+  --border-color: rgba(0, 0, 0, 0.1);
+  --border-hover: rgba(0, 0, 0, 0.16);
+
+  /* Auth Page */
+  --auth-bg: #ecedf2;
+  --auth-panel-bg: rgba(255, 255, 255, 0.95);
+  --auth-glow: rgba(109, 66, 181, 0.08);
+
+  /* Sidebar */
+  --sidebar-section-label: rgba(26, 26, 46, 0.4);
+
+  /* Chat */
+  --chat-panel-bg: rgba(255, 255, 255, 0.8);
+  --chat-mine-bg: rgba(79, 140, 255, 0.9);
+  --chat-theirs-bg: rgba(0, 0, 0, 0.05);
+
+  /* Dropdown / Overlay */
+  --dropdown-bg: rgba(255, 255, 255, 0.97);
+  --overlay-bg: rgba(0, 0, 0, 0.4);
+
+  /* Specific text colors */
+  --text-on-dark-surface: #ffffff;
+  --text-desc: #444b5e;
+  --text-secondary: #5a6175;
+  --text-meta: #6b7082;
+  --text-meta-light: #7a7f94;
+  --text-link: #3366cc;
+  --text-info-blue: #4a6fa5;
+  --text-subtitle: #6b7082;
+
+  /* Blobs opacity — more subtle in light mode */
+  --blob-opacity: 0.35;
+}
+
+/* =============================================
+   GLOBAL RESETS & TYPOGRAPHY
+   ============================================= */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -26,15 +171,17 @@
 
 body {
   font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: #0d0c13;
-  color: var(--text-color);
+  background-color: var(--bg-body);
+  color: var(--text-primary);
   line-height: 1.6;
   overflow-x: hidden;
+  transition: background-color 0.35s ease, color 0.35s ease;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   letter-spacing: -0.02em;
+  color: var(--text-primary);
 }
 
 a {

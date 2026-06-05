@@ -4,7 +4,7 @@ import apiClient from "../../config/apiClient";
 import { API_ENDPOINTS } from "../../config/config";
 import { authUtils } from "../../config/authUtils";
 import { FaEnvelope, FaLock, FaSignInAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
-import LightPillar from "../../components/backgrounds/LightPillar";
+import LightRays from "../../components/backgrounds/LightRays";
 import "../../styles/pages/auth/Login.css";
 
 function Login() {
@@ -59,19 +59,19 @@ function Login() {
   return (
     <div className="auth-container">
       <div className="auth-background">
-        <LightPillar
-          topColor="#5227FF"
-          bottomColor="#FF9FFC"
-          intensity={1}
-          rotationSpeed={0.3}
-          glowAmount={0.002}
-          pillarWidth={3}
-          pillarHeight={0.4}
-          noiseIntensity={0.5}
-          pillarRotation={25}
-          interactive={false}
-          mixBlendMode="screen"
-          quality="high"
+        <LightRays
+          raysOrigin="top-center"
+          raysColor="#ffffff"
+          raysSpeed={1}
+          lightSpread={0.5}
+          rayLength={3}
+          followMouse={true}
+          mouseInfluence={0.1}
+          noiseAmount={0}
+          distortion={0}
+          pulsating={false}
+          fadeDistance={1}
+          saturation={1}
         />
       </div>
       <div className="auth-card glass-panel">
