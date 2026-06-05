@@ -16,14 +16,22 @@ For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
 
-## API local (flowly_mobal_api)
+## API
 
-Por padrao o app usa backend local no desenvolvimento:
+O app le a URL da API pelo arquivo `.env`:
+
+```env
+FLOWLY_API_URL=https://flowly-api-backend-646126851973.southamerica-east1.run.app/api
+```
+
+A URL pode ser informada com ou sem `/api`; o app normaliza internamente.
+
+Por padrao, se a env nao estiver definida, o app usa backend local no desenvolvimento:
 
 - Web/Chrome: `http://localhost:5000`
 - Android Emulator: `http://10.0.2.2:5000`
 
-Para sobrescrever a URL da API, use `--dart-define`:
+Para sobrescrever a URL da API em tempo de execucao, use `--dart-define`:
 
 ```bash
 flutter run -d chrome --dart-define=FLOWLY_API_URL=http://localhost:5000

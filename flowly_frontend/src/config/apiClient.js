@@ -6,9 +6,15 @@
 import axios from 'axios';
 import { authUtils } from './authUtils';
 
+const normalizePublicApiUrl = (url = '') =>
+  url.trim().replace(/\/+$/, '').replace(/\/api$/, '');
+
 // Obtém a URL base da API das variáveis de ambiente
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-const API_PUBLIC_URL = process.env.REACT_APP_API_PUBLIC_URL || 'http://localhost:5000';
+const API_PUBLIC_URL =
+  normalizePublicApiUrl(process.env.REACT_APP_API_PUBLIC_URL || '') ||
+  normalizePublicApiUrl(API_BASE_URL) ||
+  'http://localhost:5000';
 
 // Cria uma instância do axios com configurações padrão
 const apiClient = axios.create({
