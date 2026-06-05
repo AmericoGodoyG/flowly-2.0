@@ -6,8 +6,15 @@
 import io from 'socket.io-client';
 import { authUtils } from './authUtils';
 
+const normalizePublicApiUrl = (url = '') =>
+  url.trim().replace(/\/+$/, '').replace(/\/api$/, '');
+
 // Obtém a URL do socket das variáveis de ambiente
-const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+const SOCKET_URL =
+  normalizePublicApiUrl(process.env.REACT_APP_SOCKET_URL || '') ||
+  normalizePublicApiUrl(process.env.REACT_APP_API_PUBLIC_URL || '') ||
+  normalizePublicApiUrl(process.env.REACT_APP_API_URL || '') ||
+  'http://localhost:5000';
 
 /**
  * Cria uma nova conexão socket com autenticação
