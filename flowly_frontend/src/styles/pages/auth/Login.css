@@ -7,6 +7,7 @@
   position: relative;
   z-index: 10;
   overflow: hidden;
+  background-color: var(--color-bends-base, #0d0c13);
 }
 
 .auth-background {
@@ -55,14 +56,14 @@
   font-size: 2rem;
   font-weight: 700;
   margin-bottom: 5px;
-  background: linear-gradient(135deg, #fff, #b0bec5);
+  background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .auth-header p {
-  color: var(--light-text);
+  color: var(--text-secondary);
   font-size: 0.95rem;
 }
 
@@ -81,17 +82,17 @@
 .input-icon {
   position: absolute;
   left: 15px;
-  color: #b0bec5;
+  color: var(--text-secondary);
   font-size: 1.1rem;
 }
 
 .input-group input {
   width: 100%;
   padding: 14px 15px 14px 45px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: 12px;
-  color: white;
+  color: var(--input-text);
   font-size: 1rem;
   font-family: inherit;
   transition: all 0.3s;
@@ -99,13 +100,13 @@
 
 .input-group input:focus {
   outline: none;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--input-focus-bg);
   border-color: var(--primary-color);
   box-shadow: 0 0 0 4px rgba(126, 87, 194, 0.2);
 }
 
 .input-group input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--input-placeholder);
 }
 
 .toggle-password {
@@ -113,7 +114,7 @@
   right: 14px;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-label);
   font-size: 1.1rem;
   cursor: pointer;
   padding: 4px;
@@ -124,7 +125,7 @@
 }
 
 .toggle-password:hover {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary);
 }
 
 .glass-btn {
@@ -142,15 +143,24 @@
 }
 
 .glass-btn.primary {
-  background: linear-gradient(135deg, var(--primary-color), #4527a0);
+  background: transparent;
   color: white;
-  box-shadow: 0 4px 15px rgba(126, 87, 194, 0.4);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  position: relative;
+  overflow: hidden;
 }
 
 .glass-btn.primary:hover {
-  background: linear-gradient(135deg, #8e6ee6, #512da8);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(126, 87, 194, 0.6);
+  background: transparent;
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 0 12px rgba(255, 255, 255, 0.25),
+    0 0 30px rgba(255, 255, 255, 0.10),
+    inset 0 0 12px rgba(255, 255, 255, 0.05);
 }
 
 .glass-btn:disabled {
@@ -168,15 +178,21 @@
   font-size: 0.9rem;
 }
 
+[data-theme="light"] .erro-container {
+  background: rgba(211, 47, 47, 0.06);
+  border-left-color: #d32f2f;
+  color: #c62828;
+}
+
 .auth-footer {
   text-align: center;
   margin-top: 15px;
   font-size: 0.95rem;
-  color: var(--light-text);
+  color: var(--text-secondary);
 }
 
 .auth-footer a {
-  color: var(--text-color);
+  color: var(--text-primary);
   font-weight: 600;
 }
 

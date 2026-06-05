@@ -10,7 +10,7 @@
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  color: white;
+  color: var(--text-primary);
   border: 1px solid var(--glass-border);
   padding: 15px 25px;
   border-radius: 40px;
@@ -40,7 +40,7 @@
   flex-direction: column;
   overflow: hidden;
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  color: #fff;
+  color: var(--text-primary);
 }
 
 @keyframes slideUp {
@@ -49,18 +49,18 @@
 }
 
 .chat-header {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-bg);
   padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .chat-equipe-select {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--input-text);
   padding: 8px 12px;
   border-radius: 8px;
   outline: none;
@@ -71,17 +71,17 @@
 }
 
 .chat-equipe-select option {
-  color: black;
+  color: #000;
   background: #fff;
 }
 
 .close-btn {
-  background: rgba(255,255,255,0.05);
+  background: var(--surface-bg);
   border: none;
   border-radius: 50%;
   width: 32px; height: 32px;
   display: flex; align-items: center; justify-content: center;
-  color: white;
+  color: var(--text-primary);
   font-size: 1.2rem;
   cursor: pointer;
   transition: all 0.2s;
@@ -89,6 +89,7 @@
 .close-btn:hover {
   background: rgba(255, 51, 102, 0.8);
   transform: rotate(90deg);
+  color: #fff;
 }
 
 .chat-messages {
@@ -118,7 +119,7 @@
 
 .message-author {
   font-size: 0.75rem;
-  color: #b0bec5;
+  color: var(--text-secondary);
   margin-bottom: 4px;
   margin-left: 4px;
 }
@@ -139,27 +140,27 @@
 }
 
 .message-wrapper.theirs .message-bubble {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: var(--chat-theirs-bg);
+  color: var(--text-primary);
   border-bottom-left-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
 }
 
 .chat-input-form {
   display: flex;
   padding: 15px 20px;
-  background: rgba(255, 255, 255, 0.02);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--surface-bg);
+  border-top: 1px solid var(--border-color);
 }
 
 .chat-input-form input {
   flex: 1;
   padding: 12px 18px;
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: 20px;
   outline: none;
-  color: #fff;
+  color: var(--input-text);
   font-family: inherit;
   transition: all 0.3s;
 }

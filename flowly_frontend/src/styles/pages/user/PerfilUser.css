@@ -10,7 +10,7 @@
 
 .perfil-header p {
   margin-top: 0.4rem;
-  color: #d4dcec;
+  color: var(--text-desc);
 }
 
 .perfil-grid {
@@ -38,14 +38,14 @@
 }
 
 .perfil-form label {
-  color: #d4dcec;
+  color: var(--text-desc);
   font-size: 0.9rem;
 }
 
 .perfil-form input {
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(0, 0, 0, 0.25);
-  color: #fff;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--input-text);
   border-radius: 10px;
   padding: 0.7rem 0.8rem;
   font-family: inherit;
@@ -86,7 +86,7 @@
 
 .perfil-avatar-img {
   object-fit: cover;
-  border: 2px solid rgba(255, 255, 255, 0.35);
+  border: 2px solid var(--border-color);
 }
 
 .perfil-avatar-fallback {
@@ -104,7 +104,15 @@
   margin: 0;
 }
 
+[data-theme="light"] .perfil-sucesso {
+  color: #2e7d32;
+}
+
 .perfil-erro {
   color: #ffc6c6;
   margin: 0;
+}
+
+[data-theme="light"] .perfil-erro {
+  color: #c62828;
 }

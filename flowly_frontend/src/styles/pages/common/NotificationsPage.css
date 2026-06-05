@@ -4,7 +4,7 @@
   margin-left: 260px;
   position: relative;
   z-index: 10;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .notifications-header {
@@ -22,7 +22,7 @@
 
 .notifications-header p {
   margin-top: 6px;
-  color: #c5d0df;
+  color: var(--text-desc);
 }
 
 .mark-all-btn,
@@ -40,9 +40,9 @@
 .notifications-empty {
   padding: 14px 16px;
   border-radius: 12px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.12);
-  color: #d7d4e3;
+  background: var(--surface-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-desc);
 }
 
 .notifications-list {
@@ -87,7 +87,11 @@
 .type-chat { background: rgba(79, 140, 255, 0.18); color: #9cc2ff; }
 .type-task { background: rgba(255, 152, 0, 0.18); color: #ffd08a; }
 .type-team { background: rgba(0, 212, 141, 0.18); color: #9be6c7; }
-.type-system { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.type-system { background: var(--surface-hover); color: var(--text-primary); }
+
+[data-theme="light"] .type-chat { background: rgba(25, 118, 210, 0.08); color: #1565c0; }
+[data-theme="light"] .type-task { background: rgba(245, 124, 0, 0.08); color: #e65100; }
+[data-theme="light"] .type-team { background: rgba(46, 125, 50, 0.08); color: #2e7d32; }
 
 .unread-dot {
   width: 10px;
@@ -99,14 +103,14 @@
 .notification-text {
   margin: 0 0 14px;
   line-height: 1.5;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .notification-footer {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  color: #b0bec5;
+  color: var(--text-secondary);
   font-size: 0.85rem;
   flex-wrap: wrap;
 }

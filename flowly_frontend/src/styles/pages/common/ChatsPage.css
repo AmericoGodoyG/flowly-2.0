@@ -17,13 +17,13 @@
 
 .chats-header h2 {
   margin: 0;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 2rem;
 }
 
 .chats-header p {
   margin-top: 8px;
-  color: #c5d0df;
+  color: var(--text-desc);
 }
 
 .chats-layout {
@@ -36,8 +36,8 @@
 
 .chats-teams-panel,
 .chats-messages-panel {
-  background: rgba(16, 22, 33, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--chat-panel-bg);
+  border: 1px solid var(--border-color);
   border-radius: 14px;
   backdrop-filter: blur(6px);
 }
@@ -50,7 +50,7 @@
 .chats-teams-panel h3,
 .chats-room-header h3 {
   margin: 0;
-  color: #edf3ff;
+  color: var(--text-primary);
 }
 
 .chats-team-list {
@@ -66,10 +66,10 @@
 
 .chats-team-list button {
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  color: #fff;
+  background: var(--surface-bg);
+  color: var(--text-primary);
   text-align: left;
   padding: 10px;
   cursor: pointer;
@@ -77,7 +77,7 @@
 
 .chats-team-list button.active {
   border-color: rgba(126, 87, 194, 0.8);
-  background: rgba(126, 87, 194, 0.18);
+  background: var(--surface-active);
 }
 
 .chats-team-list strong {
@@ -86,7 +86,7 @@
 }
 
 .chats-team-list span {
-  color: #b8c7d9;
+  color: var(--text-secondary);
   font-size: 0.85rem;
 }
 
@@ -98,7 +98,7 @@
 
 .chats-room-header {
   padding: 14px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .chats-messages-list {
@@ -123,7 +123,7 @@
 }
 
 .chat-author {
-  color: #9db5ff;
+  color: var(--text-info-blue);
   font-size: 0.78rem;
   margin-bottom: 4px;
 }
@@ -132,30 +132,31 @@
   max-width: min(74ch, 78%);
   border-radius: 12px;
   padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: var(--chat-theirs-bg);
+  color: var(--text-primary);
   overflow-wrap: anywhere;
   word-break: break-word;
   white-space: pre-wrap;
 }
 
 .chat-message-row.mine .chat-bubble {
-  background: rgba(79, 140, 255, 0.85);
+  background: var(--chat-mine-bg);
+  color: #fff;
 }
 
 .chats-input-row {
   display: flex;
   gap: 10px;
   padding: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--border-color);
 }
 
 .chats-input-row input {
   flex: 1;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid var(--input-border);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
+  background: var(--input-bg);
+  color: var(--input-text);
   padding: 10px 12px;
 }
 

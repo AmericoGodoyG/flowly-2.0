@@ -10,7 +10,7 @@
 
 .equipes-user-header p {
   margin-top: 0.5rem;
-  color: #d6dce8;
+  color: var(--text-desc);
 }
 
 .equipes-user-metrics {
@@ -31,7 +31,7 @@
 }
 
 .metric-label {
-  color: #b8c4d8;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
@@ -47,8 +47,8 @@
 }
 
 .equipe-user-card {
-  background: rgba(20, 25, 36, 0.66);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: var(--glass-bg);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 1.2rem;
 }
@@ -59,13 +59,13 @@
 
 .equipe-user-card p {
   margin: 0 0 0.8rem 0;
-  color: #d6dce8;
+  color: var(--text-desc);
 }
 
 .equipe-user-card ul {
   margin: 0;
   padding-left: 1.2rem;
-  color: #f3f5f8;
+  color: var(--text-primary);
 }
 
 .equipe-user-card li {
@@ -74,6 +74,10 @@
 
 .equipes-user-error {
   color: #ffc6c6;
+}
+
+[data-theme="light"] .equipes-user-error {
+  color: #c62828;
 }
 
 @media (max-width: 768px) {

@@ -28,21 +28,21 @@
 }
 
 .backlog-back-btn {
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  background: var(--surface-hover);
+  color: var(--text-primary);
   padding: 8px 12px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .backlog-detail-card {
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
-  background: rgba(15, 25, 45, 0.78);
+  background: var(--glass-bg);
   backdrop-filter: blur(6px);
-  color: #fff;
+  color: var(--text-primary);
   padding: 20px;
 }
 
@@ -55,7 +55,7 @@
 }
 
 .backlog-detail-card header p {
-  color: #c8d2e1;
+  color: var(--text-desc);
   margin-top: 10px;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -69,16 +69,16 @@
 }
 
 .backlog-detail-grid > div {
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--border-color);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-bg);
   padding: 12px;
   min-width: 0;
 }
 
 .backlog-detail-grid .label {
   display: block;
-  color: #a6b4c9;
+  color: var(--text-secondary);
   font-size: 0.8rem;
   margin-bottom: 6px;
   text-transform: uppercase;
@@ -97,12 +97,12 @@
 
 .backlog-detail-description h3 {
   margin: 0 0 8px;
-  color: #eaf0ff;
+  color: var(--text-primary);
 }
 
 .backlog-detail-description p {
   margin: 0;
-  color: #d2dced;
+  color: var(--text-desc);
   line-height: 1.6;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -134,11 +134,11 @@
 }
 
 .backlog-detail-empty {
-  color: #d8e0ea;
+  color: var(--text-desc);
   padding: 24px;
   border-radius: 12px;
-  border: 1px dashed rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed var(--border-color);
+  background: var(--surface-bg);
 }
 
 @media (max-width: 920px) {
