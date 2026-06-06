@@ -32,6 +32,17 @@ jobs:
                const coredemo = require('@actions/core')
                return await coredemo.getIDToken()
            result-encoding: string
+      - name: Validar variaveis do frontend
+        run: |
+          test -n "${REACT_APP_API_URL}" || (echo "REACT_APP_API_URL nao foi configurado nos GitHub Secrets" && exit 1)
+          test -n "${REACT_APP_API_PUBLIC_URL}" || (echo "REACT_APP_API_PUBLIC_URL nao foi configurado nos GitHub Secrets" && exit 1)
+          test -n "${REACT_APP_SOCKET_URL}" || (echo "REACT_APP_SOCKET_URL nao foi configurado nos GitHub Secrets" && exit 1)
+          test -n "${REACT_APP_ASSISTANT_URL}" || (echo "REACT_APP_ASSISTANT_URL nao foi configurado nos GitHub Secrets" && exit 1)
+        env:
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+          REACT_APP_API_PUBLIC_URL: ${{ secrets.REACT_APP_API_PUBLIC_URL }}
+          REACT_APP_SOCKET_URL: ${{ secrets.REACT_APP_SOCKET_URL }}
+          REACT_APP_ASSISTANT_URL: ${{ secrets.REACT_APP_ASSISTANT_URL }}
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1

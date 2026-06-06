@@ -1,30 +1,27 @@
-/**
- * Cliente Socket.io centralizado para toda a aplicação
- * Garante que a conexão socket use a URL correta do ambiente
- */
-
 import io from 'socket.io-client';
 import { authUtils } from './authUtils';
+
+const DEFAULT_SOCKET_URL = 'https://flowly-api-backend-646126851973.southamerica-east1.run.app';
+
+const isLocalHost =
+  typeof window !== 'undefined' &&
+  ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
 const normalizePublicApiUrl = (url = '') =>
   url.trim().replace(/\/+$/, '').replace(/\/api$/, '');
 
-// Obtém a URL do socket das variáveis de ambiente
 const SOCKET_URL =
   normalizePublicApiUrl(process.env.REACT_APP_SOCKET_URL || '') ||
   normalizePublicApiUrl(process.env.REACT_APP_API_PUBLIC_URL || '') ||
   normalizePublicApiUrl(process.env.REACT_APP_API_URL || '') ||
-  'http://localhost:5000';
+  (isLocalHost ? 'http://localhost:5000' : DEFAULT_SOCKET_URL);
 
-/**
- * Cria uma nova conexão socket com autenticação
- */
 export const createSocketConnection = () => {
   const token = authUtils.getToken();
-  
+
   const socket = io(SOCKET_URL, {
     auth: {
-      token: token,
+      token,
     },
     reconnection: true,
     reconnectionDelay: 1000,
@@ -47,9 +44,6 @@ export const createSocketConnection = () => {
   return socket;
 };
 
-/**
- * Obtém a URL do socket
- */
 export const getSocketUrl = () => SOCKET_URL;
 
 export default createSocketConnection;

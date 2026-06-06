@@ -1,5 +1,8 @@
-# Nome do workflow, que aparece na aba "Actions" do GitHub
 name: Build Docker Frontend
+
+on:
+  push:
+    branches: ["main"]
 
 env:
   REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
@@ -7,32 +10,27 @@ env:
   REACT_APP_SOCKET_URL: ${{ secrets.REACT_APP_SOCKET_URL }}
   REACT_APP_ASSISTANT_URL: ${{ secrets.REACT_APP_ASSISTANT_URL }}
 
-# Define o evento que dispara o workflow
-# Neste caso, o workflow será executado sempre que um push for feito na branch "main"
-on:
-  push:
-    branches: [ "main" ]
-
-# Define os jobs que o GitHub Actions executará
 jobs:
   build:
-    # Define o sistema operacional usado para rodar o job (neste caso, Ubuntu)
     runs-on: ubuntu-latest
 
     steps:
-      # Faz o checkout do código fonte do repositório
-      - name: Checkout o código
+      - name: Checkout codigo
         uses: actions/checkout@v3
 
-      # Faz login no Docker Hub usando as credenciais salvas nos secrets do repositório
       - name: Login no DockerHub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}   # Nome de usuário do Docker Hub
-          password: ${{ secrets.DOCKERHUB_TOKEN }}      # Token de acesso gerado no Docker Hub
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Faz o build da imagem Docker do Frontend
-      # Utiliza o Dockerfile presente na raiz do projeto
+      - name: Validar variaveis do frontend
+        run: |
+          test -n "${REACT_APP_API_URL}" || (echo "REACT_APP_API_URL nao foi configurado nos GitHub Secrets" && exit 1)
+          test -n "${REACT_APP_API_PUBLIC_URL}" || (echo "REACT_APP_API_PUBLIC_URL nao foi configurado nos GitHub Secrets" && exit 1)
+          test -n "${REACT_APP_SOCKET_URL}" || (echo "REACT_APP_SOCKET_URL nao foi configurado nos GitHub Secrets" && exit 1)
+          test -n "${REACT_APP_ASSISTANT_URL}" || (echo "REACT_APP_ASSISTANT_URL nao foi configurado nos GitHub Secrets" && exit 1)
+
       - name: Build da imagem do Frontend
         run: |
           docker build \
@@ -42,7 +40,6 @@ jobs:
             --build-arg REACT_APP_ASSISTANT_URL="${REACT_APP_ASSISTANT_URL}" \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/flowly-frontend:latest .
 
-      # Faz o push da imagem gerada para o Docker Hub
       - name: Push da imagem
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/flowly-frontend:latest
