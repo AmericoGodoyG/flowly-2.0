@@ -11,6 +11,7 @@ const tarefaRoutes = require('./routes/tarefaRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const userRoutes = require('./routes/userRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const storageRoutes = require('./routes/storageRoutes');
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use('/api/tarefas', tarefaRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notificacoes', notificationRoutes);
+app.use('/api/storage', storageRoutes);
 
 // 404 Handler
 app.use((req, res) => {

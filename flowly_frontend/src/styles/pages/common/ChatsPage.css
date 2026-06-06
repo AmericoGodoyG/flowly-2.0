@@ -110,15 +110,56 @@
 
 .chat-message-row {
   display: flex;
-  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
   margin-bottom: 10px;
+  width: 100%;
 }
 
 .chat-message-row.mine {
-  align-items: flex-end;
+  justify-content: flex-end;
+  flex-direction: row;
 }
 
 .chat-message-row.theirs {
+  justify-content: flex-start;
+  flex-direction: row;
+}
+
+.chat-avatar {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-active);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.chat-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.chat-message-stack {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: min(82%, 860px);
+}
+
+.chat-message-row.mine .chat-message-stack {
+  align-items: flex-end;
+}
+
+.chat-message-row.theirs .chat-message-stack {
   align-items: flex-start;
 }
 
@@ -129,7 +170,7 @@
 }
 
 .chat-bubble {
-  max-width: min(74ch, 78%);
+  max-width: 100%;
   border-radius: 12px;
   padding: 10px 12px;
   background: var(--chat-theirs-bg);
@@ -137,11 +178,37 @@
   overflow-wrap: anywhere;
   word-break: break-word;
   white-space: pre-wrap;
+  position: relative;
 }
 
 .chat-message-row.mine .chat-bubble {
   background: var(--chat-mine-bg);
   color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-message-row.mine .chat-bubble::after {
+  content: "";
+  position: absolute;
+  right: -6px;
+  bottom: 9px;
+  border-width: 6px 0 6px 6px;
+  border-style: solid;
+  border-color: transparent transparent transparent var(--chat-mine-bg);
+}
+
+.chat-message-row.theirs .chat-bubble {
+  border-bottom-left-radius: 4px;
+}
+
+.chat-message-row.theirs .chat-bubble::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  bottom: 9px;
+  border-width: 6px 6px 6px 0;
+  border-style: solid;
+  border-color: transparent var(--chat-theirs-bg) transparent transparent;
 }
 
 .chats-input-row {
@@ -187,11 +254,19 @@
   .chats-team-list {
     max-height: 180px;
   }
+
+  .chat-message-stack {
+    max-width: min(88%, 720px);
+  }
 }
 
 @media (max-width: 768px) {
   .chats-content {
     margin-left: 0;
     padding: 88px 16px 24px;
+  }
+
+  .chat-message-stack {
+    max-width: calc(100% - 48px);
   }
 }

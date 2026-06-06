@@ -6,6 +6,25 @@ const ActivityLog = require('../models/ActivityLog');
 const logActivity = require('../utils/activityLogger');
 const { notifyUsers } = require('../utils/notificationService');
 const bucket = require('../services/storage');
+const { getSignedUrl } = require('../services/storage');
+
+const assinarAnexosTarefa = async (tarefa) => {
+  const tarefaObject = typeof tarefa.toObject === 'function' ? tarefa.toObject() : tarefa;
+
+  return {
+    ...tarefaObject,
+    anexos: await Promise.all((tarefaObject.anexos || []).map(async (anexo) => {
+      const anexoObject = typeof anexo.toObject === 'function' ? anexo.toObject() : anexo;
+
+      return {
+        ...anexoObject,
+        url: await getSignedUrl(anexoObject.url),
+      };
+    })),
+  };
+};
+
+const assinarAnexosTarefas = (tarefas) => Promise.all(tarefas.map(assinarAnexosTarefa));
 
 
 // ADMIN creates task for user
@@ -57,7 +76,7 @@ exports.criarTarefa = async (req, res) => {
       : 'Tarefa criada sem responsável e enviada ao backlog';
     await logActivity('criacao', descricaoCriacao, req.user.id, tarefa._id);
 
-    res.status(201).json(tarefa);
+    res.status(201).json(await assinarAnexosTarefa(tarefa));
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao criar tarefa', detalhe: err.message });
   }
@@ -75,7 +94,7 @@ exports.listarTarefas = async (req, res) => {
       .populate('user', 'nome')
       .populate('equipe', 'nome')
       .sort({ urgencia: -1, dataEntrega: 1 });
-    res.json(tarefas);
+    res.json(await assinarAnexosTarefas(tarefas));
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao listar tarefas' });
   }
@@ -135,7 +154,7 @@ exports.editarTarefa = async (req, res) => {
     );
 
     await logActivity('atualizacao_geral', 'Detalhes da tarefa foram atualizados', req.user.id, tarefaAtualizada._id);
-    res.json(tarefaAtualizada);
+    res.json(await assinarAnexosTarefa(tarefaAtualizada));
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao editar tarefa' });
   }
@@ -163,7 +182,7 @@ exports.detalhesTarefa = async (req, res) => {
     const comentarios = await Comment.find({ tarefa: req.params.id }).populate('user', 'nome').sort({ createdAt: 1 });
     const logs = await ActivityLog.find({ tarefa: req.params.id }).populate('user', 'nome').sort({ createdAt: -1 });
 
-    res.json({ tarefa, comentarios, logs });
+    res.json({ tarefa: await assinarAnexosTarefa(tarefa), comentarios, logs });
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao buscar detalhes da tarefa', detalhe: err.message });
   }
@@ -200,7 +219,7 @@ exports.adicionarSubtarefa = async (req, res) => {
     await tarefa.save();
 
     await logActivity('nova_subtarefa', `Subtarefa '${descricao}' adicionada`, req.user.id, req.params.id);
-    res.status(201).json(tarefa);
+    res.status(201).json(await assinarAnexosTarefa(tarefa));
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao adicionar subtarefa' });
   }
@@ -219,7 +238,7 @@ exports.toggleSubtarefa = async (req, res) => {
     sub.concluida = !sub.concluida;
     await tarefa.save();
 
-    res.json(tarefa);
+    res.json(await assinarAnexosTarefa(tarefa));
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao alterar subtarefa' });
   }
@@ -230,7 +249,7 @@ exports.minhasTarefas = async (req, res) => {
   try {
     const tarefas = await Tarefa.find({ user: req.user.id })
       .populate('equipe', 'nome');
-    res.json(tarefas);
+    res.json(await assinarAnexosTarefas(tarefas));
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao buscar suas tarefas' });
   }
@@ -253,7 +272,7 @@ exports.listarBacklog = async (req, res) => {
       .populate('equipe', 'nome')
       .sort({ urgencia: -1, dataEntrega: 1 });
 
-    res.json(tarefas);
+    res.json(await assinarAnexosTarefas(tarefas));
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao buscar backlog', detalhe: err.message });
   }
@@ -310,7 +329,7 @@ exports.atribuirParaMim = async (req, res) => {
       .populate('user', 'nome')
       .populate('equipe', 'nome');
 
-    res.json({ msg: 'Tarefa atribuída com sucesso', tarefa: tarefaAtualizada });
+    res.json({ msg: 'Tarefa atribuída com sucesso', tarefa: await assinarAnexosTarefa(tarefaAtualizada) });
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao atribuir tarefa', detalhe: err.message });
   }
@@ -354,7 +373,7 @@ exports.atualizarStatusUser = async (req, res) => {
       });
     }
 
-    res.json({ msg: 'Status atualizado com sucesso', tarefa });
+    res.json({ msg: 'Status atualizado com sucesso', tarefa: await assinarAnexosTarefa(tarefa) });
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao atualizar status', detalhe: err.message });
   }
@@ -393,7 +412,7 @@ exports.controlarCronometro = async (req, res) => {
     await tarefa.save();
     res.json({
       msg: `Cronômetro ${acao}do com sucesso`,
-      tarefa,
+      tarefa: await assinarAnexosTarefa(tarefa),
       tempoExcedido: tarefa.tempoExcedido
     });
   } catch (err) {
@@ -412,10 +431,10 @@ exports.adicionarAnexo = async (req, res) => {
     }
 
     // Arquivo foi validado pela middleware, agora fazer upload
-    const publicUrl = await uploadAnexoParaGCS(tarefa._id, req.file);
+    const filePath = await uploadAnexoParaGCS(tarefa._id, req.file);
 
     const novoAnexo = {
-      url: publicUrl,
+      url: filePath,
       nomeOriginal: req.file.originalname,
       mimetype: req.file.mimetype,
       size: req.file.size
@@ -433,7 +452,10 @@ exports.adicionarAnexo = async (req, res) => {
 
     res.status(201).json({
       msg: 'Anexo adicionado com sucesso',
-      anexo: novoAnexo
+      anexo: {
+        ...novoAnexo,
+        url: await getSignedUrl(novoAnexo.url),
+      }
     });
   } catch (err) {
     console.error('Erro ao fazer upload de anexo para Google Cloud Storage:', err);
@@ -470,9 +492,8 @@ const uploadAnexoParaGCS = async (tarefaId, file) => {
       timeout: 60000 // 60 segundos de timeout
     });
 
-    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
     console.log('✅ Upload de anexo concluído em:', filename);
-    return publicUrl;
+    return filename;
   } catch (error) {
     console.error('❌ Erro ao fazer upload de anexo:', error.message);
     throw error;

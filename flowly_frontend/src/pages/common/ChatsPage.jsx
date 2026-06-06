@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import createSocketConnection from '../../config/socketClient';
-import apiClient from '../../config/apiClient';
+import apiClient, { getFullApiUrl } from '../../config/apiClient';
 import Sidebar from '../../components/layout/Sidebar';
 import { authUtils } from '../../config/authUtils';
 import { API_ENDPOINTS } from '../../config/config';
@@ -17,8 +17,27 @@ const ChatsPage = () => {
 
   const socketRef = useRef(null);
   const endRef = useRef(null);
-
   const userId = authUtils.getUserId();
+
+  const getInitials = (name = 'Usuario') =>
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase();
+
+  const renderAvatar = (user) => {
+    const photo = user?.fotoPerfil;
+    const name = user?.nome || 'Usuario';
+
+    return (
+      <div className="chat-avatar" aria-label={name}>
+        {photo ? <img src={getFullApiUrl(photo)} alt="" /> : <span>{getInitials(name)}</span>}
+      </div>
+    );
+  };
 
   const scrollToBottom = () => {
     if (endRef.current) {
@@ -125,7 +144,7 @@ const ChatsPage = () => {
             {loadingEquipes ? (
               <p>Carregando equipes...</p>
             ) : equipes.length === 0 ? (
-              <p>Nenhuma equipe disponível para chat.</p>
+              <p>Nenhuma equipe disponivel para chat.</p>
             ) : (
               <ul className="chats-team-list">
                 {equipes.map((equipe) => (
@@ -157,10 +176,16 @@ const ChatsPage = () => {
               ) : (
                 messages.map((msg, index) => {
                   const isMine = msg.user && msg.user._id === userId;
+                  const userName = msg.user?.nome || 'Usuario';
+
                   return (
                     <div key={`${msg._id || 'msg'}-${index}`} className={`chat-message-row ${isMine ? 'mine' : 'theirs'}`}>
-                      {!isMine && <span className="chat-author">{msg.user?.nome || 'Usuário'}</span>}
-                      <div className="chat-bubble">{msg.texto}</div>
+                      {!isMine && renderAvatar(msg.user)}
+                      <div className="chat-message-stack">
+                        {!isMine && <span className="chat-author">{userName}</span>}
+                        <div className="chat-bubble">{msg.texto}</div>
+                      </div>
+                      {isMine && renderAvatar(msg.user)}
                     </div>
                   );
                 })

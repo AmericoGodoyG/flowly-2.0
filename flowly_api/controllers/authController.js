@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const config = require('../config/config');
 const validatePassword = require('../utils/validatePassword.js');
 const { enviarCodigoVerificacaoEmail } = require('./emailController');
+const { getSignedUrl } = require('../services/storage');
 
 exports.registrar = async (req, res) => {
   try {
@@ -62,7 +63,7 @@ exports.login = async (req, res) => {
         id: user._id,
         nome: user.nome,
         tipo: user.tipo,
-        fotoPerfil: user.fotoPerfil,
+        fotoPerfil: await getSignedUrl(user.fotoPerfil),
       },
     });
     

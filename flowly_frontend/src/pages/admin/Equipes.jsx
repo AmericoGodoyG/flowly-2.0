@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
-import apiClient from "../../config/apiClient";
+import apiClient, { getFullApiUrl } from "../../config/apiClient";
 import { API_ENDPOINTS } from "../../config/config";
 import "../../styles/pages/admin/DashboardAdmin.css";
 import "../../styles/pages/admin/Equipes.css";
@@ -21,7 +21,29 @@ export default function Equipes() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [searchTimeout, setSearchTimeout] = useState(null);
 
+  const getInitials = (name = "?") =>
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase();
 
+  const renderUserAvatar = (user, className) => {
+    const photo = user?.fotoPerfil;
+    const name = user?.nome || "?";
+
+    return (
+      <span className={className}>
+        {photo ? (
+          <img src={getFullApiUrl(photo)} alt="" />
+        ) : (
+          getInitials(name)
+        )}
+      </span>
+    );
+  };
 
   useEffect(() => {
     carregarEquipes();
@@ -202,9 +224,7 @@ export default function Equipes() {
                 {searchResults.map((user) => (
                   <div key={user._id} className="search-item">
                     <div className="search-item-info">
-                      <span className="search-avatar">
-                        {(user.nome || "?").trim().charAt(0).toUpperCase()}
-                      </span>
+                      {renderUserAvatar(user, "search-avatar")}
                       <div>
                         <div className="search-item-main">{user.nome}</div>
                         <div className="search-item-email">{user.email}</div>
@@ -225,6 +245,7 @@ export default function Equipes() {
             <div className="selected-members">
               {membros.map((m) => (
                 <div key={m._id} className="member-chip">
+                  {renderUserAvatar(m, "member-chip-avatar")}
                   <span className="member-name">{m.nome} ({m.email})</span>
                   <button
                     type="button"
@@ -267,9 +288,7 @@ export default function Equipes() {
                   {equipe.membros?.length ? (
                     equipe.membros.map((membro) => (
                       <div key={membro._id} className="equipe-member-item" title={membro.email || ""}>
-                        <span className="equipe-member-avatar">
-                          {(membro.nome || "?").trim().charAt(0).toUpperCase()}
-                        </span>
+                        {renderUserAvatar(membro, "equipe-member-avatar")}
                         <div className="equipe-member-texts">
                           <span className="equipe-member-name">{membro.nome}</span>
                           <span className="equipe-member-email">{membro.email || "Sem email"}</span>

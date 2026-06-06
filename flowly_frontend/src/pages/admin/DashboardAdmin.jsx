@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import apiClient from "../../config/apiClient";
+import apiClient, { getFullApiUrl } from "../../config/apiClient";
 import { API_ENDPOINTS } from "../../config/config";
 import { Link } from "react-router-dom";
 import "../../styles/pages/admin/DashboardAdmin.css"; 
@@ -9,6 +9,26 @@ function DashboardAdmin() {
   const [equipes, setEquipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [adminNome, setAdminNome] = useState("");
+
+  const getInitials = (name = "?") =>
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase();
+
+  const renderAvatar = (membro) => {
+    const photo = membro?.fotoPerfil;
+    const name = membro?.nome || "?";
+
+    return (
+      <span className="team-member-avatar">
+        {photo ? <img src={getFullApiUrl(photo)} alt="" /> : getInitials(name)}
+      </span>
+    );
+  };
 
   useEffect(() => {
     const nomeSalvo = localStorage.getItem("nome");
@@ -79,9 +99,7 @@ function DashboardAdmin() {
                     <div className="team-members-grid">
                       {equipe.membros.map((membro) => (
                         <div key={membro._id} className="team-member-card">
-                          <span className="team-member-avatar">
-                            {(membro.nome || "?").trim().charAt(0).toUpperCase()}
-                          </span>
+                          {renderAvatar(membro)}
                           <div className="team-member-info">
                             <span className="team-member-name">{membro.nome}</span>
                             <span className="team-member-email">{membro.email || "Sem email"}</span>

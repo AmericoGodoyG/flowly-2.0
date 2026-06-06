@@ -2,6 +2,45 @@ const Equipe = require('../models/Equipe');
 const User = require('../models/User');
 const Message = require('../models/Message'); 
 const mongoose = require('mongoose');
+const { getSignedUrl } = require('../services/storage');
+
+const assinarFotoUsuarioMensagem = async (message) => {
+  const messageObject = typeof message.toObject === 'function' ? message.toObject() : message;
+
+  if (!messageObject.user) {
+    return messageObject;
+  }
+
+  return {
+    ...messageObject,
+    user: {
+      ...messageObject.user,
+      fotoPerfil: await getSignedUrl(messageObject.user.fotoPerfil),
+    },
+  };
+};
+
+const assinarFotosMembrosEquipe = async (equipe) => {
+  const equipeObject = typeof equipe.toObject === 'function' ? equipe.toObject() : equipe;
+
+  return {
+    ...equipeObject,
+    membros: await Promise.all((equipeObject.membros || []).map(async (membro) => {
+      const membroObject = typeof membro.toObject === 'function' ? membro.toObject() : membro;
+
+      if (!membroObject || typeof membroObject !== 'object') {
+        return membroObject;
+      }
+
+      return {
+        ...membroObject,
+        fotoPerfil: await getSignedUrl(membroObject.fotoPerfil),
+      };
+    })),
+  };
+};
+
+const assinarFotosMembrosEquipes = (equipes) => Promise.all(equipes.map(assinarFotosMembrosEquipe));
 
 exports.criarEquipe = async (req, res) => {
   try {
@@ -32,8 +71,8 @@ exports.criarEquipe = async (req, res) => {
     await novaEquipe.save();
 
     // Retornar a equipe criada com os dados populados
-    const equipePopulada = await Equipe.findById(novaEquipe._id).populate('membros', 'nome email');
-    res.status(201).json(equipePopulada);
+    const equipePopulada = await Equipe.findById(novaEquipe._id).populate('membros', 'nome email fotoPerfil');
+    res.status(201).json(await assinarFotosMembrosEquipe(equipePopulada));
   } catch (err) {
     res.status(500).json({ erro: "Erro ao criar equipe", detalhe: err.message });
   }
@@ -41,8 +80,8 @@ exports.criarEquipe = async (req, res) => {
 
 exports.listarEquipes = async (req, res) => {
   try {
-    const equipes = await Equipe.find().populate('membros', 'nome email');
-    res.json(equipes);
+    const equipes = await Equipe.find().populate('membros', 'nome email fotoPerfil');
+    res.json(await assinarFotosMembrosEquipes(equipes));
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao listar equipes' });
   }
@@ -51,8 +90,8 @@ exports.listarEquipes = async (req, res) => {
 exports.listarMinhasEquipes = async (req, res) => {
   try {
     const filtro = req.user.tipo === 'admin' ? {} : { membros: req.user.id };
-    const equipes = await Equipe.find(filtro).populate('membros', 'nome email');
-    res.json(equipes);
+    const equipes = await Equipe.find(filtro).populate('membros', 'nome email fotoPerfil');
+    res.json(await assinarFotosMembrosEquipes(equipes));
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao listar equipes do usuario' });
   }
@@ -60,9 +99,9 @@ exports.listarMinhasEquipes = async (req, res) => {
 
 exports.obterEquipe = async (req, res) => {
   try {
-    const equipe = await Equipe.findById(req.params.id).populate('membros', 'nome email');
+    const equipe = await Equipe.findById(req.params.id).populate('membros', 'nome email fotoPerfil');
     if (!equipe) return res.status(404).json({ erro: 'Equipe não encontrada' });
-    res.json(equipe);
+    res.json(await assinarFotosMembrosEquipe(equipe));
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao buscar equipe' });
   }
@@ -89,13 +128,13 @@ exports.editarEquipe = async (req, res) => {
       req.params.id,
       { nome, membros: membrosUnicos },
       { new: true }
-    ).populate('membros', 'nome email');
+    ).populate('membros', 'nome email fotoPerfil');
 
     if (!equipeAtualizada) {
       return res.status(404).json({ erro: 'Equipe não encontrada' });
     }
 
-    res.json(equipeAtualizada);
+    res.json(await assinarFotosMembrosEquipe(equipeAtualizada));
   } catch (err) {
     console.error('Erro ao editar equipe:', err.message);
     res.status(500).json({ erro: 'Erro ao editar equipe', detalhe: err.message });
@@ -114,9 +153,10 @@ exports.excluirEquipe = async (req, res) => {
 
 exports.getMembrosDaEquipe = async (req, res) => {
   try {
-    const equipe = await Equipe.findById(req.params.id).populate("membros", "nome");
+    const equipe = await Equipe.findById(req.params.id).populate("membros", "nome fotoPerfil");
     if (!equipe) return res.status(404).json({ erro: "Equipe não encontrada" });
-    res.json(equipe.membros);
+    const equipeAssinada = await assinarFotosMembrosEquipe(equipe);
+    res.json(equipeAssinada.membros);
   } catch (err) {
     res.status(500).json({ erro: "Erro ao buscar membros" });
   }
@@ -125,10 +165,10 @@ exports.getMembrosDaEquipe = async (req, res) => {
 exports.getMessages = async (req, res) => {
   try {
     const messages = await Message.find({ equipe: req.params.id })
-      .populate('user', 'nome')
+      .populate('user', 'nome fotoPerfil')
       .sort({ createdAt: 1 });
       
-    res.json(messages);
+    res.json(await Promise.all(messages.map(assinarFotoUsuarioMensagem)));
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao buscar histórico de mensagens' });
   }

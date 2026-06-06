@@ -4,6 +4,7 @@ const Equipe = require('./models/Equipe');
 const User = require('./models/User');
 const { notifyUsers } = require('./utils/notificationService');
 const { setIo, getIo } = require('./utils/socketInstance');
+const { getSignedUrl } = require('./services/storage');
 
 const setupSocketInteractions = (server) => {
   const io = new Server(server, {
@@ -42,8 +43,12 @@ const setupSocketInteractions = (server) => {
         });
         await message.save();
         
-        // Retorna a mensagem com o nome do usuário associado
-        const populatedMessage = await Message.findById(message._id).populate('user', 'nome');
+        // Retorna a mensagem com os dados visuais do usuario associado
+        const populatedMessage = await Message.findById(message._id).populate('user', 'nome fotoPerfil');
+        const messageToEmit = populatedMessage.toObject();
+        if (messageToEmit.user) {
+          messageToEmit.user.fotoPerfil = await getSignedUrl(messageToEmit.user.fotoPerfil);
+        }
 
         const equipe = await Equipe.findById(equipeId).populate('membros', 'nome email');
         const sender = await User.findById(userId).select('nome tipo');
@@ -74,7 +79,7 @@ const setupSocketInteractions = (server) => {
         }
 
         // Emite a mensagem APENAS para quem estiver na sala dessa equipe
-        io.to(`equipe_${equipeId}`).emit('receive_message', populatedMessage);
+        io.to(`equipe_${equipeId}`).emit('receive_message', messageToEmit);
       } catch(err) {
         console.error('Erro na gravação ou disparo da mensagem (Socket):', err);
       }

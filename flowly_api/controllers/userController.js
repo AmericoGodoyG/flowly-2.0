@@ -3,11 +3,21 @@ const User = require('../models/User');
 const upload = require('../middlewares/upload');
 const path = require('path');
 const bucket = require('../services/storage');
+const { getSignedUrl } = require('../services/storage');
+
+const assinarFotoPerfil = async (user) => {
+  const userObject = typeof user.toObject === 'function' ? user.toObject() : user;
+
+  return {
+    ...userObject,
+    fotoPerfil: await getSignedUrl(userObject.fotoPerfil),
+  };
+};
 
 exports.listarUsers = async (req, res) => {
   try {
     const users = await User.find().select('nome email tipo fotoPerfil');
-    res.json(users);
+    res.json(await Promise.all(users.map(assinarFotoPerfil)));
   } catch (error) {
     console.error('Erro ao buscar usuarios:', error);
     res.status(500).json({ error: 'Erro ao buscar usuarios' });
@@ -33,7 +43,7 @@ exports.searchUsers = async (req, res) => {
       .select('_id nome email fotoPerfil tipo')
       .limit(10);
 
-    res.json(users);
+    res.json(await Promise.all(users.map(assinarFotoPerfil)));
   } catch (error) {
     console.error('Erro ao buscar usuarios:', error);
     res.status(500).json({ error: 'Erro ao buscar usuarios' });
@@ -48,7 +58,7 @@ exports.me = async (req, res) => {
       return res.status(404).json({ erro: 'Usuario nao encontrado' });
     }
 
-    res.json(user);
+    res.json(await assinarFotoPerfil(user));
   } catch (error) {
     console.error('Erro ao buscar perfil:', error);
     res.status(500).json({ erro: 'Erro ao buscar perfil' });
@@ -72,8 +82,8 @@ exports.atualizarPerfil = async (req, res) => {
     if (req.file) {
       try {
         // Upload para Cloud Storage
-        const publicUrl = await uploadFotoParaGCS(req.file, user._id.toString());
-        user.fotoPerfil = publicUrl;
+        const filePath = await uploadFotoParaGCS(req.file, user._id.toString());
+        user.fotoPerfil = filePath;
       } catch (uploadError) {
         console.error('Erro ao fazer upload para Google Cloud Storage:', uploadError);
         
@@ -102,7 +112,7 @@ exports.atualizarPerfil = async (req, res) => {
         nome: user.nome,
         email: user.email,
         tipo: user.tipo,
-        fotoPerfil: user.fotoPerfil,
+        fotoPerfil: await getSignedUrl(user.fotoPerfil),
       },
     });
   } catch (error) {
@@ -139,9 +149,8 @@ const uploadFotoParaGCS = async (file, userId) => {
       timeout: 60000 // 60 segundos de timeout
     });
 
-    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
     console.log('✅ Upload de foto concluído em:', filePath);
-    return publicUrl;
+    return filePath;
   } catch (error) {
     console.error('❌ Erro ao fazer upload:', error.message);
     throw error;

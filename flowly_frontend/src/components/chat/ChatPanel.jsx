@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import createSocketConnection from '../../config/socketClient';
-import apiClient from '../../config/apiClient';
+import apiClient, { getFullApiUrl } from '../../config/apiClient';
 import { authUtils } from '../../config/authUtils';
 import { API_ENDPOINTS } from '../../config/config';
 import '../../styles/components/ChatPanel.css';
@@ -12,11 +12,30 @@ const ChatPanel = () => {
   const [messages, setMessages] = useState([]);
   const [novaMensagem, setNovaMensagem] = useState('');
   const [socket, setSocket] = useState(null);
-  
+
   const messagesEndRef = useRef(null);
   const userId = authUtils.getUserId();
 
-  // Carregar equipes
+  const getInitials = (name = 'Usuario') =>
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase();
+
+  const renderAvatar = (user) => {
+    const photo = user?.fotoPerfil;
+    const name = user?.nome || 'Usuario';
+
+    return (
+      <div className="message-avatar" aria-label={name}>
+        {photo ? <img src={getFullApiUrl(photo)} alt="" /> : <span>{getInitials(name)}</span>}
+      </div>
+    );
+  };
+
   useEffect(() => {
     const fetchEquipes = async () => {
       try {
@@ -29,32 +48,28 @@ const ChatPanel = () => {
         console.error('Erro ao carregar equipes para o chat', err);
       }
     };
+
     fetchEquipes();
   }, [userId]);
 
-  // Conectar WebSockets quando a equipe selecionada mudar
   useEffect(() => {
     if (!selectedEquipe) return;
 
-    // Conectar ao socket do Backend
     const newSocket = createSocketConnection();
     setSocket(newSocket);
-
-    // Entrar na sala da Equipe
     newSocket.emit('join_equipe', selectedEquipe);
 
-    // Carregar histórico via HTTP
     const fetchHistory = async () => {
       try {
         const res = await apiClient.get(`/equipes/${selectedEquipe}/messages`);
         setMessages(res.data);
       } catch (error) {
-        console.error('Erro ao buscar histórico de mensagens');
+        console.error('Erro ao buscar historico de mensagens');
       }
     };
+
     fetchHistory();
 
-    // Atender mensagens do WebSocket
     newSocket.on('receive_message', (msg) => {
       setMessages((prev) => [...prev, msg]);
     });
@@ -64,7 +79,6 @@ const ChatPanel = () => {
     };
   }, [selectedEquipe]);
 
-  // Sempre rolar para a última mensagem
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -77,8 +91,8 @@ const ChatPanel = () => {
 
     socket.emit('send_message', {
       equipeId: selectedEquipe,
-      userId: userId,
-      texto: novaMensagem
+      userId,
+      texto: novaMensagem,
     });
 
     setNovaMensagem('');
@@ -90,34 +104,40 @@ const ChatPanel = () => {
     <div className={`chat-panel-container ${isOpen ? 'open' : ''}`}>
       {!isOpen && (
         <button className="chat-toggle-btn" onClick={() => setIsOpen(true)}>
-          💬 Chat da Equipe
+          Chat da Equipe
         </button>
       )}
 
       {isOpen && (
         <div className="chat-window">
           <div className="chat-header">
-            <select 
-              value={selectedEquipe} 
+            <select
+              value={selectedEquipe}
               onChange={(e) => setSelectedEquipe(e.target.value)}
               className="chat-equipe-select"
             >
-              {equipes.map(eq => (
+              {equipes.map((eq) => (
                 <option key={eq._id} value={eq._id}>{eq.nome}</option>
               ))}
             </select>
-            <button className="close-btn" onClick={() => setIsOpen(false)}>✕</button>
+            <button className="close-btn" onClick={() => setIsOpen(false)}>x</button>
           </div>
 
           <div className="chat-messages">
             {messages.map((msg, index) => {
               const isMine = msg.user && msg.user._id === userId;
+              const userName = msg.user?.nome || 'Usuario';
+
               return (
-                <div key={index} className={`message-wrapper ${isMine ? 'mine' : 'theirs'}`}>
-                  {!isMine && <span className="message-author">{msg.user ? msg.user.nome : 'Usuário'}</span>}
-                  <div className="message-bubble">
-                    {msg.texto}
+                <div key={msg._id || index} className={`message-wrapper ${isMine ? 'mine' : 'theirs'}`}>
+                  {!isMine && renderAvatar(msg.user)}
+                  <div className="message-stack">
+                    {!isMine && <span className="message-author">{userName}</span>}
+                    <div className="message-bubble">
+                      {msg.texto}
+                    </div>
                   </div>
+                  {isMine && renderAvatar(msg.user)}
                 </div>
               );
             })}
@@ -125,9 +145,9 @@ const ChatPanel = () => {
           </div>
 
           <form className="chat-input-form" onSubmit={handleSendMessage}>
-            <input 
-              type="text" 
-              placeholder="Digite sua mensagem..." 
+            <input
+              type="text"
+              placeholder="Digite sua mensagem..."
               value={novaMensagem}
               onChange={(e) => setNovaMensagem(e.target.value)}
             />

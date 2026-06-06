@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import apiClient from '../../config/apiClient';
+import apiClient, { getFullApiUrl } from '../../config/apiClient';
 import Sidebar from '../../components/layout/Sidebar';
 import { API_ENDPOINTS } from '../../config/config';
 import '../../styles/pages/admin/DashboardAdmin.css';
@@ -9,6 +9,26 @@ function EquipesUser() {
   const [equipes, setEquipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const getInitials = (name = '?') =>
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase();
+
+  const renderAvatar = (membro) => {
+    const photo = membro?.fotoPerfil;
+    const name = membro?.nome || '?';
+
+    return (
+      <span className="equipe-user-member-avatar">
+        {photo ? <img src={getFullApiUrl(photo)} alt="" /> : getInitials(name)}
+      </span>
+    );
+  };
 
   useEffect(() => {
     const carregarEquipes = async () => {
@@ -69,9 +89,15 @@ function EquipesUser() {
                 <p>
                   <strong>Membros:</strong> {equipe.membros?.length || 0}
                 </p>
-                <ul>
+                <ul className="equipe-user-members-list">
                   {(equipe.membros || []).map((membro) => (
-                    <li key={membro._id}>{membro.nome}</li>
+                    <li key={membro._id} className="equipe-user-member">
+                      {renderAvatar(membro)}
+                      <span>
+                        <strong>{membro.nome}</strong>
+                        {membro.email && <small>{membro.email}</small>}
+                      </span>
+                    </li>
                   ))}
                 </ul>
               </article>
