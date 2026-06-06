@@ -1,6 +1,12 @@
 # Nome do workflow, que aparece na aba "Actions" do GitHub
 name: Build Docker Frontend
 
+env:
+  REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+  REACT_APP_API_PUBLIC_URL: ${{ secrets.REACT_APP_API_PUBLIC_URL }}
+  REACT_APP_SOCKET_URL: ${{ secrets.REACT_APP_SOCKET_URL }}
+  REACT_APP_ASSISTANT_URL: ${{ secrets.REACT_APP_ASSISTANT_URL }}
+
 # Define o evento que dispara o workflow
 # Neste caso, o workflow será executado sempre que um push for feito na branch "main"
 on:
@@ -29,7 +35,12 @@ jobs:
       # Utiliza o Dockerfile presente na raiz do projeto
       - name: Build da imagem do Frontend
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/flowly-frontend:latest .
+          docker build \
+            --build-arg REACT_APP_API_URL="${REACT_APP_API_URL}" \
+            --build-arg REACT_APP_API_PUBLIC_URL="${REACT_APP_API_PUBLIC_URL}" \
+            --build-arg REACT_APP_SOCKET_URL="${REACT_APP_SOCKET_URL}" \
+            --build-arg REACT_APP_ASSISTANT_URL="${REACT_APP_ASSISTANT_URL}" \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/flowly-frontend:latest .
 
       # Faz o push da imagem gerada para o Docker Hub
       - name: Push da imagem

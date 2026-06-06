@@ -3,6 +3,8 @@ node_modules/
 package-lock.json
 yarn.lock
 
+application_default_credentials.json
+
 # Environment
 .env
 .env.local
