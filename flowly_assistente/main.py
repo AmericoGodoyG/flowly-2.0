@@ -11,7 +11,7 @@ Para rodar em modo CLI interativo local:
 """
 
 from function import trigger_http  # noqa: F401
-from assistant import FlowlyAssistant
+from flowly_assistant.assistant import FlowlyAssistant
 
 
 def run_cli() -> None:

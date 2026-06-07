@@ -15,6 +15,7 @@ export default function Equipes() {
   const [mensagemSucesso, setMensagemSucesso] = useState("");
   const { id } = useParams();
   const location = useLocation();
+  const currentUserId = localStorage.getItem("id");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -134,6 +135,7 @@ export default function Equipes() {
 
   // Remove membro por ID
   const removerMembro = (userId) => {
+    if (String(userId) === String(currentUserId)) return;
     setMembros((prev) => prev.filter((m) => m._id !== userId));
   };
 
@@ -246,10 +248,13 @@ export default function Equipes() {
               {membros.map((m) => (
                 <div key={m._id} className="member-chip">
                   {renderUserAvatar(m, "member-chip-avatar")}
-                  <span className="member-name">{m.nome} ({m.email})</span>
+                  <span className="member-name">
+                    {m.nome} ({m.email}){String(m._id) === String(currentUserId) ? " - responsavel" : ""}
+                  </span>
                   <button
                     type="button"
-                    className="remove-chip"
+                    className={`remove-chip ${String(m._id) === String(currentUserId) ? "disabled" : ""}`}
+                    disabled={String(m._id) === String(currentUserId)}
                     onClick={() => removerMembro(m._id)}
                     aria-label={`Remover ${m.nome}`}
                   >

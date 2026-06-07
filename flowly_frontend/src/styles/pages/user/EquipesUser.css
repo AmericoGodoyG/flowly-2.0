@@ -98,7 +98,7 @@
   color: #f0e9ff;
   font-size: 0.78rem;
   font-weight: 800;
-  background: linear-gradient(135deg, rgba(126, 87, 194, 0.45), rgba(81, 45, 168, 0.35));
+  background: linear-gradient(135deg, var(--primary-shadow), var(--primary-soft));
   border: 1px solid rgba(176, 158, 255, 0.45);
 }
 

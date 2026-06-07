@@ -69,7 +69,7 @@
 .form-tarefa textarea:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(126, 87, 194, 0.2);
+  box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
 .form-tarefa textarea {
@@ -78,7 +78,7 @@
 }
 
 .form-tarefa button {
-  background: linear-gradient(135deg, var(--primary-color), #4527a0);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-deep));
   color: white;
   padding: 14px 20px;
   border: none;
@@ -87,12 +87,12 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
-  box-shadow: 0 4px 12px rgba(126, 87, 194, 0.3);
+  box-shadow: 0 4px 12px var(--primary-shadow);
 }
 
 .form-tarefa button:hover {
   transform: translateY(-2px);
-  background: linear-gradient(135deg, #8e6ee6, #512da8);
+  background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
   color: #fff;
 }
 

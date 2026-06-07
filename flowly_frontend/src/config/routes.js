@@ -17,6 +17,7 @@ import PerfilUser from '../pages/user/PerfilUser';
 import Equipes from '../pages/admin/Equipes';
 import ChatsPage from '../pages/common/ChatsPage';
 import NotificationsPage from '../pages/common/NotificationsPage';
+import VoiceAssistantPage from '../pages/common/VoiceAssistantPage';
 import { USER_TYPES } from './config';
 
 /**
@@ -120,6 +121,10 @@ export const userRoutes = [
     path: '/chats',
     element: <ChatsPage />,
     requiredRole: USER_TYPES.USER,
+  },
+  {
+    path: '/assistente',
+    element: <VoiceAssistantPage />,
   },
   {
     path: '/notificacoes',

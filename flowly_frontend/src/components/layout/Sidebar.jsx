@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   FaChartPie, FaUsers, FaTasks, FaSignOutAlt,
-  FaBars, FaTimes, FaPlus, FaClipboardList, FaHome, FaInbox, FaComments, FaBell
+  FaBars, FaTimes, FaPlus, FaClipboardList, FaHome, FaInbox, FaComments, FaBell, FaMicrophone
 } from 'react-icons/fa';
 import { authUtils } from '../../config/authUtils';
 import { getFullApiUrl } from '../../config/apiClient';
@@ -42,12 +42,34 @@ const Sidebar = () => {
   };
 
   const isActive = (path) => {
-    // Mapa de rotas relacionadas para evitar que parent paths ativem eroneamente
+    const currentPath = location.pathname.replace(/\/+$/, '') || '/';
+    const exactMenuPaths = [
+      '/admin/geral',
+      '/admin',
+      '/admin/chats',
+      '/assistente',
+      '/notificacoes',
+      '/admin/criar-equipe',
+      '/admin/tarefas',
+      '/admin/criar-tarefa',
+      '/dashboard',
+      '/minhas-tarefas',
+      '/backlog',
+      '/chats',
+      '/equipes',
+    ];
+
+    if (exactMenuPaths.includes(currentPath)) {
+      return path === currentPath;
+    }
+
+    // Rotas filhas sem item próprio no menu apontam para a seção principal.
     const relatedRoutes = {
-      '/admin': ['/admin', '/admin/equipe/', '/admin/criar-equipe'],
+      '/admin': ['/admin/equipe/'],
       '/admin/geral': ['/admin/geral'],
       '/admin/chats': ['/admin/chats'],
-      '/admin/tarefas': ['/admin/tarefas', '/admin/criar-tarefa', '/admin/editar-tarefa/'],
+      '/assistente': ['/assistente'],
+      '/admin/tarefas': ['/admin/editar-tarefa/'],
       '/notificacoes': ['/notificacoes'],
       '/dashboard': ['/dashboard'],
       '/minhas-tarefas': ['/minhas-tarefas'],
@@ -60,9 +82,9 @@ const Sidebar = () => {
     
     return routes.some(route => {
       if (route.endsWith('/')) {
-        return location.pathname.startsWith(route) || location.pathname === route.slice(0, -1);
+        return currentPath.startsWith(route) || currentPath === route.slice(0, -1);
       }
-      return location.pathname === route || location.pathname.startsWith(`${route}/`);
+      return currentPath === route || currentPath.startsWith(`${route}/`);
     });
   };
 
@@ -70,6 +92,7 @@ const Sidebar = () => {
     { path: '/admin/geral', icon: <FaChartPie />, label: 'Painel Geral' },
     { path: '/admin', icon: <FaUsers />, label: 'Equipes' },
     { path: '/admin/chats', icon: <FaComments />, label: 'Chats' },
+    { path: '/assistente', icon: <FaMicrophone />, label: 'Assistente' },
     { path: '/notificacoes', icon: <FaBell />, label: 'Notificações' },
     { path: '/admin/criar-equipe', icon: <FaPlus />, label: 'Nova Equipe' },
     { path: '/admin/tarefas', icon: <FaClipboardList />, label: 'Tarefas' },
@@ -81,6 +104,7 @@ const Sidebar = () => {
     { path: '/minhas-tarefas', icon: <FaTasks />, label: 'Kanban Board' },
     { path: '/backlog', icon: <FaInbox />, label: 'Backlog' },
     { path: '/chats', icon: <FaComments />, label: 'Chats' },
+    { path: '/assistente', icon: <FaMicrophone />, label: 'Assistente' },
     { path: '/notificacoes', icon: <FaBell />, label: 'Notificações' },
     { path: '/equipes', icon: <FaUsers />, label: 'Minhas Equipes' },
   ];

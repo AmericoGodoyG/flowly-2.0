@@ -99,6 +99,10 @@ const ChatsPage = () => {
       setMessages((prev) => [...prev, msg]);
     });
 
+    socket.on('message_blocked', (payload) => {
+      setErro(payload?.message || 'Mensagem bloqueada.');
+    });
+
     loadHistory();
 
     return () => {
@@ -123,6 +127,7 @@ const ChatsPage = () => {
       texto,
     });
 
+    setErro('');
     setNovaMensagem('');
   };
 

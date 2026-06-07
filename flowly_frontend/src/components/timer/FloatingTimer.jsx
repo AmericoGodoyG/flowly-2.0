@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../config/apiClient';
-//import { authUtils } from '../../config/authUtils';
+import { authUtils } from '../../config/authUtils';
 import '../../styles/components/FloatingTimer.css';
 
 const FloatingTimer = () => {
@@ -11,7 +11,11 @@ const FloatingTimer = () => {
     const fetchAtivas = async () => {
       try {
         const res = await apiClient.get('/tarefas/minhas');
-        const ativas = res.data.filter(t => t.cronometroAtivo);
+        const userId = authUtils.getUserId();
+        const ativas = res.data.filter((t) => {
+          const responsavelId = typeof t.user === 'object' ? t.user?._id : t.user;
+          return t.cronometroAtivo && String(responsavelId) === String(userId);
+        });
         setTarefasAtivas(ativas);
       } catch (err) {
         console.error('Erro ao buscar tarefas ativas', err);

@@ -29,7 +29,7 @@
 .read-btn {
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--primary-color), #4527a0);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-deep));
   color: #fff;
   padding: 10px 14px;
   font-weight: 700;
@@ -61,7 +61,7 @@
 }
 
 .notification-card.unread {
-  border-color: rgba(126, 87, 194, 0.35);
+  border-color: var(--primary-shadow);
 }
 
 .notification-card.read {

@@ -1,0 +1,2 @@
+"""Analytics storage adapters."""
+

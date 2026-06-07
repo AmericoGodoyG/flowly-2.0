@@ -42,6 +42,11 @@ const assinarFotosMembrosEquipe = async (equipe) => {
 
 const assinarFotosMembrosEquipes = (equipes) => Promise.all(equipes.map(assinarFotosMembrosEquipe));
 
+const garantirCriadorComoMembro = (userId) => Equipe.updateMany(
+  { createdBy: userId, membros: { $ne: userId } },
+  { $addToSet: { membros: userId } }
+);
+
 exports.criarEquipe = async (req, res) => {
   try {
     const { nome, membros } = req.body;
@@ -66,8 +71,10 @@ exports.criarEquipe = async (req, res) => {
       return res.status(400).json({ erro: "Alguns membros não são usuarios válidos" });
     }
 
+    const membrosComCriador = [...new Set([...membrosUnicos, String(req.user.id)])];
+
     // Criar a equipe
-    const novaEquipe = new Equipe({ nome, membros: membrosUnicos, createdBy: req.user.id });
+    const novaEquipe = new Equipe({ nome, membros: membrosComCriador, createdBy: req.user.id });
     await novaEquipe.save();
 
     // Retornar a equipe criada com os dados populados
@@ -80,7 +87,8 @@ exports.criarEquipe = async (req, res) => {
 
 exports.listarEquipes = async (req, res) => {
   try {
-    const equipes = await Equipe.find().populate('membros', 'nome email fotoPerfil');
+    await garantirCriadorComoMembro(req.user.id);
+    const equipes = await Equipe.find({ membros: req.user.id }).populate('membros', 'nome email fotoPerfil');
     res.json(await assinarFotosMembrosEquipes(equipes));
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao listar equipes' });
@@ -89,8 +97,8 @@ exports.listarEquipes = async (req, res) => {
 
 exports.listarMinhasEquipes = async (req, res) => {
   try {
-    const filtro = req.user.tipo === 'admin' ? {} : { membros: req.user.id };
-    const equipes = await Equipe.find(filtro).populate('membros', 'nome email fotoPerfil');
+    await garantirCriadorComoMembro(req.user.id);
+    const equipes = await Equipe.find({ membros: req.user.id }).populate('membros', 'nome email fotoPerfil');
     res.json(await assinarFotosMembrosEquipes(equipes));
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao listar equipes do usuario' });
@@ -99,7 +107,8 @@ exports.listarMinhasEquipes = async (req, res) => {
 
 exports.obterEquipe = async (req, res) => {
   try {
-    const equipe = await Equipe.findById(req.params.id).populate('membros', 'nome email fotoPerfil');
+    await garantirCriadorComoMembro(req.user.id);
+    const equipe = await Equipe.findOne({ _id: req.params.id, membros: req.user.id }).populate('membros', 'nome email fotoPerfil');
     if (!equipe) return res.status(404).json({ erro: 'Equipe não encontrada' });
     res.json(await assinarFotosMembrosEquipe(equipe));
   } catch (err) {
@@ -109,6 +118,7 @@ exports.obterEquipe = async (req, res) => {
 
 exports.editarEquipe = async (req, res) => {
   try {
+    await garantirCriadorComoMembro(req.user.id);
     const { nome, membros } = req.body;
 
     const membrosArray = Array.isArray(membros) ? membros : [];
@@ -119,14 +129,22 @@ exports.editarEquipe = async (req, res) => {
       return res.status(400).json({ erro: 'Existem membros com identificadores inválidos' });
     }
 
-    const usuarios = await User.find({ _id: { $in: membrosUnicos }, tipo: 'user' }).select('_id');
-    if (usuarios.length !== membrosUnicos.length) {
+    const equipeAtual = await Equipe.findOne({ _id: req.params.id, membros: req.user.id }).select('createdBy');
+    if (!equipeAtual) {
+      return res.status(404).json({ erro: 'Equipe não encontrada' });
+    }
+
+    const membrosSemCriador = membrosUnicos.filter((id) => String(id) !== String(equipeAtual.createdBy || req.user.id));
+    const usuarios = await User.find({ _id: { $in: membrosSemCriador }, tipo: 'user' }).select('_id');
+    if (usuarios.length !== membrosSemCriador.length) {
       return res.status(400).json({ erro: 'Alguns membros não são usuarios válidos' });
     }
 
+    const membrosComCriador = [...new Set([...membrosSemCriador, String(equipeAtual.createdBy || req.user.id)])];
+
     const equipeAtualizada = await Equipe.findByIdAndUpdate(
       req.params.id,
-      { nome, membros: membrosUnicos },
+      { nome, membros: membrosComCriador },
       { new: true }
     ).populate('membros', 'nome email fotoPerfil');
 
@@ -144,7 +162,9 @@ exports.editarEquipe = async (req, res) => {
 
 exports.excluirEquipe = async (req, res) => {
   try {
-    await Equipe.findByIdAndDelete(req.params.id);
+    await garantirCriadorComoMembro(req.user.id);
+    const equipe = await Equipe.findOneAndDelete({ _id: req.params.id, membros: req.user.id });
+    if (!equipe) return res.status(404).json({ erro: 'Equipe não encontrada' });
     res.json({ msg: 'Equipe excluída com sucesso' });
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao excluir equipe' });
@@ -153,7 +173,8 @@ exports.excluirEquipe = async (req, res) => {
 
 exports.getMembrosDaEquipe = async (req, res) => {
   try {
-    const equipe = await Equipe.findById(req.params.id).populate("membros", "nome fotoPerfil");
+    await garantirCriadorComoMembro(req.user.id);
+    const equipe = await Equipe.findOne({ _id: req.params.id, membros: req.user.id }).populate("membros", "nome fotoPerfil");
     if (!equipe) return res.status(404).json({ erro: "Equipe não encontrada" });
     const equipeAssinada = await assinarFotosMembrosEquipe(equipe);
     res.json(equipeAssinada.membros);
@@ -164,6 +185,10 @@ exports.getMembrosDaEquipe = async (req, res) => {
 
 exports.getMessages = async (req, res) => {
   try {
+    await garantirCriadorComoMembro(req.user.id);
+    const equipe = await Equipe.findOne({ _id: req.params.id, membros: req.user.id }).select('_id');
+    if (!equipe) return res.status(404).json({ erro: 'Equipe nÃ£o encontrada' });
+
     const messages = await Message.find({ equipe: req.params.id })
       .populate('user', 'nome fotoPerfil')
       .sort({ createdAt: 1 });

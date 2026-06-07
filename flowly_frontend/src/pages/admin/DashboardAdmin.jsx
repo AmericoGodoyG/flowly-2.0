@@ -9,6 +9,11 @@ function DashboardAdmin() {
   const [equipes, setEquipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [adminNome, setAdminNome] = useState("");
+  const [insightsOpen, setInsightsOpen] = useState(false);
+  const [insightsTab, setInsightsTab] = useState("resumo");
+  const [insights, setInsights] = useState(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insightsError, setInsightsError] = useState("");
 
   const getInitials = (name = "?") =>
     name
@@ -56,6 +61,25 @@ function DashboardAdmin() {
     }
   };
 
+  const fetchAssistantInsights = async () => {
+    setInsightsOpen(true);
+    setInsightsLoading(true);
+    setInsightsError("");
+
+    try {
+      const res = await apiClient.get(API_ENDPOINTS.ADMIN_ASSISTANT_INSIGHTS);
+      setInsights(res.data?.insights || null);
+    } catch (err) {
+      console.error("Erro ao carregar insights do assistente", err);
+      setInsightsError("Não foi possível carregar os insights agora.");
+    } finally {
+      setInsightsLoading(false);
+    }
+  };
+
+  const sentiments = insights?.sentiments || {};
+  const recentInsights = insights?.recent || [];
+
   return (
     <div className="admin-page">
       <Sidebar />
@@ -65,6 +89,9 @@ function DashboardAdmin() {
         <div className="dashboard-topbar">
           <h2 className="dashboard-title">Equipes</h2>
           <div className="dashboard-actions">
+            <button type="button" className="btn-create" onClick={fetchAssistantInsights}>
+              Insights IA
+            </button>
             <Link to="/admin/criar-equipe" className="btn-create">
               Criar nova equipe
             </Link>
@@ -128,6 +155,154 @@ function DashboardAdmin() {
           )}
         </div>
       </main>
+
+      {insightsOpen && (
+        <div className="insights-modal-overlay" onClick={() => setInsightsOpen(false)}>
+          <section className="insights-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="insights-modal-header">
+              <div>
+                <span className="insights-kicker">Assistente de voz</span>
+                <h3>Insights de PLN</h3>
+              </div>
+              <button type="button" className="insights-close" onClick={() => setInsightsOpen(false)}>
+                Fechar
+              </button>
+            </div>
+
+            <div className="insights-tabs">
+              {[
+                ["resumo", "Resumo"],
+                ["sentimentos", "Sentimentos"],
+                ["topicos", "Tópicos"],
+                ["equipes", "Equipes"],
+                ["alertas", "Alertas"],
+              ].map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={insightsTab === key ? "active" : ""}
+                  onClick={() => setInsightsTab(key)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {insightsLoading ? (
+              <p className="insights-feedback">Carregando insights...</p>
+            ) : insightsError ? (
+              <p className="insights-feedback error">{insightsError}</p>
+            ) : (
+              <div className="insights-content">
+                {insightsTab === "resumo" && (
+                  <>
+                    <div className="insights-grid">
+                      <div className="insight-card">
+                        <span>Total de mensagens</span>
+                        <strong>{insights?.totalMessages || 0}</strong>
+                      </div>
+                      <div className="insight-card">
+                        <span>Alertas de spam</span>
+                        <strong>{insights?.spamAlerts || 0}</strong>
+                      </div>
+                      <div className="insight-card">
+                        <span>Tópico principal</span>
+                        <strong>{insights?.topTopics?.[0]?.topic || "Sem dados"}</strong>
+                      </div>
+                    </div>
+                    <div className="insight-suggestions">
+                      <h4>Sugestões gerais</h4>
+                      {(insights?.suggestions || []).map((suggestion) => (
+                        <p key={suggestion}>{suggestion}</p>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {insightsTab === "sentimentos" && (
+                  <div className="insights-list">
+                    {["positivo", "neutro", "negativo"].map((sentiment) => (
+                      <div key={sentiment} className="insight-row">
+                        <span>{sentiment}</span>
+                        <strong>{sentiments[sentiment] || 0}</strong>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {insightsTab === "topicos" && (
+                  <div className="insights-list">
+                    {(insights?.topTopics || []).length === 0 ? (
+                      <p className="insights-feedback">Nenhum tópico minerado ainda.</p>
+                    ) : (
+                      insights.topTopics.map((item) => (
+                        <div key={item.topic} className="insight-row">
+                          <span>{item.topic}</span>
+                          <strong>{item.count}</strong>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {insightsTab === "equipes" && (
+                  <div className="team-insights-list">
+                    {(insights?.byTeam || []).length === 0 ? (
+                      <p className="insights-feedback">Nenhum insight por equipe disponível ainda.</p>
+                    ) : (
+                      insights.byTeam.map((team) => (
+                        <article key={team.channelId} className="team-insight-card">
+                          <div className="team-insight-header">
+                            <div>
+                              <span>Equipe</span>
+                              <h4>{team.teamName}</h4>
+                            </div>
+                            <strong>{team.totalMessages} msg</strong>
+                          </div>
+                          <div className="team-insight-metrics">
+                            <span>Positivo: {team.sentiments?.positivo || 0}</span>
+                            <span>Neutro: {team.sentiments?.neutro || 0}</span>
+                            <span>Negativo: {team.sentiments?.negativo || 0}</span>
+                            <span>Spam: {team.spamAlerts || 0}</span>
+                          </div>
+                          <div className="team-insight-topics">
+                            {(team.topTopics || []).map((topic) => (
+                              <span key={topic.topic}>{topic.topic} · {topic.count}</span>
+                            ))}
+                          </div>
+                          <div className="insight-suggestions compact">
+                            {(team.suggestions || []).map((suggestion) => (
+                              <p key={suggestion}>{suggestion}</p>
+                            ))}
+                          </div>
+                        </article>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {insightsTab === "alertas" && (
+                  <div className="insights-list">
+                    {recentInsights.length === 0 ? (
+                      <p className="insights-feedback">Nenhuma mensagem recente.</p>
+                    ) : (
+                      recentInsights.map((item) => (
+                        <div key={item._id} className={`insight-message ${item.spamAlert ? "spam" : ""}`}>
+                          <div>
+                            <strong>{item.sentiment}</strong>
+                            <span>{item.channelId} · {new Date(item.createdAt).toLocaleString()}</span>
+                          </div>
+                          <p>{item.content}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        </div>
+      )}
     </div>
   );
 }

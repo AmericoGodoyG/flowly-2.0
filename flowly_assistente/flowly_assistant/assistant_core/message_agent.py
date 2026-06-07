@@ -1,0 +1,592 @@
+from __future__ import annotations
+
+import os
+import re
+import uuid
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional, Tuple
+
+from flowly_assistant.api_client import FlowlyAPIClient
+from flowly_assistant.assistant_core.rest_assistant import assistant_from_http_body, tts_payload
+from flowly_assistant.command_parser import CommandParser
+from flowly_assistant.nlp.moderation import ModerationService
+from flowly_assistant.queues.analytics_queue import AnalyticsQueue
+from flowly_assistant.storage.analytics_repository import AnalyticsRepository
+from flowly_assistant.storage.conversation_state import ConversationStateRepository
+
+
+class MessageAgent:
+    """Event-oriented REST agent for /api/v1/messages."""
+
+    def __init__(self, *, token: str, body: Dict[str, Any], debug: bool = False) -> None:
+        self.body = body
+        self.token = token
+        self.debug = debug
+        self.moderation = ModerationService()
+        self.queue = AnalyticsQueue()
+        self.parser = CommandParser(threshold=int(os.getenv("FLOWLY_MATCH_THRESHOLD", "78")))
+        self.assistant = assistant_from_http_body(body, token, debug=debug)
+        self.conversations = ConversationStateRepository()
+
+    def handle_message(self) -> Tuple[Dict[str, Any], int]:
+        content = str(self.body.get("content") or self.body.get("utterance") or self.body.get("text") or "").strip()
+        user_id = str(self.body.get("userId") or self.body.get("user_id") or "").strip()
+        channel_id = str(self.body.get("channelId") or self.body.get("channel_id") or "web").strip()
+        conversation_id = str(
+            self.body.get("conversationId")
+            or self.body.get("conversation_id")
+            or f"{user_id}:{channel_id}"
+        )
+
+        if not content:
+            return self._error("missing_content", "Envie uma mensagem para eu processar.", 400)
+        if not user_id:
+            return self._error("missing_user_id", "userId é obrigatório.", 400)
+
+        moderation = self.moderation.moderate(content)
+        if not moderation.allowed:
+            return self._error(
+                "blocked_by_moderation",
+                "Não posso processar essa mensagem por segurança.",
+                422,
+                moderation={"reason": moderation.reason, "score": moderation.score},
+            )
+
+        event = {
+            "id": str(uuid.uuid4()),
+            "userId": user_id,
+            "channelId": channel_id,
+            "teamId": self.body.get("teamId") or self.body.get("team_id"),
+            "teamName": self.body.get("teamName") or self.body.get("team_name"),
+            "content": content,
+            "createdAt": datetime.now(timezone.utc).isoformat(),
+            "source": self.body.get("source") or "frontend",
+        }
+        self._enrich_event_team_context(event, content)
+        queue_result = self.queue.publish_message(event)
+
+        pending = self.conversations.get(conversation_id)
+        if pending:
+            return self._continue_pending_command(
+                conversation_id=conversation_id,
+                pending=pending,
+                content=content,
+                event_id=event["id"],
+                moderation_score=moderation.score,
+                queue_result=queue_result,
+            )
+
+        match = self.parser.match(content)
+        if match is None or match.command.key == "exit":
+            text = "Mensagem recebida. Não identifiquei uma ação imediata."
+            if match is not None and match.command.key == "exit":
+                text = "Encerrando. Assistente em standby."
+                self.conversations.clear(conversation_id)
+            return {
+                "ok": True,
+                "messageId": event["id"],
+                "moderation": {"allowed": True, "score": moderation.score},
+                "queue": queue_result,
+                "command": None if match is None else {"key": match.command.key},
+                "action_executed": False,
+                "reply_text": text,
+                "tts": tts_payload(text, language=str(self.body.get("language") or "pt-BR")),
+            }, 201
+
+        supplied_params = self.body.get("params") if isinstance(self.body.get("params"), dict) else {}
+        merged_params = {**supplied_params, **match.params}
+        missing = [p for p in match.command.required_params if not merged_params.get(p)]
+        if missing:
+            self.conversations.save(
+                conversation_id,
+                {"command_key": match.command.key, "params": merged_params, "missing": missing},
+            )
+            text = self._question_for_param(missing[0])
+            return self._awaiting_params_response(
+                event_id=event["id"],
+                moderation_score=moderation.score,
+                queue_result=queue_result,
+                conversation_id=conversation_id,
+                command_key=match.command.key,
+                missing=missing,
+                text=text,
+            )
+
+        command_payload, command_status = self.assistant.handle(content, supplied_params)
+        status = 200 if command_payload.get("ok") else command_status
+        if command_payload.get("ok"):
+            command_payload = self._prepare_follow_up(
+                conversation_id=conversation_id,
+                command_key=match.command.key,
+                payload=command_payload,
+            )
+        return {
+            "ok": bool(command_payload.get("ok")),
+            "messageId": event["id"],
+            "moderation": {"allowed": True, "score": moderation.score},
+            "queue": queue_result,
+            "action_executed": bool(command_payload.get("ok")),
+            **command_payload,
+        }, status
+
+    def _continue_pending_command(
+        self,
+        *,
+        conversation_id: str,
+        pending: Dict[str, Any],
+        content: str,
+        event_id: str,
+        moderation_score: float,
+        queue_result: Dict[str, Any],
+    ) -> Tuple[Dict[str, Any], int]:
+        if pending.get("mode") == "task_selection":
+            return self._continue_task_selection(
+                conversation_id=conversation_id,
+                pending=pending,
+                content=content,
+                event_id=event_id,
+                moderation_score=moderation_score,
+                queue_result=queue_result,
+            )
+
+        command_key = str(pending.get("command_key") or "")
+        command = next((cmd for cmd in self.parser.commands if cmd.key == command_key), None)
+        if command is None:
+            self.conversations.clear(conversation_id)
+            return self._error("invalid_conversation", "Perdi o contexto do comando. Pode repetir?", 400)
+
+        params = dict(pending.get("params") or {})
+        missing = [p for p in pending.get("missing", command.required_params) if not params.get(p)]
+        if not missing:
+            self.conversations.clear(conversation_id)
+            return self._error("invalid_conversation", "Esse comando já estava completo. Pode repetir?", 400)
+
+        params[missing[0]] = self._normalize_param_value(missing[0], content)
+        missing = [p for p in command.required_params if not params.get(p)]
+        if missing:
+            self.conversations.save(
+                conversation_id,
+                {"command_key": command.key, "params": params, "missing": missing},
+            )
+            return self._awaiting_params_response(
+                event_id=event_id,
+                moderation_score=moderation_score,
+                queue_result=queue_result,
+                conversation_id=conversation_id,
+                command_key=command.key,
+                missing=missing,
+                text=self._question_for_param(missing[0]),
+            )
+
+        utterance = f"{command.title} " + " ".join(f"{key} {value}" for key, value in params.items())
+        command_payload, command_status = self.assistant.handle(utterance, params)
+        if command_payload.get("ok"):
+            self.conversations.clear(conversation_id)
+            command_payload = self._prepare_follow_up(
+                conversation_id=conversation_id,
+                command_key=command.key,
+                payload=command_payload,
+            )
+        else:
+            self.conversations.save(
+                conversation_id,
+                {"command_key": command.key, "params": params, "missing": command_payload.get("missing") or []},
+            )
+
+        return {
+            "ok": bool(command_payload.get("ok")),
+            "messageId": event_id,
+            "moderation": {"allowed": True, "score": moderation_score},
+            "queue": queue_result,
+            "action_executed": bool(command_payload.get("ok")),
+            "conversation": {
+                "id": conversation_id,
+                "status": "completed" if command_payload.get("ok") else "awaiting_params",
+            },
+            **command_payload,
+        }, 200 if command_payload.get("ok") else command_status
+
+    def _prepare_follow_up(self, *, conversation_id: str, command_key: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        result = payload.get("result")
+        if command_key in {"my_tasks", "backlog", "list_tasks"}:
+            tasks = [task for task in result if isinstance(task, dict)] if isinstance(result, list) else []
+            text = self._tasks_reply_text(tasks)
+            if tasks:
+                self.conversations.save(
+                    conversation_id,
+                    {
+                        "mode": "task_selection",
+                        "tasks": [self._compact_task(task) for task in tasks[:10]],
+                    },
+                )
+                payload["conversation"] = {
+                    "id": conversation_id,
+                    "status": "browsing_tasks",
+                    "options": ["details", "assign_to_me", "cancel"],
+                }
+            payload["reply_text"] = text
+            payload["tts"] = tts_payload(text, language=str(self.body.get("language") or "pt-BR"))
+            return payload
+
+        if command_key in {"my_teams", "list_teams"}:
+            teams = [team for team in result if isinstance(team, dict)] if isinstance(result, list) else []
+            text = self._teams_reply_text(teams)
+            payload["reply_text"] = text
+            payload["tts"] = tts_payload(text, language=str(self.body.get("language") or "pt-BR"))
+        return payload
+
+    def _continue_task_selection(
+        self,
+        *,
+        conversation_id: str,
+        pending: Dict[str, Any],
+        content: str,
+        event_id: str,
+        moderation_score: float,
+        queue_result: Dict[str, Any],
+    ) -> Tuple[Dict[str, Any], int]:
+        text_norm = self._normalize_text(content)
+        if self._is_cancel(text_norm):
+            self.conversations.clear(conversation_id)
+            text = "Tudo bem. Cancelei a selecao de tarefa e voltei para standby."
+            return self._task_conversation_response(
+                event_id=event_id,
+                moderation_score=moderation_score,
+                queue_result=queue_result,
+                conversation_id=conversation_id,
+                status="cancelled",
+                text=text,
+                ok=True,
+                action_executed=False,
+            )
+
+        tasks = [task for task in pending.get("tasks", []) if isinstance(task, dict)]
+        if not tasks:
+            self.conversations.clear(conversation_id)
+            return self._error("invalid_conversation", "Perdi a lista de tarefas. Pode pedir para listar novamente?", 400)
+
+        selected_id = pending.get("selected_task_id")
+        selected_task = next((task for task in tasks if task.get("_id") == selected_id), None)
+        requested_task = self._select_task_from_text(text_norm, tasks)
+        if requested_task:
+            selected_task = requested_task
+
+        action = self._task_follow_up_action(text_norm)
+        if selected_task and not action:
+            self.conversations.save(
+                conversation_id,
+                {**pending, "selected_task_id": selected_task.get("_id")},
+            )
+            text = (
+                f"Selecionei {selected_task.get('descricao') or 'essa tarefa'}. "
+                "Voce quer detalhes, atribuir para voce ou cancelar?"
+            )
+            return self._task_conversation_response(
+                event_id=event_id,
+                moderation_score=moderation_score,
+                queue_result=queue_result,
+                conversation_id=conversation_id,
+                status="awaiting_task_action",
+                text=text,
+                ok=True,
+                action_executed=False,
+            )
+
+        if not selected_task:
+            text = "Qual tarefa voce quer abrir? Pode dizer o numero, como primeira ou segunda, ou pedir cancelar."
+            return self._task_conversation_response(
+                event_id=event_id,
+                moderation_score=moderation_score,
+                queue_result=queue_result,
+                conversation_id=conversation_id,
+                status="awaiting_task_selection",
+                text=text,
+                ok=True,
+                action_executed=False,
+            )
+
+        try:
+            if action == "assign":
+                result = self.assistant.api.assign_to_me(str(selected_task["_id"]))
+                self.conversations.clear(conversation_id)
+                task = (result or {}).get("tarefa") if isinstance(result, dict) else selected_task
+                text = f"Atribui a tarefa {self._task_title(task)} para voce."
+                return self._task_conversation_response(
+                    event_id=event_id,
+                    moderation_score=moderation_score,
+                    queue_result=queue_result,
+                    conversation_id=conversation_id,
+                    status="completed",
+                    text=text,
+                    ok=True,
+                    action_executed=True,
+                    result=result,
+                    command={"key": "assign_to_me"},
+                )
+
+            result = self.assistant.api.task_details(str(selected_task["_id"]))
+            text = self._task_details_reply_text(result)
+            self.conversations.save(
+                conversation_id,
+                {**pending, "selected_task_id": selected_task.get("_id")},
+            )
+            return self._task_conversation_response(
+                event_id=event_id,
+                moderation_score=moderation_score,
+                queue_result=queue_result,
+                conversation_id=conversation_id,
+                status="browsing_tasks",
+                text=text,
+                ok=True,
+                action_executed=True,
+                result=result,
+                command={"key": "task_details"},
+            )
+        except Exception as exc:
+            text = str(exc) or "Nao consegui concluir essa acao agora."
+            return self._task_conversation_response(
+                event_id=event_id,
+                moderation_score=moderation_score,
+                queue_result=queue_result,
+                conversation_id=conversation_id,
+                status="browsing_tasks",
+                text=text,
+                ok=False,
+                action_executed=False,
+                error="api_error",
+            )
+
+    def _task_conversation_response(
+        self,
+        *,
+        event_id: str,
+        moderation_score: float,
+        queue_result: Dict[str, Any],
+        conversation_id: str,
+        status: str,
+        text: str,
+        ok: bool,
+        action_executed: bool,
+        **extra: Any,
+    ) -> Tuple[Dict[str, Any], int]:
+        return {
+            "ok": ok,
+            "messageId": event_id,
+            "moderation": {"allowed": True, "score": moderation_score},
+            "queue": queue_result,
+            "action_executed": action_executed,
+            "conversation": {"id": conversation_id, "status": status},
+            "reply_text": text,
+            "tts": tts_payload(text, language=str(self.body.get("language") or "pt-BR")),
+            **extra,
+        }, 200 if ok else 400
+
+    def _compact_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        equipe = task.get("equipe")
+        user = task.get("user")
+        return {
+            "_id": str(task.get("_id") or ""),
+            "descricao": str(task.get("descricao") or "").strip(),
+            "status": str(task.get("status") or "pendente").strip(),
+            "urgencia": task.get("urgencia"),
+            "dataEntrega": task.get("dataEntrega"),
+            "equipe": {"nome": equipe.get("nome")} if isinstance(equipe, dict) else equipe,
+            "user": {"nome": user.get("nome")} if isinstance(user, dict) else user,
+        }
+
+    def _tasks_reply_text(self, tasks: list[Dict[str, Any]]) -> str:
+        if not tasks:
+            return "Nao encontrei tarefas para listar."
+        pieces = [f"Encontrei {len(tasks)} tarefa{'s' if len(tasks) != 1 else ''}."]
+        for idx, task in enumerate(tasks[:5], start=1):
+            equipe = task.get("equipe")
+            equipe_nome = equipe.get("nome") if isinstance(equipe, dict) else None
+            status = self._status_label(str(task.get("status") or "pendente"))
+            team_text = f", equipe {equipe_nome}" if equipe_nome else ""
+            pieces.append(f"{idx}. {self._task_title(task)}, status {status}{team_text}.")
+        pieces.append("Voce pode pedir detalhes, atribuir uma tarefa para voce ou cancelar.")
+        return " ".join(pieces)
+
+    def _teams_reply_text(self, teams: list[Dict[str, Any]]) -> str:
+        if not teams:
+            return "Nao encontrei equipes vinculadas a voce."
+        names = [str(team.get("nome") or "").strip() for team in teams if team.get("nome")]
+        if not names:
+            return f"Voce participa de {len(teams)} equipe{'s' if len(teams) != 1 else ''}."
+        return f"Voce participa de {len(teams)} equipe{'s' if len(teams) != 1 else ''}: {', '.join(names[:8])}."
+
+    def _task_details_reply_text(self, result: Any) -> str:
+        tarefa = (result or {}).get("tarefa") if isinstance(result, dict) else None
+        if not isinstance(tarefa, dict):
+            return "Detalhes carregados."
+        equipe = tarefa.get("equipe")
+        user = tarefa.get("user")
+        parts = [
+            f"Tarefa {self._task_title(tarefa)}",
+            f"status {self._status_label(str(tarefa.get('status') or 'pendente'))}",
+        ]
+        if isinstance(equipe, dict) and equipe.get("nome"):
+            parts.append(f"equipe {equipe.get('nome')}")
+        if isinstance(user, dict) and user.get("nome"):
+            parts.append(f"responsavel {user.get('nome')}")
+        elif not user:
+            parts.append("sem responsavel")
+        detalhes = str(tarefa.get("detalhes") or "").strip()
+        if detalhes:
+            parts.append(f"detalhes: {detalhes[:180]}")
+        return ". ".join(parts) + ". Voce pode pedir outra tarefa, atribuir para voce ou cancelar."
+
+    def _task_title(self, task: Any) -> str:
+        if not isinstance(task, dict):
+            return "sem descricao"
+        return str(task.get("descricao") or task.get("titulo") or "sem descricao").strip()
+
+    def _status_label(self, status: str) -> str:
+        labels = {
+            "pendente": "pendente",
+            "em_andamento": "em andamento",
+            "concluido": "concluida",
+        }
+        return labels.get(status, status.replace("_", " "))
+
+    def _normalize_text(self, text: str) -> str:
+        return " ".join((text or "").strip().lower().split())
+
+    def _is_cancel(self, text: str) -> bool:
+        return any(word in text for word in ("cancelar", "cancele", "sair", "encerrar", "parar"))
+
+    def _task_follow_up_action(self, text: str) -> Optional[str]:
+        if any(word in text for word in ("atribuir", "assumir", "pegar", "para mim")):
+            return "assign"
+        if any(word in text for word in ("detalhe", "detalhes", "informacao", "informacoes", "abrir", "mostrar")):
+            return "details"
+        return None
+
+    def _select_task_from_text(self, text: str, tasks: list[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        number_match = re.search(r"\b(\d{1,2})\b", text)
+        if number_match:
+            idx = int(number_match.group(1)) - 1
+            if 0 <= idx < len(tasks):
+                return tasks[idx]
+        ordinals = {
+            "primeira": 0,
+            "primeiro": 0,
+            "segunda": 1,
+            "segundo": 1,
+            "terceira": 2,
+            "terceiro": 2,
+            "quarta": 3,
+            "quarto": 3,
+            "quinta": 4,
+            "quinto": 4,
+        }
+        for word, idx in ordinals.items():
+            if word in text and idx < len(tasks):
+                return tasks[idx]
+        for task in tasks:
+            title = self._normalize_text(str(task.get("descricao") or ""))
+            if title and (title in text or text in title):
+                return task
+        return None
+
+    def _awaiting_params_response(
+        self,
+        *,
+        event_id: str,
+        moderation_score: float,
+        queue_result: Dict[str, Any],
+        conversation_id: str,
+        command_key: str,
+        missing: list[str],
+        text: str,
+    ) -> Tuple[Dict[str, Any], int]:
+        return {
+            "ok": True,
+            "messageId": event_id,
+            "moderation": {"allowed": True, "score": moderation_score},
+            "queue": queue_result,
+            "action_executed": False,
+            "conversation": {
+                "id": conversation_id,
+                "status": "awaiting_params",
+                "command": command_key,
+                "missing": missing,
+                "next_param": missing[0],
+            },
+            "reply_text": text,
+            "tts": tts_payload(text, language=str(self.body.get("language") or "pt-BR")),
+        }, 200
+
+    def _normalize_param_value(self, param: str, value: str) -> str:
+        raw = (value or "").strip()
+        if param == "status":
+            text = raw.lower()
+            if "andamento" in text:
+                return "em_andamento"
+            if "conclu" in text or "feito" in text or "final" in text:
+                return "concluido"
+            return "pendente"
+        if param == "acao":
+            return "iniciar" if raw.lower().startswith(("i", "come", "start")) else "pausar"
+        return raw
+
+    def _enrich_event_team_context(self, event: Dict[str, Any], content: str) -> None:
+        if event.get("teamId") or event.get("team_id"):
+            return
+        try:
+            match = self.parser.match(content)
+            if match is None:
+                return
+            params = dict(match.params)
+            team_ref = params.get("team_id") or params.get("equipe")
+            if not team_ref:
+                return
+            resolver_params = {"team_id": team_ref}
+            self.assistant._resolve_refs(resolver_params, self.assistant._detect_user_type() or "user")
+            event["teamId"] = resolver_params.get("team_id")
+            if resolver_params.get("_team_label"):
+                event["teamName"] = resolver_params.get("_team_label")
+        except Exception:
+            return
+
+    def _question_for_param(self, param: str) -> str:
+        questions = {
+            "descricao": "Qual é a descrição da tarefa?",
+            "equipe": "Para qual equipe?",
+            "nome": "Qual é o nome?",
+            "task_id": "Qual tarefa? Pode dizer o nome ou descrição.",
+            "team_id": "Qual equipe?",
+            "texto": "Qual texto devo adicionar?",
+            "status": "Qual status? Pendente, em andamento ou concluído?",
+            "acao": "Você quer iniciar ou pausar?",
+            "q": "Qual termo devo buscar?",
+        }
+        return questions.get(param, f"Qual é o valor de {param}?")
+
+    def _error(self, error: str, text: str, status: int, **extra: Any) -> Tuple[Dict[str, Any], int]:
+        return {
+            "ok": False,
+            "error": error,
+            **extra,
+            "reply_text": text,
+            "tts": tts_payload(text, language=str(self.body.get("language") or "pt-BR")),
+        }, status
+
+
+def get_admin_insights(token: str, body: Optional[Dict[str, Any]] = None) -> Tuple[Dict[str, Any], int]:
+    api_base_url = str(
+        (body or {}).get("api_url")
+        or (body or {}).get("api_base_url")
+        or os.getenv("FLOWLY_API_BASE_URL")
+        or "http://localhost:5000/api"
+    ).strip()
+
+    try:
+        me = FlowlyAPIClient(base_url=api_base_url, token=token).me()
+    except Exception:
+        return {"ok": False, "error": "unauthorized", "reply_text": "Autenticação inválida."}, 401
+
+    if str((me or {}).get("tipo") or "").lower() != "admin":
+        return {"ok": False, "error": "forbidden", "reply_text": "Apenas administradores podem ver insights."}, 403
+
+    return {"ok": True, "insights": AnalyticsRepository().aggregate(), "source": "mongodb"}, 200

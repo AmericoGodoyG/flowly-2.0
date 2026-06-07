@@ -8,6 +8,14 @@ const API_BASE_URL =
   (process.env.REACT_APP_API_URL || '').trim() ||
   (isLocalHost ? 'http://localhost:5000/api' : DEFAULT_API_BASE_URL);
 
+const DEFAULT_ASSISTANT_URL = 'https://flowly-assistente-voz-646126851973.southamerica-east1.run.app';
+const ASSISTANT_ENV_URL = (process.env.REACT_APP_ASSISTANT_URL || '').trim().replace(/\/+$/, '');
+const ASSISTANT_BASE_URL =
+  (isLocalHost && (!ASSISTANT_ENV_URL || ASSISTANT_ENV_URL === 'http://localhost:5000')
+    ? 'http://localhost:8080'
+    : ASSISTANT_ENV_URL) ||
+  (isLocalHost ? 'http://localhost:8080' : DEFAULT_ASSISTANT_URL);
+
 export const API_ENDPOINTS = {
   LOGIN: `${API_BASE_URL}/auth/login`,
   REGISTER: `${API_BASE_URL}/auth/registrar`,
@@ -32,6 +40,7 @@ export const API_ENDPOINTS = {
   EQUIPE_MEMBROS: (id) => `${API_BASE_URL}/equipes/${id}/membros`,
 
   ADMIN: `${API_BASE_URL}/admin`,
+  ADMIN_ASSISTANT_INSIGHTS: `${API_BASE_URL}/admin/assistant-insights`,
 
   NOTIFICATIONS: `${API_BASE_URL}/notificacoes`,
   NOTIFICATIONS_COUNT: `${API_BASE_URL}/notificacoes/count`,
@@ -41,6 +50,10 @@ export const API_ENDPOINTS = {
   USERS: `${API_BASE_URL}/users`,
   USER_ME: `${API_BASE_URL}/users/me`,
   USER_ME_PASSWORD: `${API_BASE_URL}/users/me/password`,
+
+  ASSISTANT_HEALTH: `${ASSISTANT_BASE_URL}/health`,
+  ASSISTANT_COMMAND: `${ASSISTANT_BASE_URL}/api/v1/messages`,
+  ASSISTANT_STANDBY: `${ASSISTANT_BASE_URL}/standby`,
 };
 
 export const LOCAL_STORAGE_KEYS = {

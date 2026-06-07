@@ -5,6 +5,8 @@ const User = require('./models/User');
 const { notifyUsers } = require('./utils/notificationService');
 const { setIo, getIo } = require('./utils/socketInstance');
 const { getSignedUrl } = require('./services/storage');
+const { moderateText } = require('./services/nlpModerationService');
+const { saveChatInsight } = require('./services/assistantInsightService');
 
 const setupSocketInteractions = (server) => {
   const io = new Server(server, {
@@ -34,10 +36,42 @@ const setupSocketInteractions = (server) => {
     socket.on('send_message', async (data) => {
       try {
         const { equipeId, userId, texto } = data;
+        const cleanText = String(texto || '').trim();
+
+        const moderation = moderateText(cleanText);
+        if (!moderation.allowed) {
+          socket.emit('message_blocked', {
+            reason: moderation.reason,
+            score: moderation.score,
+            message: 'Mensagem bloqueada por seguranca. Revise o texto e tente novamente.',
+          });
+          return;
+        }
+
+        const equipe = await Equipe.findOne({
+          _id: equipeId,
+          $or: [{ membros: userId }, { createdBy: userId }],
+        }).populate('membros', 'nome email');
+        if (!equipe) {
+          socket.emit('message_blocked', {
+            reason: 'team_access_denied',
+            message: 'Voce nao tem permissao para enviar mensagens nesta equipe.',
+          });
+          return;
+        }
+
+        const sender = await User.findById(userId).select('nome tipo');
+        if (!sender) {
+          socket.emit('message_blocked', {
+            reason: 'invalid_user',
+            message: 'Usuario invalido para envio da mensagem.',
+          });
+          return;
+        }
         
         // Salva a mensagem no DB
         const message = new Message({
-          texto,
+          texto: cleanText,
           user: userId,
           equipe: equipeId
         });
@@ -50,8 +84,9 @@ const setupSocketInteractions = (server) => {
           messageToEmit.user.fotoPerfil = await getSignedUrl(messageToEmit.user.fotoPerfil);
         }
 
-        const equipe = await Equipe.findById(equipeId).populate('membros', 'nome email');
-        const sender = await User.findById(userId).select('nome tipo');
+        saveChatInsight({ message, equipe, userId }).catch((error) => {
+          console.error('Erro ao minerar insight do chat:', error.message);
+        });
 
         if (equipe) {
           const recipientIds = new Set();

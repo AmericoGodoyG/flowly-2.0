@@ -6,11 +6,11 @@ from typing import Any, Dict, Optional
 
 from difflib import SequenceMatcher
 
-from api_client import APIError, FlowlyAPIClient
-from command_parser import CommandParser, Match
-from settings import Settings, get_settings
-from speech_service import SpeechService
-from tts_service import TTSService
+from flowly_assistant.api_client import APIError, FlowlyAPIClient
+from flowly_assistant.command_parser import CommandParser, Match
+from flowly_assistant.settings import Settings, get_settings
+from flowly_assistant.speech_service import SpeechService
+from flowly_assistant.tts_service import TTSService
 
 
 OBJ_ID_RE = re.compile(r"\b[a-fA-F0-9]{24}\b")

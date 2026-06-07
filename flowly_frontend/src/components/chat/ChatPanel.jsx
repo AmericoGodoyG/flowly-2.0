@@ -12,6 +12,7 @@ const ChatPanel = () => {
   const [messages, setMessages] = useState([]);
   const [novaMensagem, setNovaMensagem] = useState('');
   const [socket, setSocket] = useState(null);
+  const [chatError, setChatError] = useState('');
 
   const messagesEndRef = useRef(null);
   const userId = authUtils.getUserId();
@@ -74,6 +75,10 @@ const ChatPanel = () => {
       setMessages((prev) => [...prev, msg]);
     });
 
+    newSocket.on('message_blocked', (payload) => {
+      setChatError(payload?.message || 'Mensagem bloqueada.');
+    });
+
     return () => {
       newSocket.disconnect();
     };
@@ -95,6 +100,7 @@ const ChatPanel = () => {
       texto: novaMensagem,
     });
 
+    setChatError('');
     setNovaMensagem('');
   };
 
@@ -124,6 +130,7 @@ const ChatPanel = () => {
           </div>
 
           <div className="chat-messages">
+            {chatError && <div className="chat-error-message">{chatError}</div>}
             {messages.map((msg, index) => {
               const isMine = msg.user && msg.user._id === userId;
               const userName = msg.user?.nome || 'Usuario';

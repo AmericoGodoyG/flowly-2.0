@@ -123,8 +123,8 @@
 }
 
 .tag-badge {
-  background: rgba(126, 87, 194, 0.2);
-  border: 1px solid rgba(126, 87, 194, 0.4);
+  background: var(--primary-soft);
+  border: 1px solid var(--primary-shadow);
   color: #d1c4e9;
   padding: 4px 12px;
   border-radius: 20px;
@@ -188,19 +188,19 @@
 
 .add-form button {
   padding: 12px 24px;
-  background: linear-gradient(135deg, var(--primary-color), #4527a0);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-deep));
   color: white;
   border: none;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(126, 87, 194, 0.3);
+  box-shadow: 0 4px 10px var(--primary-shadow);
   transition: transform 0.2s;
 }
 
 .add-form button:hover {
   transform: translateY(-2px);
-  background: linear-gradient(135deg, #8e6ee6, #512da8);
+  background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
 }
 
 .comentarios-list {

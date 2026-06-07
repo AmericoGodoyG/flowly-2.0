@@ -89,7 +89,7 @@
 .tarefa-dragging {
   transform: rotate(2deg) scale(1.01);
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-  background: rgba(126, 87, 194, 0.3);
+  background: var(--primary-soft);
   border: 1px solid var(--primary-color);
 }
 
@@ -134,8 +134,8 @@
 .pausar-btn { background: linear-gradient(135deg, #fbc02d, #f57f17); color: #fff; }
 .pausar-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(251,192,45,0.4); }
 
-.finalizar-btn { background: linear-gradient(135deg, var(--primary-color), #4527a0); color: white; }
-.finalizar-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(126,87,194,0.4); }
+.finalizar-btn { background: linear-gradient(135deg, var(--primary-color), var(--primary-deep)); color: white; }
+.finalizar-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px var(--primary-shadow); }
 
 .pdf-btn { background: var(--surface-hover); color: var(--text-primary); border: 1px solid var(--border-color); }
 .pdf-btn:hover { background: var(--card-hover-bg); transform: translateY(-2px); }

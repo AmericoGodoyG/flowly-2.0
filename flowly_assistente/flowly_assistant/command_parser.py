@@ -6,7 +6,7 @@ from typing import Dict, Optional, Tuple
 
 from difflib import SequenceMatcher
 
-from commands import Command, get_commands
+from flowly_assistant.commands import Command, get_commands
 
 
 OBJ_ID_RE = re.compile(r"\b[a-fA-F0-9]{24}\b")
@@ -211,7 +211,7 @@ class CommandParser:
                 if equipe_nome:
                     params["equipe"] = equipe_nome
             descricao = extract_free_text_after(text, ("tarefa", "criar", "adicionar"))
-            if descricao:
+            if descricao and _normalize(descricao) not in {"tarefa", "nova tarefa", "criar tarefa", "adicionar tarefa"}:
                 params["descricao"] = descricao
 
         return params

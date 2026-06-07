@@ -39,7 +39,7 @@ functions-framework --target trigger_http --port 8080
 
 **Test:**
 ```bash
-curl -X POST http://localhost:8080/ \
+curl -X POST http://localhost:8080/assist \
   -H "Content-Type: application/json" \
   -d '{"utterance": "meu perfil", "token": "SEU_TOKEN"}'
 ```
@@ -61,7 +61,7 @@ python main.py --cli
 
 ### HTTP API (Web/Mobile Frontend)
 ```javascript
-const response = await fetch('https://seu-cloud-function/', {
+const response = await fetch('https://seu-cloud-function/assist', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -69,6 +69,20 @@ const response = await fetch('https://seu-cloud-function/', {
     token: 'jwt_token'
   })
 });
+```
+
+No modo REST, o servidor não executa microfone nem `pyttsx3`. O frontend deve tocar a voz usando `reply_text` ou `tts.text`:
+
+```json
+{
+  "ok": true,
+  "reply_text": "Ok. Encontrei 3 itens.",
+  "tts": {
+    "enabled": true,
+    "language": "pt-BR",
+    "text": "Ok. Encontrei 3 itens."
+  }
+}
 ```
 
 ## Arquitetura
@@ -176,7 +190,7 @@ gcloud functions deploy flowly_assistente \
 python test_api.py
 
 # Teste individual
-curl -X POST http://localhost:8080/ \
+curl -X POST http://localhost:8080/assist \
   -H "Content-Type: application/json" \
   -d '{"utterance": "minhas equipes", "token": "TOKEN"}'
 ```
@@ -205,16 +219,99 @@ FLOWLY_DEBUG=false
 
 ```
 flowly_assistente/
+├── flowly_assistant/
+│   ├── assistant_core/
+│   │   ├── rest_assistant.py # Caso de uso REST stateless legado (/assist)
+│   │   └── message_agent.py  # Fluxo REST v1: moderação, comando e fila
+│   ├── assistant.py          # CLI local com voz/microfone
+│   ├── api_client.py         # Cliente da API Flowly
+│   ├── command_parser.py     # NLP / reconhecimento
+│   ├── commands.py           # Lista de comandos
+│   ├── nlp/                  # Moderação e mineração PLN
+│   ├── queues/               # Celery/Redis e publisher de analytics
+│   ├── speech_service.py     # Captura de voz local para CLI
+│   ├── storage/              # Repositório de insights analytics
+│   ├── tts_service.py        # TTS local para CLI
+│   ├── workers/              # Worker use cases
+│   └── settings.py           # Configurações
 ├── main.py                 # Entrypoint (Cloud Fn + CLI)
-├── function.py             # HTTP handler (200+ linhas)
-├── assistant.py            # Lógica da assistente
-├── api_client.py           # Cliente da API Flowly
-├── command_parser.py       # NLP / Reconhecimento
-├── commands.py             # Lista de comandos
+├── function.py             # Adaptador HTTP: /health e /assist
+├── worker.py               # Entrypoint Celery
 ├── requirements.txt        # Dependências
 ├── Dockerfile              # Para Google Cloud Run
 └── API_EXAMPLES.md         # Documentação API
 ```
+
+## API v1 orientada a eventos
+
+Além do endpoint legado `/assist`, o agente expõe a arquitetura pedida para voz/PLN:
+
+- `POST /api/v1/messages`
+  - recebe `userId`, `channelId`, `content`
+  - executa moderação síncrona
+  - publica evento de analytics se a mensagem for segura
+  - classifica comando e aciona a API backend quando houver ação imediata
+
+- `GET /api/v1/admin/insights`
+  - rota protegida para administradores
+  - agrega sentimentos, tópicos e alertas de spam salvos pelo worker
+
+Exemplo:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/messages \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer TOKEN" \
+  -d '{"userId":"123","channelId":"web","content":"minhas tarefas"}'
+```
+
+### Worker de analytics
+
+O armazenamento principal dos insights usa diretamente o MongoDB da aplicação:
+
+```env
+FLOWLY_ANALYTICS_STORAGE=mongodb
+FLOWLY_MONGO_URI=mongodb://localhost:27017/Flowly
+FLOWLY_MONGO_DB=Flowly
+FLOWLY_ANALYTICS_COLLECTION=assistantinsights
+```
+
+O backend `flowly_api` lê a mesma coleção MongoDB pela rota:
+
+```text
+GET /api/admin/assistant-insights
+```
+
+Desenvolvimento sem Redis:
+
+```env
+FLOWLY_ANALYTICS_QUEUE_MODE=local
+```
+
+Produção com Celery/Redis:
+
+```env
+FLOWLY_ANALYTICS_QUEUE_MODE=celery
+FLOWLY_REDIS_URL=redis://localhost:6379/0
+```
+
+```bash
+celery -A worker.celery_app worker --loglevel=INFO
+```
+
+Os modelos reais entram em:
+
+- `flowly_assistant/nlp/moderation.py`
+- `flowly_assistant/nlp/mining.py`
+
+Para gravar em JSONL local em vez do banco da aplicação:
+
+```env
+FLOWLY_ANALYTICS_STORAGE=jsonl
+FLOWLY_ANALYTICS_STORE=data/analytics_events.jsonl
+```
+
+As variáveis `FLOWLY_ANALYTICS_INGEST_URL`, `FLOWLY_ANALYTICS_READ_URL` e `FLOWLY_ANALYTICS_SECRET` ficam apenas como opção futura caso você volte a integrar analytics via endpoint HTTP interno.
 
 ## Voz (Opcional)
 

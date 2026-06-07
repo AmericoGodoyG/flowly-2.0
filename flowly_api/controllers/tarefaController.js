@@ -26,6 +26,31 @@ const assinarAnexosTarefa = async (tarefa) => {
 
 const assinarAnexosTarefas = (tarefas) => Promise.all(tarefas.map(assinarAnexosTarefa));
 
+const getEquipeIdsAcessiveis = async (req) => {
+  const filtroEquipes = req.user.tipo === 'admin'
+    ? { $or: [{ membros: req.user.id }, { createdBy: req.user.id }] }
+    : { membros: req.user.id };
+
+  const equipes = await Equipe.find(filtroEquipes).select('_id');
+  return equipes.map((equipe) => equipe._id);
+};
+
+const montarFiltroTarefasAcessiveis = async (req, filtroBase = {}) => {
+  const equipeIds = await getEquipeIdsAcessiveis(req);
+  if (equipeIds.length === 0) {
+    return null;
+  }
+
+  const filtro = { ...filtroBase };
+  if (filtro.equipe) {
+    const equipePermitida = equipeIds.some((id) => String(id) === String(filtro.equipe));
+    return equipePermitida ? filtro : null;
+  }
+
+  filtro.equipe = { $in: equipeIds };
+  return filtro;
+};
+
 
 // ADMIN creates task for user
 exports.criarTarefa = async (req, res) => {
@@ -33,7 +58,10 @@ exports.criarTarefa = async (req, res) => {
     const { descricao, detalhes, dataEntrega, user, equipe, tempoEstimado, urgencia, tags, subtarefas } = req.body;
     if (!equipe) return res.status(400).json({ erro: 'Equipe é obrigatória' });
 
-    const equipeDoc = await Equipe.findById(equipe).select('membros nome');
+    const equipeDoc = await Equipe.findOne({
+      _id: equipe,
+      $or: [{ membros: req.user.id }, { createdBy: req.user.id }],
+    }).select('membros nome');
     if (!equipeDoc) {
       return res.status(400).json({ erro: 'Equipe inválida' });
     }
@@ -86,9 +114,14 @@ exports.criarTarefa = async (req, res) => {
 exports.listarTarefas = async (req, res) => {
   try {
     const { user, equipe } = req.query;
-    const filtro = {};
-    if (user) filtro.user = user;
-    if (equipe) filtro.equipe = equipe;
+    const filtroBase = {};
+    if (user) filtroBase.user = user;
+    if (equipe) filtroBase.equipe = equipe;
+
+    const filtro = await montarFiltroTarefasAcessiveis(req, filtroBase);
+    if (!filtro) {
+      return res.json([]);
+    }
 
     const tarefas = await Tarefa.find(filtro)
       .populate('user', 'nome')
@@ -105,13 +138,21 @@ exports.editarTarefa = async (req, res) => {
   try {
     const { descricao, detalhes, dataEntrega, user, equipe, tempoEstimado, urgencia, tags } = req.body;
 
-    const tarefaAtual = await Tarefa.findById(req.params.id);
+    const filtroTarefaAtual = await montarFiltroTarefasAcessiveis(req, { _id: req.params.id });
+    if (!filtroTarefaAtual) {
+      return res.status(404).json({ erro: 'Tarefa nÃ£o encontrada' });
+    }
+
+    const tarefaAtual = await Tarefa.findOne(filtroTarefaAtual);
     if (!tarefaAtual) {
       return res.status(404).json({ erro: 'Tarefa não encontrada' });
     }
 
     const equipeAlvo = equipe || tarefaAtual.equipe;
-    const equipeDoc = await Equipe.findById(equipeAlvo).select('membros');
+    const equipeDoc = await Equipe.findOne({
+      _id: equipeAlvo,
+      $or: [{ membros: req.user.id }, { createdBy: req.user.id }],
+    }).select('membros');
     if (!equipeDoc) {
       return res.status(400).json({ erro: 'Equipe inválida' });
     }
@@ -147,8 +188,8 @@ exports.editarTarefa = async (req, res) => {
       dadosAtualizacao.user = userAlvo;
     }
 
-    const tarefaAtualizada = await Tarefa.findByIdAndUpdate(
-      req.params.id,
+    const tarefaAtualizada = await Tarefa.findOneAndUpdate(
+      filtroTarefaAtual,
       dadosAtualizacao,
       { new: true }
     );
@@ -163,7 +204,11 @@ exports.editarTarefa = async (req, res) => {
 // ADMIN: excluir
 exports.excluirTarefa = async (req, res) => {
   try {
-    await Tarefa.findByIdAndDelete(req.params.id);
+    const filtro = await montarFiltroTarefasAcessiveis(req, { _id: req.params.id });
+    if (!filtro) return res.status(404).json({ erro: 'Tarefa nÃ£o encontrada' });
+
+    const tarefa = await Tarefa.findOneAndDelete(filtro);
+    if (!tarefa) return res.status(404).json({ erro: 'Tarefa nÃ£o encontrada' });
     res.json({ msg: 'Tarefa excluída' });
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao excluir tarefa' });
@@ -173,7 +218,10 @@ exports.excluirTarefa = async (req, res) => {
 // ALL: get task details with comments and logs
 exports.detalhesTarefa = async (req, res) => {
   try {
-    const tarefa = await Tarefa.findById(req.params.id)
+    const filtro = await montarFiltroTarefasAcessiveis(req, { _id: req.params.id });
+    if (!filtro) return res.status(404).json({ erro: 'Tarefa nÃ£o encontrada' });
+
+    const tarefa = await Tarefa.findOne(filtro)
       .populate('user', 'nome')
       .populate('equipe', 'nome');
 
@@ -194,6 +242,11 @@ exports.adicionarComentario = async (req, res) => {
     const { texto } = req.body;
     if (!texto) return res.status(400).json({ erro: 'Texto do comentário vazio' });
 
+    const filtro = await montarFiltroTarefasAcessiveis(req, { _id: req.params.id });
+    if (!filtro) return res.status(404).json({ erro: 'Tarefa nÃ£o encontrada' });
+    const tarefa = await Tarefa.findOne(filtro).select('_id');
+    if (!tarefa) return res.status(404).json({ erro: 'Tarefa nÃ£o encontrada' });
+
     const comentario = new Comment({ texto, user: req.user.id, tarefa: req.params.id });
     await comentario.save();
 
@@ -212,7 +265,10 @@ exports.adicionarSubtarefa = async (req, res) => {
     const { descricao } = req.body;
     if (!descricao) return res.status(400).json({ erro: 'Obrigatório fornecer descrição' });
 
-    const tarefa = await Tarefa.findById(req.params.id);
+    const filtro = await montarFiltroTarefasAcessiveis(req, { _id: req.params.id });
+    if (!filtro) return res.status(404).json({ erro: 'Tarefa nÃ£o encontrada' });
+
+    const tarefa = await Tarefa.findOne(filtro);
     if (!tarefa) return res.status(404).json({ erro: 'Tarefa não encontrada' });
 
     tarefa.subtarefas.push({ descricao, concluida: false });
@@ -229,7 +285,10 @@ exports.adicionarSubtarefa = async (req, res) => {
 exports.toggleSubtarefa = async (req, res) => {
   try {
     const { subId } = req.params;
-    const tarefa = await Tarefa.findById(req.params.id);
+    const filtro = await montarFiltroTarefasAcessiveis(req, { _id: req.params.id });
+    if (!filtro) return res.status(404).json({ erro: 'Tarefa nÃ£o encontrada' });
+
+    const tarefa = await Tarefa.findOne(filtro);
     if (!tarefa) return res.status(404).json({ erro: 'Tarefa não encontrada' });
 
     const sub = tarefa.subtarefas.id(subId);
@@ -247,8 +306,15 @@ exports.toggleSubtarefa = async (req, res) => {
 // USER: view their own tasks
 exports.minhasTarefas = async (req, res) => {
   try {
-    const tarefas = await Tarefa.find({ user: req.user.id })
-      .populate('equipe', 'nome');
+    const filtro = await montarFiltroTarefasAcessiveis(req);
+    if (!filtro) {
+      return res.json([]);
+    }
+
+    const tarefas = await Tarefa.find(filtro)
+      .populate('user', 'nome')
+      .populate('equipe', 'nome')
+      .sort({ urgencia: -1, dataEntrega: 1 });
     res.json(await assinarAnexosTarefas(tarefas));
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao buscar suas tarefas' });
@@ -281,7 +347,10 @@ exports.listarBacklog = async (req, res) => {
 // USER: atribuir tarefa do backlog para si mesmo
 exports.atribuirParaMim = async (req, res) => {
   try {
-    const tarefa = await Tarefa.findById(req.params.id);
+    const filtro = await montarFiltroTarefasAcessiveis(req, { _id: req.params.id });
+    if (!filtro) return res.status(404).json({ erro: 'Tarefa nÃ£o encontrada' });
+
+    const tarefa = await Tarefa.findOne(filtro);
     if (!tarefa) {
       return res.status(404).json({ erro: 'Tarefa não encontrada' });
     }
@@ -423,7 +492,10 @@ exports.controlarCronometro = async (req, res) => {
 // ALL: Upload de anexos
 exports.adicionarAnexo = async (req, res) => {
   try {
-    const tarefa = await Tarefa.findById(req.params.id);
+    const filtro = await montarFiltroTarefasAcessiveis(req, { _id: req.params.id });
+    if (!filtro) return res.status(404).json({ erro: 'Tarefa nÃ£o encontrada' });
+
+    const tarefa = await Tarefa.findOne(filtro);
     if (!tarefa) return res.status(404).json({ erro: 'Tarefa não encontrada' });
 
     if (!req.file) {

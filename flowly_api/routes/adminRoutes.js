@@ -4,6 +4,11 @@ const Usuario = require("../models/User.js");
 const Equipe = require("../models/Equipe.js");
 const Tarefa = require("../models/Tarefa.js");
 const verificarToken = require('../middlewares/auth.js');
+const { isAdmin } = require('../middlewares/roles.js');
+const {
+  ingestAssistantInsight,
+  getAssistantInsights,
+} = require('../controllers/assistantInsightController.js');
 
 // [GET] /api/admin/metricas
 router.get("/metricas", verificarToken, async (req, res) => {
@@ -31,5 +36,13 @@ router.get("/metricas", verificarToken, async (req, res) => {
     res.status(500).json({ mensagem: "Erro ao carregar métricas" });
   }
 });
+
+// [POST] /api/admin/assistant-insights/ingest
+// Rota interna usada pelo agente de voz/PLN para persistir analytics no MongoDB da aplicação.
+router.post("/assistant-insights/ingest", ingestAssistantInsight);
+
+// [GET] /api/admin/assistant-insights
+// Rota protegida para administradores consumirem os agregados de PLN.
+router.get("/assistant-insights", verificarToken, isAdmin, getAssistantInsights);
 
 module.exports = router;
