@@ -9,9 +9,11 @@ const {
   issueFaceSessionToken,
 } = require('../utils/faceAuth');
 
+const CURRENT_TERMS_VERSION = '2026-06-08';
+
 exports.registrar = async (req, res) => {
   try {
-    const { nome, email, senha, tipo } = req.body;
+    const { nome, email, senha, tipo, termsAccepted, termsVersion } = req.body;
 
     const passwordValidationResult = validatePassword(senha);
 
@@ -19,9 +21,24 @@ exports.registrar = async (req, res) => {
       return res.status(400).json({ erro: passwordValidationResult });
     }
 
+    if (termsAccepted !== true) {
+      return res.status(400).json({
+        erro: 'Para criar a conta, leia e aceite os Termos de Uso e a Política de Privacidade.',
+      });
+    }
+
     const hash = await argon2.hash(senha);
     
-    const novoUsuario = new User({ nome, email, senha: hash, tipo });
+    const novoUsuario = new User({
+      nome,
+      email,
+      senha: hash,
+      tipo,
+      termsAccepted: true,
+      termsAcceptedAt: new Date(),
+      termsVersion: termsVersion || CURRENT_TERMS_VERSION,
+      termsAcceptedIp: req.ip || req.headers['x-forwarded-for'] || '',
+    });
     await novoUsuario.save();
 
     // Enviar código de verificação por email após registro bem-sucedido
