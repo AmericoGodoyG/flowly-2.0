@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import apiClient, { getFullApiUrl } from "../../config/apiClient";
 import { API_ENDPOINTS } from "../../config/config";
 import { Link } from "react-router-dom";
-import "../../styles/pages/admin/DashboardAdmin.css"; 
+import "../../styles/pages/admin/DashboardAdmin.css";
 import Sidebar from "../../components/layout/Sidebar";
 
 function DashboardAdmin() {
@@ -37,7 +37,7 @@ function DashboardAdmin() {
 
   useEffect(() => {
     const nomeSalvo = localStorage.getItem("nome");
-      if (nomeSalvo) setAdminNome(nomeSalvo);
+    if (nomeSalvo) setAdminNome(nomeSalvo);
     const fetchEquipes = async () => {
       try {
         const res = await apiClient.get(API_ENDPOINTS.EQUIPES);
