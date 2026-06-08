@@ -78,7 +78,8 @@ function PerfilUser() {
       setArquivoFoto(null);
       setMensagemPerfil('Perfil atualizado com sucesso.');
     } catch (error) {
-      setErro(error?.response?.data?.erro || 'Erro ao atualizar perfil.');
+      const data = error?.response?.data || {};
+      setErro(data.debug || data.detalhe || data.erro || data.error || 'Erro ao atualizar perfil.');
     } finally {
       setSavingPerfil(false);
     }
