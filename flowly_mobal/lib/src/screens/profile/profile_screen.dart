@@ -184,6 +184,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 12),
                   _buildMenuTile(
+                    icon: Icons.face_retouching_natural,
+                    title: 'Verificação facial',
+                    subtitle: 'Cadastrar rosto para login seguro',
+                    onTap: () => context.go('/perfil/verificacao-facial'),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildMenuTile(
                     icon: Icons.info,
                     title: 'Sobre',
                     subtitle: 'Versão 1.0.0',

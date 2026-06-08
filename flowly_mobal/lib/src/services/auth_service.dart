@@ -23,6 +23,31 @@ class AuthService {
       );
 
       final Map<String, dynamic> data = response.data ?? <String, dynamic>{};
+
+      if (data['requiresFaceVerification'] == true) {
+        final Map<String, dynamic> user = _extractUserMap(data);
+        return AuthResult(
+          success: false,
+          message: 'Verificação facial necessária.',
+          requiresFaceVerification: true,
+          faceSessionToken: (data['faceSessionToken'] ?? '').toString(),
+          name: _extractName(data, user),
+          userType: _extractUserType(data, user, ''),
+        );
+      }
+
+      if (data['requiresFaceEnrollmentOffer'] == true) {
+        final Map<String, dynamic> user = _extractUserMap(data);
+        return AuthResult(
+          success: false,
+          message: 'Cadastro facial opcional disponível.',
+          requiresFaceEnrollmentOffer: true,
+          faceSessionToken: (data['faceSessionToken'] ?? '').toString(),
+          name: _extractName(data, user),
+          userType: _extractUserType(data, user, ''),
+        );
+      }
+
       final String token = (data['token'] ?? '').toString();
       final Map<String, dynamic> user = _extractUserMap(data);
       final String name = _extractName(data, user);
@@ -200,6 +225,29 @@ class AuthService {
     return const AuthResult(
       success: false,
       message: 'Reenvio de código não está habilitado nesta API.',
+    );
+  }
+
+  Future<void> persistAuthSession({
+    required String token,
+    required String email,
+    required String userType,
+    String? userId,
+    String? name,
+    String? fotoPerfil,
+  }) async {
+    await _storage.write(key: StorageKeys.jwtToken, value: token);
+    await _storage.write(key: StorageKeys.userEmail, value: email);
+    await _storage.write(key: StorageKeys.userType, value: userType);
+    if (userId != null && userId.isNotEmpty) {
+      await _storage.write(key: StorageKeys.userId, value: userId);
+    }
+    if (name != null && name.isNotEmpty) {
+      await _storage.write(key: StorageKeys.userName, value: name);
+    }
+    await _storage.write(
+      key: StorageKeys.userPhoto,
+      value: fotoPerfil ?? '',
     );
   }
 

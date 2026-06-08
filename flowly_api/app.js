@@ -12,12 +12,14 @@ const adminRoutes = require('./routes/adminRoutes');
 const userRoutes = require('./routes/userRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const storageRoutes = require('./routes/storageRoutes');
+const faceRoutes = require('./routes/faceRoutes');
 
 const app = express();
 
 // Middleware
 app.use(cors({ origin: config.corsOrigin }));
-app.use(express.json());
+app.use(express.json({ limit: config.bodySizeLimit }));
+app.use(express.urlencoded({ extended: true, limit: config.bodySizeLimit }));
 
 const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -30,6 +32,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notificacoes', notificationRoutes);
 app.use('/api/storage', storageRoutes);
+app.use('/api/face', faceRoutes);
 
 // 404 Handler
 app.use((req, res) => {

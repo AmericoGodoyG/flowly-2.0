@@ -60,4 +60,6 @@ export const getApiPublicUrl = () => API_PUBLIC_URL;
 
 export const getApiBaseUrl = () => API_BASE_URL;
 
+export const FACE_API_TIMEOUT_MS = 120000;
+
 export default apiClient;

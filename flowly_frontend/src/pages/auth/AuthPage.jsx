@@ -9,6 +9,7 @@ import {
 } from "react-icons/fa";
 import LightRays from "../../components/backgrounds/LightRays";
 import CurvedLoop from "../../components/text/CurvedLoop";
+import FaceAuthStep from "../../components/face/FaceAuthStep";
 import "../../styles/pages/auth/Auth.css";
 
 function AuthPage() {
@@ -76,6 +77,11 @@ function AuthPage() {
   const [regLoading, setRegLoading] = useState(false);
   const [mostrarSenhaReg, setMostrarSenhaReg] = useState(false);
 
+  // Face auth state
+  const [faceStep, setFaceStep] = useState(null);
+  const [faceSessionToken, setFaceSessionToken] = useState("");
+  const [pendingUser, setPendingUser] = useState(null);
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -109,6 +115,20 @@ function AuthPage() {
     }, 350);
   };
 
+  const redirectAfterLogin = (user) => {
+    if (user.tipo === "admin") {
+      window.location.href = "/admin";
+    } else {
+      window.location.href = "/dashboard";
+    }
+  };
+
+  const resetFaceStep = () => {
+    setFaceStep(null);
+    setFaceSessionToken("");
+    setPendingUser(null);
+  };
+
   // Login handler
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -121,17 +141,41 @@ function AuthPage() {
         senha: loginSenha,
       });
 
-      authUtils.saveAuthData(res.data.token, res.data.user);
-
-      if (res.data.user.tipo === "admin") {
-        window.location.href = "/admin";
-      } else {
-        window.location.href = "/dashboard";
+      if (res.data.requiresFaceVerification) {
+        setFaceStep("verify");
+        setFaceSessionToken(res.data.faceSessionToken);
+        setPendingUser(res.data.user);
+        return;
       }
+
+      if (res.data.requiresFaceEnrollmentOffer) {
+        setFaceStep("enroll");
+        setFaceSessionToken(res.data.faceSessionToken);
+        setPendingUser(res.data.user);
+        return;
+      }
+
+      authUtils.saveAuthData(res.data.token, res.data.user);
+      redirectAfterLogin(res.data.user);
     } catch (err) {
-      setLoginErro(
-        err.response?.data?.error || err.response?.data?.erro || "Erro ao fazer login"
-      );
+      const errorMessage =
+        err.response?.data?.error || err.response?.data?.erro || "Erro ao fazer login";
+      const redirectTo = err.response?.data?.redirectTo;
+
+      if (redirectTo) {
+        navigate(redirectTo, { replace: true });
+        return;
+      }
+
+      if (
+        errorMessage.toLowerCase().includes("usuário não verificado") ||
+        errorMessage.toLowerCase().includes("usuario nao verificado")
+      ) {
+        navigate(`/verificar-2fa?email=${encodeURIComponent(loginEmail)}`, { replace: true });
+        return;
+      }
+
+      setLoginErro(errorMessage);
     } finally {
       setLoginLoading(false);
     }
@@ -191,7 +235,17 @@ function AuthPage() {
 
         {/* ========== FORM CAROUSEL ========== */}
         <div className={`auth-carousel-wrapper ${slideDirection}`}>
-          {!isRegistering ? (
+          {faceStep ? (
+            <div className="auth-form-container">
+              <FaceAuthStep
+                mode={faceStep}
+                faceSessionToken={faceSessionToken}
+                user={pendingUser}
+                onComplete={redirectAfterLogin}
+                onCancel={resetFaceStep}
+              />
+            </div>
+          ) : !isRegistering ? (
             /* ========== LOGIN FORM ========== */
             <div className="auth-form-container">
               <div className="auth-header">

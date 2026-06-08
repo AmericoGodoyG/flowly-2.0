@@ -1,10 +1,13 @@
 const User = require('../models/User');
+const FaceProfile = require('../models/FaceProfile');
 const argon2 = require('argon2');
-const jwt = require('jsonwebtoken');
-const config = require('../config/config');
 const validatePassword = require('../utils/validatePassword.js');
 const { enviarCodigoVerificacaoEmail } = require('./emailController');
-const { getSignedUrl } = require('../services/storage');
+const {
+  buildUserPayload,
+  issueAuthToken,
+  issueFaceSessionToken,
+} = require('../utils/faceAuth');
 
 exports.registrar = async (req, res) => {
   try {
@@ -55,16 +58,41 @@ exports.login = async (req, res) => {
       });
     }
 
-    const token = jwt.sign({ id: user._id, tipo: user.tipo }, config.jwt.secret, { expiresIn: '1d' });
+    if (user.tipo === 'admin') {
+      return res.json({
+        token: issueAuthToken(user),
+        user: await buildUserPayload(user),
+      });
+    }
+
+    const faceProfile = await FaceProfile.findOne({ userId: user._id, enrolled: true });
+
+    if (faceProfile) {
+      const faceSessionToken = issueFaceSessionToken(user._id, 'face_verify');
+      return res.json({
+        requiresFaceVerification: true,
+        faceSessionToken,
+        user: await buildUserPayload(user),
+      });
+    }
+
+    if (!user.faceEnrollmentOffered && !user.faceEnrollmentSkipped) {
+      user.faceEnrollmentOffered = true;
+      await user.save();
+
+      const faceSessionToken = issueFaceSessionToken(user._id, 'face_enroll');
+      return res.json({
+        requiresFaceEnrollmentOffer: true,
+        faceSessionToken,
+        user: await buildUserPayload(user),
+      });
+    }
+
+    const token = issueAuthToken(user);
 
     res.json({
       token,
-      user: {
-        id: user._id,
-        nome: user.nome,
-        tipo: user.tipo,
-        fotoPerfil: await getSignedUrl(user.fotoPerfil),
-      },
+      user: await buildUserPayload(user),
     });
     
   } catch (err) {

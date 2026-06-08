@@ -52,7 +52,9 @@ exports.searchUsers = async (req, res) => {
 
 exports.me = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('nome email tipo fotoPerfil');
+    const user = await User.findById(req.user.id).select(
+      'nome email tipo fotoPerfil faceEnrollmentOffered faceEnrollmentSkipped'
+    );
 
     if (!user) {
       return res.status(404).json({ erro: 'Usuario nao encontrado' });

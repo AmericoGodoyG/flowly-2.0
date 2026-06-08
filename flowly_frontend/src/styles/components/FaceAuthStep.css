@@ -1,0 +1,30 @@
+.face-auth-step {
+  width: 100%;
+}
+
+.face-auth-header h2 {
+  margin-bottom: 8px;
+}
+
+.face-auth-header p {
+  margin-top: 0;
+  margin-bottom: 16px;
+  opacity: 0.85;
+}
+
+.face-auth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.face-profile-section .face-profile-desc {
+  margin-top: 0;
+  margin-bottom: 16px;
+  opacity: 0.85;
+}
+
+.face-profile-section button {
+  margin-top: 12px;
+}
