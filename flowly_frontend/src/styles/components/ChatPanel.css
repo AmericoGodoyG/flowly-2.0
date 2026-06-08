@@ -204,6 +204,15 @@
   margin-left: 4px;
 }
 
+.message-time {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  margin-left: 6px;
+  margin-right: 6px;
+  opacity: 0.75;
+}
+
 .message-bubble {
   max-width: 100%;
   padding: 12px 16px;
