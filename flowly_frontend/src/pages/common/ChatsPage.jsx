@@ -14,6 +14,7 @@ const ChatsPage = () => {
   const [loadingEquipes, setLoadingEquipes] = useState(true);
   const [loadingMensagens, setLoadingMensagens] = useState(false);
   const [erro, setErro] = useState('');
+  const [blockedPopup, setBlockedPopup] = useState('');
 
   const socketRef = useRef(null);
   const endRef = useRef(null);
@@ -100,7 +101,7 @@ const ChatsPage = () => {
     });
 
     socket.on('message_blocked', (payload) => {
-      setErro(payload?.message || 'Mensagem bloqueada.');
+      setBlockedPopup(payload?.message || 'Mensagem bloqueada.');
     });
 
     loadHistory();
@@ -127,15 +128,28 @@ const ChatsPage = () => {
       texto,
     });
 
-    setErro('');
     setNovaMensagem('');
   };
+
+  useEffect(() => {
+    if (!blockedPopup) return undefined;
+    const timeout = setTimeout(() => setBlockedPopup(''), 4500);
+    return () => clearTimeout(timeout);
+  }, [blockedPopup]);
 
   return (
     <div className="chats-page">
       <Sidebar />
 
       <main className="chats-content">
+        {blockedPopup && (
+          <div className="chat-blocked-popup page" role="alert">
+            <strong>Mensagem bloqueada</strong>
+            <span>{blockedPopup}</span>
+            <button type="button" onClick={() => setBlockedPopup('')} aria-label="Fechar aviso">x</button>
+          </div>
+        )}
+
         <div className="chats-header">
           <h2>Chats</h2>
           <p>Converse com os membros das equipes em um lugar unificado.</p>

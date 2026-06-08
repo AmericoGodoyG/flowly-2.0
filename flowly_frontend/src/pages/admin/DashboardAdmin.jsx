@@ -77,8 +77,9 @@ function DashboardAdmin() {
     }
   };
 
-  const sentiments = insights?.sentiments || {};
   const recentInsights = insights?.recent || [];
+  const chatSummaries = insights?.chatSummaries || insights?.byTeam || [];
+  const badActors = insights?.badActors || [];
 
   return (
     <div className="admin-page">
@@ -172,11 +173,11 @@ function DashboardAdmin() {
             <div className="insights-tabs">
               {[
                 ["resumo", "Resumo"],
-                ["sentimentos", "Sentimentos"],
+                ["chats", "Chats"],
                 ["topicos", "Tópicos"],
                 ["equipes", "Equipes"],
                 ["alertas", "Alertas"],
-              ].map(([key, label]) => (
+              ].filter(([key]) => key !== "topicos").map(([key, label]) => (
                 <button
                   key={key}
                   type="button"
@@ -219,14 +220,37 @@ function DashboardAdmin() {
                   </>
                 )}
 
-                {insightsTab === "sentimentos" && (
-                  <div className="insights-list">
-                    {["positivo", "neutro", "negativo"].map((sentiment) => (
-                      <div key={sentiment} className="insight-row">
-                        <span>{sentiment}</span>
-                        <strong>{sentiments[sentiment] || 0}</strong>
-                      </div>
-                    ))}
+                {insightsTab === "chats" && (
+                  <div className="team-insights-list">
+                    {chatSummaries.length === 0 ? (
+                      <p className="insights-feedback">Nenhum assunto de chat nos ultimos dias.</p>
+                    ) : (
+                      chatSummaries.map((team) => (
+                        <article key={team.channelId} className="team-insight-card">
+                          <div className="team-insight-header">
+                            <div>
+                              <span>Ultimos {insights?.chatWindowDays || 7} dias</span>
+                              <h4>{team.teamName}</h4>
+                            </div>
+                            <strong>{team.totalMessages} msg</strong>
+                          </div>
+                          <div className="team-insight-topics">
+                            {(team.topTopics || []).length === 0 ? (
+                              <span>Sem topicos recorrentes</span>
+                            ) : (
+                              team.topTopics.map((topic) => (
+                                <span key={topic.topic}>{topic.topic} · {topic.count}</span>
+                              ))
+                            )}
+                          </div>
+                          <div className="insight-suggestions compact">
+                            {(team.suggestions || []).map((suggestion) => (
+                              <p key={suggestion}>{suggestion}</p>
+                            ))}
+                          </div>
+                        </article>
+                      ))
+                    )}
                   </div>
                 )}
 
@@ -283,16 +307,31 @@ function DashboardAdmin() {
 
                 {insightsTab === "alertas" && (
                   <div className="insights-list">
+                    {badActors.length > 0 && (
+                      <>
+                        {badActors.map((actor) => (
+                          <div key={`${actor.channelId}-${actor.userId}`} className="insight-message spam">
+                            <div>
+                              <strong>{actor.userName}</strong>
+                              <span>{actor.teamName} · {actor.count} ocorrências</span>
+                            </div>
+                            <p>{actor.recommendation}</p>
+                            <p>Risco: {Math.round((actor.conflictRisk || 0) * 100)}%</p>
+                          </div>
+                        ))}
+                      </>
+                    )}
                     {recentInsights.length === 0 ? (
-                      <p className="insights-feedback">Nenhuma mensagem recente.</p>
+                      badActors.length === 0 && <p className="insights-feedback">Nenhum alerta importante detectado.</p>
                     ) : (
                       recentInsights.map((item) => (
-                        <div key={item._id} className={`insight-message ${item.spamAlert ? "spam" : ""}`}>
+                        <div key={item._id} className={`insight-message ${item.spamAlert || item.alertLevel === "high" ? "spam" : ""}`}>
                           <div>
-                            <strong>{item.sentiment}</strong>
+                            <strong>{item.alertLevel || item.sentiment}</strong>
                             <span>{item.channelId} · {new Date(item.createdAt).toLocaleString()}</span>
                           </div>
                           <p>{item.content}</p>
+                          {item.recommendation && <p>{item.recommendation}</p>}
                         </div>
                       ))
                     )}

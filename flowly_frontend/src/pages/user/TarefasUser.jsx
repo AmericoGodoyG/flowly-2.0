@@ -9,11 +9,14 @@ import '../../styles/pages/user/TarefasUser.css';
 
 const TarefasUser = () => {
   const [tarefas, setTarefas] = useState([]);
+  const [equipes, setEquipes] = useState([]);
+  const [equipeSelecionada, setEquipeSelecionada] = useState('');
   const [mensagem, setMensagem] = useState('');
   const [tarefaInspecionada, setTarefaInspecionada] = useState(null);
 
   useEffect(() => {
     carregarTarefas();
+    carregarEquipes();
   }, []);
 
   const carregarTarefas = async () => {
@@ -22,6 +25,18 @@ const TarefasUser = () => {
       setTarefas(response.data);
     } catch (error) {
       setMensagem('Erro ao carregar tarefas');
+    }
+  };
+
+  const carregarEquipes = async () => {
+    try {
+      const response = await apiClient.get(API_ENDPOINTS.MINHAS_EQUIPES);
+      const equipesRecebidas = Array.isArray(response.data) ? response.data : [];
+
+      setEquipes(equipesRecebidas);
+      setEquipeSelecionada((atual) => atual || equipesRecebidas[0]?._id || '');
+    } catch (error) {
+      setMensagem('Erro ao carregar equipes');
     }
   };
 
@@ -84,6 +99,15 @@ const TarefasUser = () => {
     { id: 'concluido', titulo: 'Concluído' }
   ];
 
+  const tarefasDaEquipeSelecionada = equipeSelecionada
+    ? tarefas.filter((tarefa) => {
+        const equipeId = tarefa.equipe?._id || tarefa.equipe;
+        return String(equipeId) === String(equipeSelecionada);
+      })
+    : [];
+
+  const equipeAtual = equipes.find((equipe) => String(equipe._id) === String(equipeSelecionada));
+
   const getDragStyle = (isDragging, draggableStyle) => ({
     ...draggableStyle,
     ...(isDragging
@@ -101,12 +125,40 @@ const TarefasUser = () => {
       <div className="tarefas-content">
         <div className="tarefas-container">
         <h2>O seu Painel Kanban de Tarefas</h2>
+        <div className="kanban-toolbar">
+          <div className="kanban-team-field">
+            <label htmlFor="kanban-equipe-select">Equipe</label>
+            <select
+              id="kanban-equipe-select"
+              className="kanban-team-select"
+              value={equipeSelecionada}
+              onChange={(event) => setEquipeSelecionada(event.target.value)}
+              disabled={equipes.length === 0}
+            >
+              {equipes.length === 0 ? (
+                <option value="">Nenhuma equipe disponivel</option>
+              ) : (
+                equipes.map((equipe) => (
+                  <option key={equipe._id} value={equipe._id}>
+                    {equipe.nome}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
+
+          <span className="kanban-team-summary">
+            {equipeAtual
+              ? `${tarefasDaEquipeSelecionada.length} tarefa${tarefasDaEquipeSelecionada.length === 1 ? '' : 's'} em ${equipeAtual.nome}`
+              : 'Entre em uma equipe para visualizar o Kanban'}
+          </span>
+        </div>
         {mensagem && <div className={`mensagem ${mensagem.includes('sucesso') ? 'sucesso' : mensagem.includes('Atenção') ? 'alerta' : 'erro'}`}>{mensagem}</div>}
         
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="kanban-board">
             {colunas.map((coluna) => {
-              const tarefasDaColuna = tarefas.filter(t => t.status === coluna.id);
+              const tarefasDaColuna = tarefasDaEquipeSelecionada.filter(t => t.status === coluna.id);
 
               return (
                 <Droppable key={coluna.id} droppableId={coluna.id}>

@@ -41,6 +41,7 @@
   overflow: hidden;
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   color: var(--text-primary);
+  position: relative;
 }
 
 @keyframes slideUp {
@@ -101,14 +102,43 @@
   gap: 12px;
 }
 
-.chat-error-message {
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 99, 132, 0.45);
-  background: rgba(255, 99, 132, 0.14);
-  color: #ffd7df;
+.chat-blocked-popup {
+  position: absolute;
+  top: 76px;
+  left: 16px;
+  right: 16px;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 10px;
+  align-items: start;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 99, 132, 0.5);
+  background: rgba(66, 12, 28, 0.94);
+  color: #ffe7ec;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.chat-blocked-popup strong,
+.chat-blocked-popup span {
+  min-width: 0;
+}
+
+.chat-blocked-popup span {
+  grid-column: 1 / 2;
   font-size: 0.86rem;
   line-height: 1.35;
+}
+
+.chat-blocked-popup button {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 800;
 }
 
 .message-wrapper {

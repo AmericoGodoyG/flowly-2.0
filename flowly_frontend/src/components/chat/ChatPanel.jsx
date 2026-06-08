@@ -12,7 +12,7 @@ const ChatPanel = () => {
   const [messages, setMessages] = useState([]);
   const [novaMensagem, setNovaMensagem] = useState('');
   const [socket, setSocket] = useState(null);
-  const [chatError, setChatError] = useState('');
+  const [blockedPopup, setBlockedPopup] = useState('');
 
   const messagesEndRef = useRef(null);
   const userId = authUtils.getUserId();
@@ -76,7 +76,7 @@ const ChatPanel = () => {
     });
 
     newSocket.on('message_blocked', (payload) => {
-      setChatError(payload?.message || 'Mensagem bloqueada.');
+      setBlockedPopup(payload?.message || 'Mensagem bloqueada.');
     });
 
     return () => {
@@ -100,9 +100,14 @@ const ChatPanel = () => {
       texto: novaMensagem,
     });
 
-    setChatError('');
     setNovaMensagem('');
   };
+
+  useEffect(() => {
+    if (!blockedPopup) return undefined;
+    const timeout = setTimeout(() => setBlockedPopup(''), 4500);
+    return () => clearTimeout(timeout);
+  }, [blockedPopup]);
 
   if (equipes.length === 0) return null;
 
@@ -116,6 +121,13 @@ const ChatPanel = () => {
 
       {isOpen && (
         <div className="chat-window">
+          {blockedPopup && (
+            <div className="chat-blocked-popup" role="alert">
+              <strong>Mensagem bloqueada</strong>
+              <span>{blockedPopup}</span>
+              <button type="button" onClick={() => setBlockedPopup('')} aria-label="Fechar aviso">x</button>
+            </div>
+          )}
           <div className="chat-header">
             <select
               value={selectedEquipe}
@@ -130,7 +142,6 @@ const ChatPanel = () => {
           </div>
 
           <div className="chat-messages">
-            {chatError && <div className="chat-error-message">{chatError}</div>}
             {messages.map((msg, index) => {
               const isMine = msg.user && msg.user._id === userId;
               const userName = msg.user?.nome || 'Usuario';

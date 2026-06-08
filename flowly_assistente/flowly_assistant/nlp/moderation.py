@@ -24,7 +24,7 @@ class ModerationService:
             re.compile(pattern, re.IGNORECASE)
             for pattern in (
                 r"\b(matar|espancar|viol[eê]ncia|amea[cç]a)\b",
-                r"\b(filho da puta|idiota|burro|lixo)\b",
+                r"\b(filho da puta|idiota|burro|lixo|bosta|merda)\b",
                 r"\b(spam|promo[cç][aã]o imperd[ií]vel|clique aqui)\b",
             )
         ]

@@ -26,11 +26,113 @@
 
 .tarefas-container h2 {
   color: var(--text-primary);
-  margin-bottom: 30px;
+  margin-bottom: 18px;
   text-align: center;
   font-size: 2.2rem;
   font-weight: 800;
   text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.kanban-toolbar {
+  width: min(760px, 100%);
+  margin: 0 auto 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 18px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary-color) 10%, transparent), transparent 54%),
+    var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  box-shadow: var(--glass-shadow);
+}
+
+.kanban-team-field {
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.kanban-team-field label {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.kanban-team-select {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 44px 0 14px;
+  color: var(--text-primary);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary-color) 14%, transparent), transparent 62%),
+    var(--dropdown-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.96rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 24px rgba(0, 0, 0, 0.16);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.kanban-team-field::after {
+  content: "";
+  position: absolute;
+  right: 15px;
+  bottom: 15px;
+  width: 9px;
+  height: 9px;
+  pointer-events: none;
+  border-right: 2px solid var(--primary-color);
+  border-bottom: 2px solid var(--primary-color);
+  transform: rotate(45deg);
+  opacity: 0.9;
+}
+
+.kanban-team-select:hover:not(:disabled) {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary-color) 20%, transparent), transparent 62%),
+    var(--surface-hover);
+  border-color: var(--border-hover);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 28px var(--primary-shadow);
+  transform: translateY(-1px);
+}
+
+.kanban-team-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-soft), 0 12px 28px var(--primary-shadow);
+}
+
+.kanban-team-select:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.kanban-team-select option {
+  color: var(--text-primary);
+  background: var(--dropdown-bg);
+  font-weight: 600;
+}
+
+.kanban-team-summary {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: right;
+  max-width: 320px;
 }
 
 .kanban-board {
@@ -166,6 +268,21 @@
 
   .tarefas-container {
     padding: 88px 16px 24px;
+  }
+
+  .kanban-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .kanban-team-field {
+    min-width: 0;
+  }
+
+  .kanban-team-summary {
+    text-align: center;
+    max-width: none;
   }
 
   .kanban-column {

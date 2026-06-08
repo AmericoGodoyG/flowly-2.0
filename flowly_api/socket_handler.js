@@ -6,7 +6,7 @@ const { notifyUsers } = require('./utils/notificationService');
 const { setIo, getIo } = require('./utils/socketInstance');
 const { getSignedUrl } = require('./services/storage');
 const { moderateText } = require('./services/nlpModerationService');
-const { saveChatInsight } = require('./services/assistantInsightService');
+const { saveChatInsight, saveBlockedChatInsight } = require('./services/assistantInsightService');
 
 const setupSocketInteractions = (server) => {
   const io = new Server(server, {
@@ -38,16 +38,6 @@ const setupSocketInteractions = (server) => {
         const { equipeId, userId, texto } = data;
         const cleanText = String(texto || '').trim();
 
-        const moderation = moderateText(cleanText);
-        if (!moderation.allowed) {
-          socket.emit('message_blocked', {
-            reason: moderation.reason,
-            score: moderation.score,
-            message: 'Mensagem bloqueada por seguranca. Revise o texto e tente novamente.',
-          });
-          return;
-        }
-
         const equipe = await Equipe.findOne({
           _id: equipeId,
           $or: [{ membros: userId }, { createdBy: userId }],
@@ -65,6 +55,25 @@ const setupSocketInteractions = (server) => {
           socket.emit('message_blocked', {
             reason: 'invalid_user',
             message: 'Usuario invalido para envio da mensagem.',
+          });
+          return;
+        }
+
+        const moderation = moderateText(cleanText);
+        if (!moderation.allowed) {
+          saveBlockedChatInsight({
+            texto: cleanText,
+            equipe,
+            userId,
+            reason: moderation.reason,
+          }).catch((error) => {
+            console.error('Erro ao registrar insight de mensagem bloqueada:', error.message);
+          });
+
+          socket.emit('message_blocked', {
+            reason: moderation.reason,
+            score: moderation.score,
+            message: 'Mensagem bloqueada por seguranca. Revise o texto e tente novamente.',
           });
           return;
         }

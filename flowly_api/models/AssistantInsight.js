@@ -27,6 +27,16 @@ const assistantInsightSchema = new mongoose.Schema(
     topics: [{ type: String, index: true }],
     entities: [entitySchema],
     spamAlert: { type: Boolean, default: false, index: true },
+    alertLevel: {
+      type: String,
+      enum: ['none', 'low', 'medium', 'high'],
+      default: 'none',
+      index: true,
+    },
+    conflictRisk: { type: Number, default: 0 },
+    helpNeeded: { type: Boolean, default: false, index: true },
+    signals: [{ type: String }],
+    recommendation: { type: String, trim: true },
   },
   { timestamps: true }
 );

@@ -1,7 +1,18 @@
 const AssistantInsight = require('../models/AssistantInsight');
 const Equipe = require('../models/Equipe');
+const User = require('../models/User');
 
-const buildSuggestions = ({ sentiments = {}, topTopics = [], spamAlerts = 0, totalMessages = 0 }) => {
+const CHAT_INSIGHTS_DAYS = 7;
+const BEHAVIOR_ALERT_DAYS = 14;
+
+const buildSuggestions = ({
+  sentiments = {},
+  topTopics = [],
+  spamAlerts = 0,
+  totalMessages = 0,
+  criticalAlerts = 0,
+  conflictRisk = 0,
+}) => {
   const suggestions = [];
   const negative = sentiments.negativo || 0;
   const neutral = sentiments.neutro || 0;
@@ -11,6 +22,9 @@ const buildSuggestions = ({ sentiments = {}, topTopics = [], spamAlerts = 0, tot
 
   if (negativeRatio >= 0.35) {
     suggestions.push('Priorize uma conversa com a equipe: há volume relevante de mensagens negativas.');
+  }
+  if (criticalAlerts > 0 || conflictRisk >= 0.5) {
+    suggestions.push('Verifique possivel conflito ou necessidade de apoio: ha alertas criticos no chat da equipe.');
   }
   if (neutralRatio >= 0.6 && totalMessages >= 5) {
     suggestions.push('Estimule feedbacks mais objetivos: muitas mensagens estão neutras e podem esconder dúvidas não verbalizadas.');
@@ -35,7 +49,15 @@ const buildSuggestions = ({ sentiments = {}, topTopics = [], spamAlerts = 0, tot
 };
 
 const buildAggregation = async () => {
-  const [totalMessages, sentimentRows, topicRows, spamAlerts, recent, teamRows] = await Promise.all([
+  const chatSince = new Date(Date.now() - CHAT_INSIGHTS_DAYS * 24 * 60 * 60 * 1000);
+  const behaviorSince = new Date(Date.now() - BEHAVIOR_ALERT_DAYS * 24 * 60 * 60 * 1000);
+  const chatMatch = {
+    source: { $in: ['team_chat', 'team_chat_blocked'] },
+    createdAt: { $gte: chatSince },
+  };
+  const behaviorSignals = ['offensive_language', 'offensive_language_excess', 'blocked_message', 'possible_conflict'];
+
+  const [totalMessages, sentimentRows, topicRows, spamAlerts, criticalAlerts, recent, teamRows, behaviorRows] = await Promise.all([
     AssistantInsight.countDocuments(),
     AssistantInsight.aggregate([
       { $group: { _id: '$sentiment', count: { $sum: 1 } } },
@@ -48,12 +70,20 @@ const buildAggregation = async () => {
       { $limit: 10 },
     ]),
     AssistantInsight.countDocuments({ spamAlert: true }),
-    AssistantInsight.find()
+    AssistantInsight.countDocuments({ alertLevel: { $in: ['medium', 'high'] } }),
+    AssistantInsight.find({
+      $or: [
+        { alertLevel: { $in: ['medium', 'high'] } },
+        { helpNeeded: true },
+        { spamAlert: true },
+      ],
+    })
       .sort({ createdAt: -1 })
       .limit(12)
-      .select('userId channelId teamId teamName content sentiment topics spamAlert createdAt')
+      .select('userId channelId teamId teamName content sentiment topics spamAlert alertLevel conflictRisk helpNeeded signals recommendation createdAt')
       .lean(),
     AssistantInsight.aggregate([
+      { $match: chatMatch },
       {
         $facet: {
           totals: [
@@ -62,6 +92,10 @@ const buildAggregation = async () => {
                 _id: { $ifNull: ['$teamId', '$channelId'] },
                 totalMessages: { $sum: 1 },
                 spamAlerts: { $sum: { $cond: ['$spamAlert', 1, 0] } },
+                criticalAlerts: {
+                  $sum: { $cond: [{ $in: ['$alertLevel', ['medium', 'high']] }, 1, 0] },
+                },
+                avgConflictRisk: { $avg: '$conflictRisk' },
               },
             },
           ],
@@ -92,6 +126,35 @@ const buildAggregation = async () => {
         },
       },
     ]),
+    AssistantInsight.aggregate([
+      {
+        $match: {
+          source: { $in: ['team_chat', 'team_chat_blocked'] },
+          createdAt: { $gte: behaviorSince },
+          $or: [
+            { spamAlert: true },
+            { alertLevel: { $in: ['medium', 'high'] } },
+            { signals: { $in: behaviorSignals } },
+          ],
+        },
+      },
+      {
+        $group: {
+          _id: {
+            teamKey: { $ifNull: ['$teamId', '$channelId'] },
+            userId: '$userId',
+          },
+          count: { $sum: 1 },
+          highAlerts: { $sum: { $cond: [{ $eq: ['$alertLevel', 'high'] }, 1, 0] } },
+          spamAlerts: { $sum: { $cond: ['$spamAlert', 1, 0] } },
+          avgConflictRisk: { $avg: '$conflictRisk' },
+          signals: { $addToSet: '$signals' },
+          lastAt: { $max: '$createdAt' },
+        },
+      },
+      { $sort: { highAlerts: -1, count: -1, avgConflictRisk: -1 } },
+      { $limit: 20 },
+    ]),
   ]);
 
   const sentiments = sentimentRows.reduce((acc, row) => {
@@ -108,6 +171,21 @@ const buildAggregation = async () => {
     acc[String(equipe._id)] = equipe.nome;
     return acc;
   }, {});
+
+  const recentUserIds = recent.map((item) => item.userId).filter(Boolean);
+  const behaviorUserIds = behaviorRows.map((row) => row._id.userId).filter(Boolean);
+  const users = await User.find({ _id: { $in: [...new Set([...recentUserIds, ...behaviorUserIds])] } })
+    .select('nome email')
+    .lean();
+  const userNames = users.reduce((acc, user) => {
+    acc[String(user._id)] = user.nome || user.email || String(user._id);
+    return acc;
+  }, {});
+
+  const recentAlerts = recent.map((item) => ({
+    ...item,
+    userName: userNames[String(item.userId)] || item.userId,
+  }));
 
   const byTeam = teamFacet.totals.map((row) => {
     const channelId = String(row._id || 'web');
@@ -126,6 +204,8 @@ const buildAggregation = async () => {
       teamName: teamNames[channelId] || (channelId === 'web' ? 'Canal Web' : `Equipe ${channelId.slice(-6)}`),
       totalMessages: row.totalMessages,
       spamAlerts: row.spamAlerts,
+      criticalAlerts: row.criticalAlerts || 0,
+      conflictRisk: Number((row.avgConflictRisk || 0).toFixed(2)),
       sentiments: sentimentsByTeam,
       topTopics,
     };
@@ -135,13 +215,40 @@ const buildAggregation = async () => {
     };
   }).sort((a, b) => b.totalMessages - a.totalMessages);
 
+  const badActors = behaviorRows
+    .map((row) => {
+      const channelId = String(row._id.teamKey || 'web');
+      const flattenedSignals = [...new Set((row.signals || []).flat().filter(Boolean))];
+      return {
+        channelId,
+        teamName: teamNames[channelId] || (channelId === 'web' ? 'Canal Web' : `Equipe ${channelId.slice(-6)}`),
+        userId: row._id.userId,
+        userName: userNames[String(row._id.userId)] || row._id.userId,
+        count: row.count,
+        highAlerts: row.highAlerts || 0,
+        spamAlerts: row.spamAlerts || 0,
+        conflictRisk: Number((row.avgConflictRisk || 0).toFixed(2)),
+        signals: flattenedSignals,
+        lastAt: row.lastAt,
+        recommendation: row.highAlerts > 0 || row.count >= 3
+          ? 'Converse em particular com este usuario e acompanhe a conduta nas proximas interacoes.'
+          : 'Observe o comportamento deste usuario nas proximas conversas da equipe.',
+      };
+    })
+    .filter((item) => item.count >= 2 || item.highAlerts > 0 || item.conflictRisk >= 0.5);
+
   const globalInsight = {
     totalMessages,
     sentiments,
     topTopics: topicRows.map((row) => ({ topic: row._id, count: row.count })),
     spamAlerts,
-    recent,
+    criticalAlerts,
+    recent: recentAlerts,
     byTeam,
+    chatSummaries: byTeam,
+    chatWindowDays: CHAT_INSIGHTS_DAYS,
+    badActors,
+    behaviorWindowDays: BEHAVIOR_ALERT_DAYS,
   };
 
   return {
@@ -181,6 +288,11 @@ const ingestAssistantInsight = async (req, res) => {
         topics: Array.isArray(insight.topics) ? insight.topics : [],
         entities: Array.isArray(insight.entities) ? insight.entities : [],
         spamAlert: Boolean(insight.spam_alert ?? insight.spamAlert),
+        alertLevel: insight.alertLevel || insight.alert_level || 'none',
+        conflictRisk: Number(insight.conflictRisk ?? insight.conflict_risk ?? 0),
+        helpNeeded: Boolean(insight.helpNeeded ?? insight.help_needed),
+        signals: Array.isArray(insight.signals) ? insight.signals : [],
+        recommendation: insight.recommendation || undefined,
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );

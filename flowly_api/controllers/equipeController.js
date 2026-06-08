@@ -42,6 +42,21 @@ const assinarFotosMembrosEquipe = async (equipe) => {
 
 const assinarFotosMembrosEquipes = (equipes) => Promise.all(equipes.map(assinarFotosMembrosEquipe));
 
+const formatarNomeEquipe = (nome) => {
+  const palavrasPequenas = new Set(['da', 'de', 'do', 'das', 'dos', 'e']);
+  return String(nome || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase()
+    .split(' ')
+    .map((palavra, index) => (
+      index > 0 && palavrasPequenas.has(palavra)
+        ? palavra
+        : palavra.charAt(0).toUpperCase() + palavra.slice(1)
+    ))
+    .join(' ');
+};
+
 const garantirCriadorComoMembro = (userId) => Equipe.updateMany(
   { createdBy: userId, membros: { $ne: userId } },
   { $addToSet: { membros: userId } }
@@ -74,7 +89,7 @@ exports.criarEquipe = async (req, res) => {
     const membrosComCriador = [...new Set([...membrosUnicos, String(req.user.id)])];
 
     // Criar a equipe
-    const novaEquipe = new Equipe({ nome, membros: membrosComCriador, createdBy: req.user.id });
+    const novaEquipe = new Equipe({ nome: formatarNomeEquipe(nome), membros: membrosComCriador, createdBy: req.user.id });
     await novaEquipe.save();
 
     // Retornar a equipe criada com os dados populados
@@ -144,7 +159,7 @@ exports.editarEquipe = async (req, res) => {
 
     const equipeAtualizada = await Equipe.findByIdAndUpdate(
       req.params.id,
-      { nome, membros: membrosComCriador },
+      { nome: formatarNomeEquipe(nome), membros: membrosComCriador },
       { new: true }
     ).populate('membros', 'nome email fotoPerfil');
 

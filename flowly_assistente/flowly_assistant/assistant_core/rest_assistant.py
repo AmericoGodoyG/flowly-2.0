@@ -188,12 +188,26 @@ class RestAssistant:
             params.setdefault("_team_label", label)
 
         if params.get("task_id") and not is_object_id(params["task_id"]):
-            task_id, label = self._resolve_task_ref(user_type, params["task_id"])
+            task_id, label = self._resolve_task_ref(user_type, params["task_id"], team_id=params.get("team_id") or params.get("equipe"))
             params["task_id"] = task_id
             params.setdefault("_task_label", label)
 
+        if params.get("user") and params["user"] != "__none__" and not is_object_id(params["user"]):
+            user_id, label = self._resolve_user_ref(params["user"], team_id=params.get("equipe") or params.get("team_id"))
+            params["user"] = user_id
+            params.setdefault("_user_label", label)
+
     def _resolve_team_ref(self, ref: str) -> Tuple[str, str]:
         query = normalize(ref)
+        if query in {"eu", "mim", "para mim", "pra mim", "eu mesmo", "eu mesma"}:
+            me = self.api.me()
+            user_id = str((me or {}).get("_id") or (me or {}).get("id") or "").strip()
+            name = str((me or {}).get("nome") or "voce").strip()
+            if not user_id:
+                raise APIError("Nao consegui identificar seu usuario")
+            if team_id and not self._is_user_in_team(user_id, team_id):
+                raise APIError("Voce nao esta na equipe alvo")
+            return user_id, name
         if len(query) < 2:
             raise APIError("Nome da equipe inválido")
 
@@ -215,7 +229,7 @@ class RestAssistant:
             raise APIError("Não consegui encontrar essa equipe pelo nome")
         return scored[0][1], scored[0][2]
 
-    def _resolve_task_ref(self, user_type: str, ref: str) -> Tuple[str, str]:
+    def _resolve_task_ref(self, user_type: str, ref: str, team_id: Optional[str] = None) -> Tuple[str, str]:
         query = normalize(ref)
         if len(query) < 2:
             raise APIError("Descrição da tarefa inválida")
@@ -241,10 +255,13 @@ class RestAssistant:
             if not task_id or task_id in seen:
                 continue
             seen.add(task_id)
+            equipe = task.get("equipe")
+            task_team_id = str(equipe.get("_id") or equipe.get("id") or "") if isinstance(equipe, dict) else str(equipe or "")
+            if team_id and task_team_id and str(task_team_id) != str(team_id):
+                continue
             desc = str(task.get("descricao") or "").strip()
             if not desc:
                 continue
-            equipe = task.get("equipe")
             team_name = str(equipe.get("nome") or "").strip() if isinstance(equipe, dict) else ""
             label = f"{desc} (equipe {team_name})" if team_name else desc
             scored.append((self._token_set_ratio(query, desc), task_id, label))
@@ -253,6 +270,52 @@ class RestAssistant:
         if not scored or scored[0][0] < 62:
             raise APIError("Não consegui encontrar essa tarefa pelo nome/descrição")
         return scored[0][1], scored[0][2]
+
+    def _resolve_user_ref(self, ref: str, team_id: Optional[str] = None) -> Tuple[str, str]:
+        query = normalize(ref)
+        if query in {"nao", "não", "ninguem", "ninguém", "sem responsavel", "sem responsável"}:
+            return "__none__", "sem responsavel"
+        if len(query) < 2:
+            raise APIError("Nome do responsavel invalido")
+
+        users = self.api.team_members(team_id) if team_id else self.api.search_users(query)
+        if team_id and (not isinstance(users, list) or not users):
+            raise APIError("Nao encontrei membros na equipe alvo")
+        if not team_id and (not isinstance(users, list) or not users):
+            users = self.api.search_users(query)
+        if not isinstance(users, list) or not users:
+            users = self.api.list_users()
+
+        scored = []
+        for user in [item for item in users if isinstance(item, dict)]:
+            user_id = str(user.get("_id") or user.get("id") or "").strip()
+            name = str(user.get("nome") or "").strip()
+            email = str(user.get("email") or "").strip()
+            if not user_id:
+                continue
+            label = f"{name} ({email})" if email else name
+            candidate = normalize(f"{name} {email}")
+            score = max(self._token_set_ratio(query, name), self._token_set_ratio(query, email))
+            if query == normalize(name) or query == normalize(email):
+                score = 100
+            elif re.search(rf"\b{re.escape(query)}\b", candidate):
+                score = max(score, 92)
+            scored.append((score, user_id, label or user_id))
+
+        scored.sort(key=lambda item: item[0], reverse=True)
+        if not scored or scored[0][0] < 55:
+            raise APIError("Nao consegui encontrar esse usuario entre os membros da equipe alvo")
+        return scored[0][1], scored[0][2]
+
+    def _is_user_in_team(self, user_id: str, team_id: str) -> bool:
+        members = self.api.team_members(team_id)
+        if not isinstance(members, list):
+            return False
+        return any(
+            str((member or {}).get("_id") or (member or {}).get("id") or "") == str(user_id)
+            for member in members
+            if isinstance(member, dict)
+        )
 
     def _execute(self, match: Match, params: Dict[str, str]) -> Any:
         key = match.command.key
@@ -271,7 +334,7 @@ class RestAssistant:
         if key == "team_messages":
             return self.api.team_messages(params["team_id"])
         if key == "create_team":
-            return self.api.create_team(params["nome"])
+            return self.api.create_team(self._title_case_name(params["nome"]))
         if key == "task_details":
             return self.api.task_details(params["task_id"])
         if key == "add_comment":
@@ -289,7 +352,14 @@ class RestAssistant:
         if key == "timer":
             return self.api.timer(params["task_id"], params["acao"])
         if key == "create_task":
-            return self.api.create_task(descricao=params["descricao"], equipe=params["equipe"])
+            return self.api.create_task(
+                descricao=params["nome"],
+                detalhes=params.get("descricao"),
+                dataEntrega=params["dataEntrega"],
+                urgencia=params["urgencia"],
+                equipe=params["equipe"],
+                user=params.get("user"),
+            )
         if key == "list_tasks":
             return self.api.list_tasks()
         if key == "delete_task":
@@ -313,6 +383,14 @@ class RestAssistant:
         combo_a = " ".join(sorted(intersection | diff_a))
         combo_b = " ".join(sorted(intersection | diff_b))
         return max(self._ratio(sect, combo_a), self._ratio(sect, combo_b), self._ratio(combo_a, combo_b))
+
+    def _title_case_name(self, value: str) -> str:
+        small_words = {"da", "de", "do", "das", "dos", "e"}
+        words = normalize(value).split()
+        titled = []
+        for idx, word in enumerate(words):
+            titled.append(word if idx > 0 and word in small_words else word[:1].upper() + word[1:])
+        return " ".join(titled)
 
     def _ok(self, payload: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
         return {"ok": True, **payload}, 200

@@ -124,11 +124,25 @@ class FlowlyAPIClient:
     def timer(self, task_id: str, acao: str) -> Any:
         return self.request("PUT", f"/tarefas/{task_id}/cronometro", json={"acao": acao})
 
-    def create_task(self, *, descricao: str, equipe: str, detalhes: Optional[str] = None, user: Optional[str] = None) -> Any:
-        body: Dict[str, Any] = {"descricao": descricao, "equipe": equipe}
+    def create_task(
+        self,
+        *,
+        descricao: str,
+        equipe: str,
+        dataEntrega: str,
+        urgencia: str,
+        detalhes: Optional[str] = None,
+        user: Optional[str] = None,
+    ) -> Any:
+        body: Dict[str, Any] = {
+            "descricao": descricao,
+            "equipe": equipe,
+            "dataEntrega": dataEntrega,
+            "urgencia": urgencia,
+        }
         if detalhes:
             body["detalhes"] = detalhes
-        if user is not None:
+        if user is not None and user != "__none__":
             body["user"] = user
         return self.request("POST", "/tarefas", json=body)
 

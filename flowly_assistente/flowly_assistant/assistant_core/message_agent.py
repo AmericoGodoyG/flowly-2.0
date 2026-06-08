@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Tuple
 
 from flowly_assistant.api_client import FlowlyAPIClient
@@ -101,7 +101,7 @@ class MessageAgent:
                 conversation_id,
                 {"command_key": match.command.key, "params": merged_params, "missing": missing},
             )
-            text = self._question_for_param(missing[0])
+            text = self._question_for_param(missing[0], match.command.key)
             return self._awaiting_params_response(
                 event_id=event["id"],
                 moderation_score=moderation.score,
@@ -175,7 +175,7 @@ class MessageAgent:
                 conversation_id=conversation_id,
                 command_key=command.key,
                 missing=missing,
-                text=self._question_for_param(missing[0]),
+            text=self._question_for_param(missing[0], command.key),
             )
 
         utterance = f"{command.title} " + " ".join(f"{key} {value}" for key, value in params.items())
@@ -519,8 +519,28 @@ class MessageAgent:
 
     def _normalize_param_value(self, param: str, value: str) -> str:
         raw = (value or "").strip()
+        if param in {"nome", "descricao", "equipe", "user"}:
+            raw = self._strip_spoken_label(raw, param)
+        if param == "descricao":
+            raw = self._strip_due_date_tail(raw)
+        text = raw.lower().strip(" :,-")
+        if param == "user":
+            if text in {"nao", "não", "ninguem", "ninguém", "sem responsavel", "sem responsável"}:
+                return "__none__"
+            if text in {"eu", "mim", "para mim", "pra mim", "eu mesmo", "eu mesma"}:
+                return "para mim"
+            return raw
+        if param == "task_id":
+            return self._strip_spoken_label(self._strip_task_assignment_tail(raw), "task_id")
+        if param == "dataEntrega":
+            return self._normalize_due_date(raw)
+        if param == "urgencia":
+            if any(word in text for word in ("alta", "urgente", "prioridade alta")):
+                return "alta"
+            if any(word in text for word in ("media", "média", "normal")):
+                return "media"
+            return "baixa"
         if param == "status":
-            text = raw.lower()
             if "andamento" in text:
                 return "em_andamento"
             if "conclu" in text or "feito" in text or "final" in text:
@@ -529,6 +549,71 @@ class MessageAgent:
         if param == "acao":
             return "iniciar" if raw.lower().startswith(("i", "come", "start")) else "pausar"
         return raw
+
+    def _strip_spoken_label(self, value: str, param: str) -> str:
+        text = " ".join((value or "").strip().split()).strip(" :,-")
+        labels = {
+            "nome": ("nome", "titulo", "título", "chamada", "com nome"),
+            "descricao": ("descricao", "descrição", "detalhes", "detalhe"),
+            "equipe": ("equipe", "time"),
+            "user": ("usuario", "usuário", "responsavel", "responsável", "para"),
+            "task_id": ("tarefa", "task"),
+        }.get(param, ())
+        lowered = text.lower()
+        changed = True
+        while changed:
+            changed = False
+            for label in labels:
+                label_norm = label.lower()
+                if lowered == label_norm:
+                    return ""
+                prefix = f"{label_norm} "
+                if lowered.startswith(prefix):
+                    text = text[len(prefix):].strip(" :,-")
+                    lowered = text.lower()
+                    changed = True
+        return text
+
+    def _strip_task_assignment_tail(self, value: str) -> str:
+        text = " ".join((value or "").strip().split()).strip(" :,-")
+        return re.split(
+            r"\b(?:para\s+mim|atribuir\s+para|assumir|pegar|equipe|time)\b",
+            text,
+            maxsplit=1,
+            flags=re.IGNORECASE,
+        )[0].strip(" :,-")
+
+    def _normalize_due_date(self, value: str) -> str:
+        text = (value or "").strip().lower()
+        today = datetime.now().date()
+        if text in {"hoje", "para hoje"}:
+            return today.isoformat()
+        if text in {"amanha", "amanhã", "para amanha", "para amanhã"}:
+            return (today + timedelta(days=1)).isoformat()
+        if "semana que vem" in text or "proxima semana" in text or "próxima semana" in text:
+            return (today + timedelta(days=7)).isoformat()
+
+        match = re.search(r"\b(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?\b", text)
+        if match:
+            day = int(match.group(1))
+            month = int(match.group(2))
+            year = int(match.group(3)) if match.group(3) else today.year
+            if year < 100:
+                year += 2000
+            try:
+                return datetime(year, month, day).date().isoformat()
+            except ValueError:
+                return value
+        return value
+
+    def _strip_due_date_tail(self, value: str) -> str:
+        text = " ".join((value or "").strip().split()).strip(" :,-")
+        return re.split(
+            r"\b(?:dataentrega|data\s+entrega|data\s+de\s+entrega|prazo|entrega|urg[eê]ncia|urgencia|equipe|time|respons[aá]vel|responsavel)\b",
+            text,
+            maxsplit=1,
+            flags=re.IGNORECASE,
+        )[0].strip(" :,-")
 
     def _enrich_event_team_context(self, event: Dict[str, Any], content: str) -> None:
         if event.get("teamId") or event.get("team_id"):
@@ -549,7 +634,27 @@ class MessageAgent:
         except Exception:
             return
 
-    def _question_for_param(self, param: str) -> str:
+    def _question_for_param(self, param: str, command_key: str = "") -> str:
+        custom_questions = {
+            "nome": "Qual é o nome da tarefa ou da equipe?",
+            "descricao": "Qual é a descrição detalhada da tarefa?",
+            "dataEntrega": "Qual é a data de entrega? Pode dizer hoje, amanhã ou uma data como 25/06/2026.",
+            "urgencia": "Qual é o grau de urgência? Baixa, média ou alta?",
+            "user": "Quer atribuir para alguém? Diga o nome do usuário ou diga não.",
+        }
+        if command_key == "create_task" and param == "nome":
+            return "Qual é o nome da tarefa?"
+        if command_key == "create_task" and param == "descricao":
+            return "Qual é a descrição detalhada da tarefa?"
+        if command_key == "create_team" and param == "nome":
+            return "Qual é o nome da equipe?"
+        if command_key == "assign_to_me" and param == "team_id":
+            return "Em qual equipe esta a tarefa que voce quer atribuir para voce?"
+        if command_key == "assign_to_me" and param == "task_id":
+            return "Qual tarefa dessa equipe voce quer atribuir para voce?"
+        if param in custom_questions:
+            return custom_questions[param]
+
         questions = {
             "descricao": "Qual é a descrição da tarefa?",
             "equipe": "Para qual equipe?",

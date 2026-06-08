@@ -61,7 +61,7 @@ def get_commands() -> List[Command]:
             controller_method="tarefaController.atribuirParaMim",
             role_required="user",
             phrases=["atribuir para mim", "pegar tarefa", "assumir tarefa", "atribuir tarefa para mim"],
-            required_params=["task_id"],
+            required_params=["team_id", "task_id"],
         ),
         Command(
             key="update_status",
@@ -205,7 +205,7 @@ def get_commands() -> List[Command]:
             controller_method="tarefaController.criarTarefa",
             role_required="admin",
             phrases=["criar tarefa", "nova tarefa", "adicionar tarefa"],
-            required_params=["descricao", "equipe"],
+            required_params=["nome", "descricao", "dataEntrega", "urgencia", "equipe", "user"],
         ),
         Command(
             key="list_tasks",
