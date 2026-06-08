@@ -6,6 +6,7 @@ import 'package:meu_app/src/screens/auth/login_screen.dart';
 import 'package:meu_app/src/screens/auth/register_screen.dart';
 import 'package:meu_app/src/screens/auth/verify_email_screen.dart';
 import 'package:meu_app/src/screens/home/home_screen.dart';
+import 'package:meu_app/src/screens/profile/face_profile_screen.dart';
 import 'package:meu_app/src/screens/profile/profile_screen.dart';
 import 'package:meu_app/src/screens/profile/user_settings_screen.dart';
 import 'package:meu_app/src/screens/notifications/notifications_screen.dart';
@@ -103,6 +104,11 @@ final GoRouter flowlyRouter = GoRouter(
       path: '/perfil/configuracoes',
       builder: (BuildContext context, GoRouterState state) =>
           const UserSettingsScreen(),
+    ),
+    GoRoute(
+      path: '/perfil/verificacao-facial',
+      builder: (BuildContext context, GoRouterState state) =>
+          const FaceProfileScreen(),
     ),
     GoRoute(
       path: '/equipes/minhas',

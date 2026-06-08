@@ -6,7 +6,13 @@ const userSchema = new mongoose.Schema({
   senha: { type: String, required: true },
   tipo: { type: String, enum: ['admin', 'user'], default: 'user' },
   verificado: { type: Boolean, default: false },
-  fotoPerfil: { type: String, default: '' }
+  fotoPerfil: { type: String, default: '' },
+  faceEnrollmentOffered: { type: Boolean, default: false },
+  faceEnrollmentSkipped: { type: Boolean, default: false },
+  termsAccepted: { type: Boolean, default: false },
+  termsAcceptedAt: { type: Date },
+  termsVersion: { type: String, default: '' },
+  termsAcceptedIp: { type: String, default: '' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

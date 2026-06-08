@@ -152,6 +152,47 @@ describe('API Auth — Testes de Integração com Supertest', () => {
       expect(response.body.erro).toContain('8 caracteres');
     });
 
+    it('deve retornar erro 400 quando os termos nao foram aceitos', async () => {
+      const response = await request(app)
+        .post('/api/auth/registrar')
+        .send({
+          nome: 'Usuario Teste',
+          email: `teste${Date.now()}@flowly.com`,
+          senha: 'SenhaForte@123',
+          tipo: 'user',
+          termsAccepted: false,
+        })
+        .expect('Content-Type', /json/)
+        .expect(400);
+
+      expect(response.body).toHaveProperty('erro');
+      expect(response.body.erro).toContain('Termos de Uso');
+    });
+
+    it('deve registrar usuario quando os termos foram aceitos', async () => {
+      const response = await request(app)
+        .post('/api/auth/registrar')
+        .send({
+          nome: 'Usuario Teste',
+          email: `teste${Date.now()}@flowly.com`,
+          senha: 'SenhaForte@123',
+          tipo: 'user',
+          termsAccepted: true,
+          termsVersion: '2026-06-08',
+        })
+        .expect('Content-Type', /json/)
+        .expect(201);
+
+      expect(response.body).toHaveProperty('msg');
+      expect(User).toHaveBeenCalledWith(
+        expect.objectContaining({
+          termsAccepted: true,
+          termsVersion: '2026-06-08',
+          termsAcceptedAt: expect.any(Date),
+        })
+      );
+    });
+
   });
 
   // ------------------------------------------

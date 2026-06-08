@@ -51,6 +51,13 @@ export const API_ENDPOINTS = {
   USER_ME: `${API_BASE_URL}/users/me`,
   USER_ME_PASSWORD: `${API_BASE_URL}/users/me/password`,
 
+  FACE_ENROLL: `${API_BASE_URL}/face/enroll`,
+  FACE_VERIFY: `${API_BASE_URL}/face/verify`,
+  FACE_SKIP_ENROLLMENT: `${API_BASE_URL}/face/skip-enrollment`,
+  FACE_ENROLL_PROFILE: `${API_BASE_URL}/face/enroll-profile`,
+  FACE_STATUS: `${API_BASE_URL}/face/status`,
+  FACE_HEALTH: `${API_BASE_URL}/face/health`,
+
   ASSISTANT_HEALTH: `${ASSISTANT_BASE_URL}/health`,
   ASSISTANT_COMMAND: `${ASSISTANT_BASE_URL}/api/v1/messages`,
   ASSISTANT_STANDBY: `${ASSISTANT_BASE_URL}/standby`,

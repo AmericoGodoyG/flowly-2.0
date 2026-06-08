@@ -1,0 +1,12 @@
+flask>=3.0.0
+flask-cors>=4.0.0
+python-dotenv>=1.0.0
+deepface>=0.0.93
+tensorflow>=2.15.0
+tf-keras>=2.21.0
+opencv-python-headless>=4.9.0
+numpy>=1.26.0
+gunicorn>=22.0.0
+
+# Após pip install, na 1ª execução o DeepFace baixa vgg_face_weights.h5 (~550 MB).
+# Se o download falhar, veja SETUP_FACE.md (seção Solução de problemas).

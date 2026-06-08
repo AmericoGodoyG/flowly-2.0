@@ -257,7 +257,7 @@ exports.validarCodigoVerificacao = async (req, res) => {
 
     // Gerar JWT ou sessão aqui
     const token = jwt.sign(
-      { userId: resolvedUserId, email: user?.email },
+      { id: resolvedUserId, userId: resolvedUserId, tipo: user?.tipo, email: user?.email },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -302,7 +302,7 @@ exports.validarTokenVerificacao = async (req, res) => {
       await user.save();
     }
     const jwtToken = jwt.sign(
-      { userId: user._id, email: user.email },
+      { id: user._id, userId: user._id, tipo: user.tipo, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );

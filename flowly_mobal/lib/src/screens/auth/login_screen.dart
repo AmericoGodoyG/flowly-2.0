@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:meu_app/src/app/flowly_theme.dart';
+import 'package:meu_app/src/models/auth_result.dart';
+import 'package:meu_app/src/screens/auth/face_auth_screen.dart';
 import 'package:meu_app/src/services/auth_service.dart';
 import 'package:meu_app/src/widgets/auth_background.dart';
 import 'package:meu_app/src/widgets/flowly_card.dart';
@@ -57,6 +59,52 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     setState(() => _isSubmitting = false);
+
+    if (result.requiresFaceVerification || result.requiresFaceEnrollmentOffer) {
+      await Navigator.of(context).push<AuthResult>(
+        MaterialPageRoute<AuthResult>(
+          builder: (context) => FaceAuthScreen(
+            mode: result.requiresFaceVerification
+                ? FaceAuthMode.verify
+                : FaceAuthMode.enroll,
+            faceSessionToken: result.faceSessionToken ?? '',
+            userName: result.name ?? 'usuário',
+            onCancel: () => Navigator.pop(context),
+            onSkip: result.requiresFaceEnrollmentOffer ? () {} : null,
+            onSuccess: (faceResult) => Navigator.pop(context, faceResult),
+          ),
+        ),
+      ).then((faceResult) async {
+        if (!mounted || faceResult == null) {
+          return;
+        }
+
+        messenger.hideCurrentSnackBar();
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(faceResult.message),
+            backgroundColor: faceResult.success
+                ? const Color(0xFF0D9C6E)
+                : const Color(0xFFC62828),
+          ),
+        );
+
+        if (faceResult.success && faceResult.token != null) {
+          await _authService.persistAuthSession(
+            token: faceResult.token!,
+            email: _emailController.text.trim(),
+            userType: faceResult.userType ?? 'user',
+            userId: faceResult.userId,
+            name: faceResult.name,
+            fotoPerfil: faceResult.userPhoto,
+          );
+          if (mounted) {
+            context.go('/dashboard');
+          }
+        }
+      });
+      return;
+    }
 
     messenger.hideCurrentSnackBar();
     messenger.showSnackBar(

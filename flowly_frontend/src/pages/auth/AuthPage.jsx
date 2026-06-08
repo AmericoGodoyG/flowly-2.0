@@ -9,7 +9,10 @@ import {
 } from "react-icons/fa";
 import LightRays from "../../components/backgrounds/LightRays";
 import CurvedLoop from "../../components/text/CurvedLoop";
+import FaceAuthStep from "../../components/face/FaceAuthStep";
 import "../../styles/pages/auth/Auth.css";
+
+const TERMS_VERSION = "2026-06-08";
 
 function AuthPage() {
   // Water ripple effect handler
@@ -75,6 +78,13 @@ function AuthPage() {
   const [regErro, setRegErro] = useState("");
   const [regLoading, setRegLoading] = useState(false);
   const [mostrarSenhaReg, setMostrarSenhaReg] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
+
+  // Face auth state
+  const [faceStep, setFaceStep] = useState(null);
+  const [faceSessionToken, setFaceSessionToken] = useState("");
+  const [pendingUser, setPendingUser] = useState(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -109,6 +119,20 @@ function AuthPage() {
     }, 350);
   };
 
+  const redirectAfterLogin = (user) => {
+    if (user.tipo === "admin") {
+      window.location.href = "/admin";
+    } else {
+      window.location.href = "/dashboard";
+    }
+  };
+
+  const resetFaceStep = () => {
+    setFaceStep(null);
+    setFaceSessionToken("");
+    setPendingUser(null);
+  };
+
   // Login handler
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -121,17 +145,41 @@ function AuthPage() {
         senha: loginSenha,
       });
 
-      authUtils.saveAuthData(res.data.token, res.data.user);
-
-      if (res.data.user.tipo === "admin") {
-        window.location.href = "/admin";
-      } else {
-        window.location.href = "/dashboard";
+      if (res.data.requiresFaceVerification) {
+        setFaceStep("verify");
+        setFaceSessionToken(res.data.faceSessionToken);
+        setPendingUser(res.data.user);
+        return;
       }
+
+      if (res.data.requiresFaceEnrollmentOffer) {
+        setFaceStep("enroll");
+        setFaceSessionToken(res.data.faceSessionToken);
+        setPendingUser(res.data.user);
+        return;
+      }
+
+      authUtils.saveAuthData(res.data.token, res.data.user);
+      redirectAfterLogin(res.data.user);
     } catch (err) {
-      setLoginErro(
-        err.response?.data?.error || err.response?.data?.erro || "Erro ao fazer login"
-      );
+      const errorMessage =
+        err.response?.data?.error || err.response?.data?.erro || "Erro ao fazer login";
+      const redirectTo = err.response?.data?.redirectTo;
+
+      if (redirectTo) {
+        navigate(redirectTo, { replace: true });
+        return;
+      }
+
+      if (
+        errorMessage.toLowerCase().includes("usuário não verificado") ||
+        errorMessage.toLowerCase().includes("usuario nao verificado")
+      ) {
+        navigate(`/verificar-2fa?email=${encodeURIComponent(loginEmail)}`, { replace: true });
+        return;
+      }
+
+      setLoginErro(errorMessage);
     } finally {
       setLoginLoading(false);
     }
@@ -143,12 +191,20 @@ function AuthPage() {
     setRegLoading(true);
     setRegErro("");
 
+    if (!termsAccepted) {
+      setRegErro("Leia e aceite os Termos de Uso e Privacidade para finalizar o cadastro.");
+      setRegLoading(false);
+      return;
+    }
+
     try {
       await apiClient.post(API_ENDPOINTS.REGISTER, {
         nome: regNome,
         email: regEmail,
         senha: regSenha,
         tipo: regTipo,
+        termsAccepted,
+        termsVersion: TERMS_VERSION,
       });
 
       navigate(`/?fromRegister=1&email=${encodeURIComponent(regEmail)}`, { replace: true });
@@ -191,7 +247,17 @@ function AuthPage() {
 
         {/* ========== FORM CAROUSEL ========== */}
         <div className={`auth-carousel-wrapper ${slideDirection}`}>
-          {!isRegistering ? (
+          {faceStep ? (
+            <div className="auth-form-container">
+              <FaceAuthStep
+                mode={faceStep}
+                faceSessionToken={faceSessionToken}
+                user={pendingUser}
+                onComplete={redirectAfterLogin}
+                onCancel={resetFaceStep}
+              />
+            </div>
+          ) : !isRegistering ? (
             /* ========== LOGIN FORM ========== */
             <div className="auth-form-container">
               <div className="auth-header">
@@ -316,7 +382,27 @@ function AuthPage() {
                   </select>
                 </div>
 
-                <button type="submit" className="glass-btn primary" disabled={regLoading}>
+                <label className="terms-check">
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    disabled={regLoading}
+                    required
+                  />
+                  <span>
+                    Li e aceito os{" "}
+                    <button
+                      type="button"
+                      className="terms-link"
+                      onClick={() => setTermsOpen(true)}
+                    >
+                      Termos de Uso
+                    </button>
+                  </span>
+                </label>
+
+                <button type="submit" className="glass-btn primary" disabled={regLoading || !termsAccepted}>
                   <FaUserPlus /> {regLoading ? "Criando conta..." : "Criar conta"}
                 </button>
 
@@ -343,6 +429,94 @@ function AuthPage() {
           direction="left"
         />
       </div>
+      {termsOpen && (
+        <div
+          className="terms-modal-backdrop"
+          role="presentation"
+          onMouseDown={() => setTermsOpen(false)}
+        >
+          <div
+            className="terms-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="terms-title"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="terms-modal-header">
+              <div>
+                <h3 id="terms-title">Termos de Uso e Privacidade</h3>
+                <p>Versao {TERMS_VERSION}</p>
+              </div>
+              <button
+                type="button"
+                className="terms-close"
+                onClick={() => setTermsOpen(false)}
+                aria-label="Fechar termos"
+              >
+                x
+              </button>
+            </div>
+
+            <div className="terms-content">
+              <p>
+                Ao criar uma conta no Flowly, voce concorda com o uso dos dados
+                necessarios para operar a plataforma de tarefas, equipes, mensagens,
+                notificacoes, assistente digital e recursos de seguranca.
+              </p>
+              <h4>Dados pessoais tratados</h4>
+              <p>
+                Podemos tratar nome, e-mail, senha protegida por hash, tipo de usuario,
+                foto de perfil, tarefas, comentarios, equipes, mensagens, anexos,
+                registros de uso, tokens, IP, datas e horarios de acesso.
+              </p>
+              <h4>Biometria facial</h4>
+              <p>
+                Quando o reconhecimento facial for usado, imagens da camera podem ser
+                processadas para gerar embeddings faciais usados apenas para verificacao
+                de identidade, seguranca da conta e prevencao de fraude. Esse dado e
+                sensivel pela LGPD.
+              </p>
+              <h4>Assistente e voz</h4>
+              <p>
+                O assistente pode processar comandos, texto, contexto de tarefas,
+                equipes e, quando usado recurso de voz, fala convertida em texto para
+                executar solicitacoes.
+              </p>
+              <h4>Finalidade e bases legais</h4>
+              <p>
+                O tratamento ocorre para execucao do servico, seguranca, prevencao de
+                fraude, cumprimento de obrigacoes legais, legitimo interesse quando
+                aplicavel e consentimento para funcionalidades opcionais ou dados
+                sensiveis.
+              </p>
+              <h4>Responsabilidades do usuario</h4>
+              <p>
+                Voce deve fornecer informacoes verdadeiras, proteger sua senha, respeitar
+                outros usuarios e nao enviar conteudo ilegal, ofensivo, confidencial de
+                terceiros sem autorizacao ou arquivos maliciosos.
+              </p>
+              <h4>Direitos LGPD</h4>
+              <p>
+                Voce pode solicitar confirmacao de tratamento, acesso, correcao,
+                portabilidade, informacoes sobre compartilhamento, eliminacao quando
+                aplicavel e revogacao de consentimento.
+              </p>
+            </div>
+
+            <div className="terms-modal-actions">
+              <button
+                type="button"
+                onClick={() => {
+                  setTermsAccepted(true);
+                  setTermsOpen(false);
+                }}
+              >
+                Li e aceito
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

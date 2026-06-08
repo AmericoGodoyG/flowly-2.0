@@ -1,14 +1,19 @@
 const User = require('../models/User');
+const FaceProfile = require('../models/FaceProfile');
 const argon2 = require('argon2');
-const jwt = require('jsonwebtoken');
-const config = require('../config/config');
 const validatePassword = require('../utils/validatePassword.js');
 const { enviarCodigoVerificacaoEmail } = require('./emailController');
-const { getSignedUrl } = require('../services/storage');
+const {
+  buildUserPayload,
+  issueAuthToken,
+  issueFaceSessionToken,
+} = require('../utils/faceAuth');
+
+const CURRENT_TERMS_VERSION = '2026-06-08';
 
 exports.registrar = async (req, res) => {
   try {
-    const { nome, email, senha, tipo } = req.body;
+    const { nome, email, senha, tipo, termsAccepted, termsVersion } = req.body;
 
     const passwordValidationResult = validatePassword(senha);
 
@@ -16,9 +21,24 @@ exports.registrar = async (req, res) => {
       return res.status(400).json({ erro: passwordValidationResult });
     }
 
+    if (termsAccepted !== true) {
+      return res.status(400).json({
+        erro: 'Para criar a conta, leia e aceite os Termos de Uso e a Política de Privacidade.',
+      });
+    }
+
     const hash = await argon2.hash(senha);
     
-    const novoUsuario = new User({ nome, email, senha: hash, tipo });
+    const novoUsuario = new User({
+      nome,
+      email,
+      senha: hash,
+      tipo,
+      termsAccepted: true,
+      termsAcceptedAt: new Date(),
+      termsVersion: termsVersion || CURRENT_TERMS_VERSION,
+      termsAcceptedIp: req.ip || req.headers['x-forwarded-for'] || '',
+    });
     await novoUsuario.save();
 
     // Enviar código de verificação por email após registro bem-sucedido
@@ -55,16 +75,41 @@ exports.login = async (req, res) => {
       });
     }
 
-    const token = jwt.sign({ id: user._id, tipo: user.tipo }, config.jwt.secret, { expiresIn: '1d' });
+    if (user.tipo === 'admin') {
+      return res.json({
+        token: issueAuthToken(user),
+        user: await buildUserPayload(user),
+      });
+    }
+
+    const faceProfile = await FaceProfile.findOne({ userId: user._id, enrolled: true });
+
+    if (faceProfile) {
+      const faceSessionToken = issueFaceSessionToken(user._id, 'face_verify');
+      return res.json({
+        requiresFaceVerification: true,
+        faceSessionToken,
+        user: await buildUserPayload(user),
+      });
+    }
+
+    if (!user.faceEnrollmentOffered && !user.faceEnrollmentSkipped) {
+      user.faceEnrollmentOffered = true;
+      await user.save();
+
+      const faceSessionToken = issueFaceSessionToken(user._id, 'face_enroll');
+      return res.json({
+        requiresFaceEnrollmentOffer: true,
+        faceSessionToken,
+        user: await buildUserPayload(user),
+      });
+    }
+
+    const token = issueAuthToken(user);
 
     res.json({
       token,
-      user: {
-        id: user._id,
-        nome: user.nome,
-        tipo: user.tipo,
-        fotoPerfil: await getSignedUrl(user.fotoPerfil),
-      },
+      user: await buildUserPayload(user),
     });
     
   } catch (err) {

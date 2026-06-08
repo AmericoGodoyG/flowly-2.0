@@ -1,0 +1,134 @@
+.terms-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.terms-check input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--primary-color);
+  flex: 0 0 auto;
+}
+
+.terms-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.terms-link:hover {
+  color: var(--primary-color);
+}
+
+.terms-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.terms-modal {
+  width: min(760px, 100%);
+  max-height: min(760px, calc(100vh - 48px));
+  display: flex;
+  flex-direction: column;
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  overflow: hidden;
+}
+
+.terms-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px 14px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.terms-modal-header h3 {
+  margin: 0 0 4px;
+  font-size: 1.25rem;
+}
+
+.terms-modal-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+
+.terms-close {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.terms-content {
+  padding: 18px 24px;
+  overflow-y: auto;
+}
+
+.terms-content h4 {
+  margin: 18px 0 8px;
+  font-size: 1rem;
+}
+
+.terms-content p {
+  margin: 0 0 10px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.terms-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 24px 22px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.terms-modal-actions button {
+  min-height: 42px;
+  padding: 0 18px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .terms-modal-backdrop {
+    align-items: stretch;
+    padding: 14px;
+  }
+
+  .terms-modal {
+    max-height: calc(100vh - 28px);
+  }
+}

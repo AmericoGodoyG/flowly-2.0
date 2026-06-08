@@ -130,6 +130,11 @@ export const userRoutes = [
     path: '/notificacoes',
     element: <NotificationsPage />,
   },
+  {
+    path: '/perfil',
+    element: <PerfilUser />,
+    requiredRole: USER_TYPES.USER,
+  },
 ];
 
 /**

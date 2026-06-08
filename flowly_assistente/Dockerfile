@@ -19,8 +19,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Environment padrão
-ENV FLOWLY_API_BASE_URL=http://localhost:5000/api
 ENV FLOWLY_DEBUG=false
+ENV FLOWLY_ANALYTICS_QUEUE_MODE=local
+ENV FLOWLY_CONVERSATION_STORE=/tmp/flowly_conversation_state.json
 ENV PORT=8080
 
 # Expor porta

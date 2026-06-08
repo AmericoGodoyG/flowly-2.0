@@ -1,34 +1,37 @@
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 
 const allowedMimeTypes = [
-      'image/jpeg',
-      'image/png',
-      'application/pdf'
-    ];
+  'image/jpeg',
+  'image/png',
+  'application/pdf',
+];
 
-const allowedExtensions = ['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.zip'];
+const allowedExtensionsByMime = {
+  'image/jpeg': ['.jpg', '.jpeg'],
+  'image/png': ['.png'],
+  'application/pdf': ['.pdf'],
+};
 
 const fileFilter = (req, file, cb) => {
-  const ext = path.extname(file.originalname).toLowerCase();
+  const ext = path.extname(file.originalname || '').toLowerCase();
   const isMimeTypeAllowed = allowedMimeTypes.includes(file.mimetype);
-  const isExtensionAllowed = allowedExtensions.includes(ext);
+  const isExtensionAllowed = allowedExtensionsByMime[file.mimetype]?.includes(ext);
 
   if (isMimeTypeAllowed && isExtensionAllowed) {
     cb(null, true);
-  } else {
-    cb(new Error('Tipo de arquivo não permitido! Tente imagens ou documentos.'), false);
+    return;
   }
+
+  cb(new Error('Tipo de arquivo nao permitido! Use PNG, JPG ou PDF.'), false);
 };
 
-// Multer em memoria
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024 // Limite de 10 MB
+    fileSize: 10 * 1024 * 1024,
   },
-  fileFilter: fileFilter
+  fileFilter,
 });
 
 module.exports = upload;

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'; //useMemo
 import apiClient, { getFullApiUrl } from '../../config/apiClient';
 import Sidebar from '../../components/layout/Sidebar';
 import { API_ENDPOINTS, LOCAL_STORAGE_KEYS } from '../../config/config';
+import FaceProfileEnroll from '../../components/face/FaceProfileEnroll';
 //import { authUtils } from '../../config/authUtils';
 import '../../styles/pages/admin/DashboardAdmin.css';
 import '../../styles/pages/user/PerfilUser.css';
@@ -25,6 +26,7 @@ function PerfilUser() {
   const [mensagemPerfil, setMensagemPerfil] = useState('');
   const [mensagemSenha, setMensagemSenha] = useState('');
   const [erro, setErro] = useState('');
+  const [faceEnrolled, setFaceEnrolled] = useState(false);
 
   const carregarPerfil = async () => {
     setLoading(true);
@@ -35,6 +37,13 @@ function PerfilUser() {
       setEmail(res.data.email || '');
       setTipo(res.data.tipo || '');
       setFotoPerfil(res.data.fotoPerfil || '');
+
+      try {
+        const faceStatus = await apiClient.get(API_ENDPOINTS.FACE_STATUS);
+        setFaceEnrolled(Boolean(faceStatus.data?.enrolled));
+      } catch (_) {
+        setFaceEnrolled(false);
+      }
     } catch (error) {
       setErro('Nao foi possivel carregar seu perfil.');
     } finally {
@@ -78,7 +87,8 @@ function PerfilUser() {
       setArquivoFoto(null);
       setMensagemPerfil('Perfil atualizado com sucesso.');
     } catch (error) {
-      setErro(error?.response?.data?.erro || 'Erro ao atualizar perfil.');
+      const data = error?.response?.data || {};
+      setErro(data.debug || data.detalhe || data.erro || data.error || 'Erro ao atualizar perfil.');
     } finally {
       setSavingPerfil(false);
     }
@@ -171,6 +181,11 @@ function PerfilUser() {
                 {mensagemPerfil && <p className="perfil-sucesso">{mensagemPerfil}</p>}
               </form>
             </section>
+
+            <FaceProfileEnroll
+              enrolled={faceEnrolled}
+              onEnrolled={() => setFaceEnrolled(true)}
+            />
 
             <section className="perfil-card">
               <h3>Redefinir Senha</h3>
