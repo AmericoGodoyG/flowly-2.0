@@ -242,6 +242,15 @@
   margin-bottom: 4px;
 }
 
+.chat-message-time {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  margin-left: 6px;
+  margin-right: 6px;
+  opacity: 0.75;
+}
+
 .chat-bubble {
   max-width: 100%;
   border-radius: 12px;

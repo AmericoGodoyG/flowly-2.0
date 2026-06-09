@@ -146,6 +146,10 @@
   color: var(--text-primary);
 }
 
+.collapsed .sidebar-brand {
+  display: none;
+}
+
 .collapsed .sidebar-toggle {
   margin: 0 auto;
 }

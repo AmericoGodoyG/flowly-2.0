@@ -6,6 +6,17 @@ import { authUtils } from '../../config/authUtils';
 import { API_ENDPOINTS } from '../../config/config';
 import '../../styles/pages/common/ChatsPage.css';
 
+const formatMessageTime = (dateStr) => {
+  const date = dateStr ? new Date(dateStr) : new Date();
+  if (isNaN(date.getTime())) return '';
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+};
+
 const ChatsPage = () => {
   const [equipes, setEquipes] = useState([]);
   const [selectedEquipe, setSelectedEquipe] = useState(null);
@@ -203,6 +214,9 @@ const ChatsPage = () => {
                       <div className="chat-message-stack">
                         {!isMine && <span className="chat-author">{userName}</span>}
                         <div className="chat-bubble">{msg.texto}</div>
+                        <span className="chat-message-time">
+                          {formatMessageTime(msg.createdAt)}
+                        </span>
                       </div>
                       {isMine && renderAvatar(msg.user)}
                     </div>

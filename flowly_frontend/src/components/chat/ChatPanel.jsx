@@ -5,6 +5,17 @@ import { authUtils } from '../../config/authUtils';
 import { API_ENDPOINTS } from '../../config/config';
 import '../../styles/components/ChatPanel.css';
 
+const formatMessageTime = (dateStr) => {
+  const date = dateStr ? new Date(dateStr) : new Date();
+  if (isNaN(date.getTime())) return '';
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+};
+
 const ChatPanel = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [equipes, setEquipes] = useState([]);
@@ -154,6 +165,9 @@ const ChatPanel = () => {
                     <div className="message-bubble">
                       {msg.texto}
                     </div>
+                    <span className="message-time">
+                      {formatMessageTime(msg.createdAt)}
+                    </span>
                   </div>
                   {isMine && renderAvatar(msg.user)}
                 </div>
