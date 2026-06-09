@@ -29,8 +29,9 @@ A aplicação é composta por:
 * Aplicativo Mobile em Flutter
 * Banco de dados MongoDB
 * Comunicação em tempo real com Socket.IO
-* Infraestrutura com Docker, Kubernetes e GitHub Actions
-* Módulo auxiliar em Python para mineração de dados e assistente
+* Infraestrutura com Docker, Cloud Run, Azure Static Web Apps, Kubernetes e Docker Hub
+* Módulo auxiliar em Python para assistente, voz, analytics e comandos
+* Microserviço Python para reconhecimento facial
 
 ---
 
@@ -43,10 +44,11 @@ flowly-2.0/
 ├── flowly_frontend/    # Frontend Web React
 ├── flowly_mobal/       # Aplicativo Flutter
 ├── flowly_assistente/  # Assistente e mineração de dados em Python
+├── flowly_iot_face/    # Microserviço Python de reconhecimento facial
 │
-├── docker/             # Containers e infraestrutura
-├── kubernetes/         # Manifests Kubernetes
-└── .github/            # Pipelines CI/CD
+├── flowly_api/k8s/     # Manifests Kubernetes da API e MongoDB
+├── flowly_frontend/k8s/# Manifest Kubernetes do frontend
+└── *.md                # Documentação técnica, deploy e integração
 ```
 <img width="1304" height="586" alt="arquitetura" src="https://github.com/user-attachments/assets/af18d19d-bb61-4780-91c2-bbf94df10381" />
 
@@ -56,43 +58,121 @@ flowly-2.0/
 
 ## Backend
 
-* Node.js
-* Express
-* MongoDB
-* Mongoose
-* Socket.IO
-* JWT
-* Argon2
-* Multer
-* Nodemailer
+<details>
+<summary><strong>Backend API - Node.js, dados, autenticacao e tempo real</strong></summary>
+
+| Tecnologia | Uso no projeto | Justificativa |
+| ---------- | -------------- | ------------- |
+| Node.js | Runtime da `flowly_api` | Mantem a API REST e o Socket.IO em uma pilha JavaScript simples para o time web. |
+| Express | Servidor HTTP e roteamento | Framework direto para organizar controllers, middlewares e rotas REST. |
+| MongoDB | Banco principal | Modelo documental combina bem com usuarios, equipes, tarefas, mensagens e notificacoes. |
+| Mongoose | ODM da API | Define schemas, relacionamentos e validacoes para as colecoes MongoDB. |
+| Socket.IO | Chat e atualizacoes em tempo real | Simplifica comunicacao bidirecional para mensagens e eventos de equipe. |
+| JSON Web Token | Autenticacao stateless | Permite proteger rotas web/mobile sem sessao server-side centralizada. |
+| Argon2 | Hash de senhas | Algoritmo moderno para armazenamento seguro de credenciais. |
+| Multer | Upload de arquivos | Middleware usado para receber anexos e fotos antes de validar e persistir. |
+| Google Cloud Storage | Armazenamento de uploads | Separa arquivos do container e permite persistencia em ambiente cloud. |
+| Google Vision API | Moderacao de imagens | Analisa uploads de imagem antes do armazenamento para reduzir risco de conteudo impróprio. |
+| Nodemailer | Envio de e-mails | Suporta verificacao de conta/2FA por codigo enviado ao usuario. |
+| CORS/dotenv | Configuracao operacional | Controla origens permitidas e variaveis sensiveis por ambiente. |
+| Jest/Supertest | Testes de API | Valida endpoints e regras de autenticacao sem depender de fluxo manual. |
+
+</details>
 
 ## Frontend Web
 
-* React
-* React Router DOM
-* Axios
-* Socket.IO Client
-* Chart.js
-* Recharts
-* jsPDF
-* Three.js
-* @hello-pangea/dnd
+<details>
+<summary><strong>Frontend Web - React, experiencia do usuario e dashboards</strong></summary>
+
+| Tecnologia | Uso no projeto | Justificativa |
+| ---------- | -------------- | ------------- |
+| React | Interface web em `flowly_frontend` | Componentizacao para telas de login, dashboards, tarefas, equipes, chat e perfil. |
+| React Scripts | Build e ambiente CRA | Mantem scripts de desenvolvimento, teste e build ja adotados no projeto. |
+| React Router DOM | Navegacao | Organiza rotas publicas, protegidas, admin e usuario. |
+| Axios | Cliente HTTP | Centraliza chamadas REST para a API Node. |
+| Socket.IO Client | Tempo real no navegador | Integra o chat e eventos em tempo real com a API. |
+| Chart.js/react-chartjs-2 e Recharts | Graficos e dashboards | Bibliotecas usadas para visualizacao de metricas e produtividade. |
+| jsPDF | Geracao de PDF | Exporta informacoes de tarefas/relatorios quando necessario. |
+| @hello-pangea/dnd | Drag and drop | Base do Kanban e movimentacao de tarefas. |
+| React Icons | Iconografia | Padroniza icones em botoes, menus e telas. |
+| React Toastify | Feedback ao usuario | Exibe notificacoes visuais para acoes e erros. |
+| Three.js/OGL | Efeitos visuais | Apoia componentes visuais e fundos interativos da interface. |
+| Cypress/Testing Library | Testes web | Cobre fluxos E2E e testes de componentes. |
+
+</details>
 
 ## Mobile
 
-* Flutter
-* Dart
-* Dio
-* go_router
-* flutter_secure_storage
-* socket_io_client
+<details>
+<summary><strong>Mobile - Flutter multiplataforma</strong></summary>
+
+| Tecnologia | Uso no projeto | Justificativa |
+| ---------- | -------------- | ------------- |
+| Flutter | Aplicativo em `flowly_mobal` | Permite entregar app multiplataforma com uma unica base de codigo. |
+| Dart | Linguagem do app | Linguagem nativa do Flutter, com tipagem e boa produtividade. |
+| go_router | Navegacao | Define rotas e redirecionamentos de forma declarativa. |
+| Dio | Cliente HTTP | Consome a API REST com suporte a interceptors e tratamento de erros. |
+| flutter_secure_storage | Armazenamento seguro | Guarda tokens e dados sensiveis no dispositivo. |
+| socket_io_client | Tempo real mobile | Integra chats e eventos ao mesmo canal da web. |
+| google_fonts | Tipografia | Mantem identidade visual consistente. |
+| pdf/printing | Geracao e impressao | Suporta exportacao de documentos no mobile. |
+| image_picker/file_picker | Imagens e anexos | Permite foto de perfil, captura facial e upload de arquivos. |
+| flutter_dotenv | Configuracao | Carrega URLs e variaveis por ambiente. |
+| flutter_lints/flutter_test | Qualidade | Apoia padronizacao e testes do app. |
+
+</details>
+
+## Assistente
+
+<details>
+<summary><strong>Assistente - Python, voz, analytics e comandos</strong></summary>
+
+| Tecnologia | Uso no projeto | Justificativa |
+| ---------- | -------------- | ------------- |
+| Python | `flowly_assistente` | Adequado para automacao, NLP leve, voz e workers. |
+| requests | Cliente HTTP | Comunica o assistente com a API Node. |
+| SpeechRecognition | Speech-to-text | Captura comandos de voz em pt-BR quando o modo de voz e usado. |
+| pyttsx3 | Text-to-speech local | Permite resposta falada sem depender de servico externo no modo local. |
+| pymongo | Persistencia de analytics | Grava insights/eventos diretamente no MongoDB quando configurado. |
+| Functions Framework | Runtime HTTP | Expoe o assistente como endpoint em Google Cloud Functions/Run. |
+| Celery/Redis | Fila opcional | Suporta processamento assincromo de analytics quando ha worker separado. |
+| python-dotenv | Configuracao local | Carrega variaveis do `.env` durante desenvolvimento. |
+
+</details>
+
+## Reconhecimento Facial
+
+<details>
+<summary><strong>IoT Face - reconhecimento facial e biometria</strong></summary>
+
+| Tecnologia | Uso no projeto | Justificativa |
+| ---------- | -------------- | ------------- |
+| Flask | Microservico `flowly_iot_face` | Expoe endpoints `/health`, `/embed`, `/verify` e `/verify-multi`. |
+| Flask-CORS | CORS do servico facial | Facilita testes e integracoes controladas em ambiente HTTP. |
+| DeepFace | Extracao e verificacao facial | Biblioteca pronta para embeddings e comparacao facial. |
+| TensorFlow/tf-keras | Backend de modelo | Necessario para carregar modelos usados pelo DeepFace. |
+| OpenCV headless | Pre-processamento/deteccao | Detecta rosto sem dependencias de interface grafica no container. |
+| NumPy | Calculo vetorial | Calcula distancia cosseno entre embeddings. |
+| Gunicorn | Servidor de producao | Executa Flask de forma adequada em container/Cloud Run. |
+
+</details>
 
 ## Infraestrutura
 
-* Docker
-* Kubernetes
-* GitHub Actions
-* Docker Hub
+<details>
+<summary><strong>Infraestrutura, deploy e operacao</strong></summary>
+
+| Tecnologia | Uso no projeto | Justificativa |
+| ---------- | -------------- | ------------- |
+| Docker | Containers da API, frontend e servicos Python | Padroniza ambiente e facilita deploy. |
+| Google Cloud Run | Deploy de API, assistente e face | Executa containers HTTP com escala sob demanda. |
+| Google Cloud Storage | Uploads | Armazena anexos fora do ciclo de vida dos containers. |
+| Azure Static Web Apps | Frontend web publicado | Hospeda build estatico React com HTTPS. |
+| Kubernetes | Manifests em `k8s/` | Mantem alternativa/registro de deploy orquestrado para API, frontend e MongoDB. |
+| Docker Hub | Publicacao de imagens | Suporta distribuicao das imagens geradas. |
+| GitHub Actions | CI/CD documentado | Automatiza builds e publicacao quando configurado no repositorio remoto. |
+
+</details>
 
 ---
 
@@ -226,6 +306,18 @@ Pode:
 POST /api/auth/registrar
 POST /api/auth/login
 GET  /api/auth/users
+POST /api/auth/2fa/enviar-codigo
+POST /api/auth/2fa/validar-codigo
+GET  /api/auth/2fa/validar-token
+```
+
+### Usuários
+
+```http
+GET /api/users
+GET /api/users/me
+PUT /api/users/me
+PUT /api/users/me/password
 ```
 
 ### Equipes
@@ -233,8 +325,12 @@ GET  /api/auth/users
 ```http
 GET    /api/equipes
 POST   /api/equipes
+GET    /api/equipes/minhas
+GET    /api/equipes/:id
 PUT    /api/equipes/:id
 DELETE /api/equipes/:id
+GET    /api/equipes/:id/membros
+GET    /api/equipes/:id/messages
 ```
 
 ### Tarefas
@@ -244,14 +340,44 @@ GET    /api/tarefas
 POST   /api/tarefas
 PUT    /api/tarefas/:id
 DELETE /api/tarefas/:id
-PATCH  /api/tarefas/:id/status
+GET    /api/tarefas/minhas
+GET    /api/tarefas/backlog
+GET    /api/tarefas/:id/detalhes
+POST   /api/tarefas/:id/comentarios
+POST   /api/tarefas/:id/subtarefas
+PUT    /api/tarefas/:id/subtarefas/:subId
+POST   /api/tarefas/:id/anexos
+PUT    /api/tarefas/:id/status
+PUT    /api/tarefas/:id/cronometro
 ```
 
 ### Notificações
 
 ```http
-GET  /api/notificacoes
-PATCH /api/notificacoes/:id/read
+GET /api/notificacoes
+GET /api/notificacoes/count
+PUT /api/notificacoes/mark-all-read
+PUT /api/notificacoes/:id/read
+```
+
+### Reconhecimento Facial
+
+```http
+GET  /api/face/health
+POST /api/face/enroll
+POST /api/face/verify
+POST /api/face/skip-enrollment
+GET  /api/face/status
+POST /api/face/enroll-profile
+```
+
+### Admin e Storage
+
+```http
+GET  /api/admin/metricas
+POST /api/admin/assistant-insights/ingest
+GET  /api/admin/assistant-insights
+GET  /api/storage/files/:encodedPath
 ```
 
 ---
@@ -269,6 +395,8 @@ PATCH /api/notificacoes/:id/read
 | Comment      | Comentários              |
 | Notification | Notificações             |
 | ActivityLog  | Histórico de ações       |
+| FaceProfile  | Embeddings faciais e status de cadastro biométrico |
+| AssistantInsight | Eventos e insights do assistente |
 
 ---
 
@@ -325,6 +453,50 @@ PATCH /api/notificacoes/:id/read
 * WebSocket
 * Atualização otimista
 * Polling eficiente
+
+---
+
+# Ética, Privacidade e LGPD
+
+O Flowly trata dados pessoais e, em alguns fluxos, dados pessoais sensíveis. Por isso, o projeto adota os seguintes princípios de ética em desenvolvimento de software:
+
+## Dados pessoais tratados
+
+* Nome, e-mail, senha protegida por hash, tipo de usuário e foto de perfil
+* Tarefas, subtarefas, comentários, anexos, equipes, mensagens e notificações
+* Registros técnicos como data, horário, IP, tokens e eventos de uso
+* Dados de voz convertidos em texto quando o assistente for utilizado
+* Embeddings faciais quando o reconhecimento facial for habilitado
+
+## Dados sensíveis e biometria
+
+O reconhecimento facial gera embeddings a partir de imagens capturadas pelo usuário. Esse tipo de informação é sensível pela LGPD e deve ser usado apenas para autenticação, prevenção de fraude e segurança da conta. O frontend e o mobile não chamam o serviço facial diretamente; a API Node centraliza autenticação, autorização e auditoria.
+
+## Consentimento e transparência
+
+* O cadastro exige aceite dos Termos de Uso e Privacidade.
+* O aceite é registrado com versão, data e IP no modelo de usuário.
+* Funcionalidades de biometria e voz devem explicar a finalidade antes da coleta.
+* O usuário deve conseguir entender quais dados são necessários para o funcionamento da plataforma.
+
+## Minimização e finalidade
+
+* Coletar apenas dados necessários para tarefas, equipes, comunicação, autenticação e segurança.
+* Evitar armazenar imagem facial bruta quando o embedding for suficiente para verificação.
+* Usar Google Vision API e moderação interna para reduzir risco de uploads impróprios ou maliciosos.
+* Restringir anexos por tamanho, MIME type e política de segurança.
+
+## Segurança e responsabilidade
+
+* Senhas são armazenadas com Argon2.
+* Tokens JWT protegem rotas autenticadas.
+* Secrets devem ficar em variáveis de ambiente ou Secret Manager.
+* Buckets, MongoDB Atlas e serviços Cloud Run devem ter permissões mínimas necessárias.
+* Logs não devem expor senhas, tokens, embeddings faciais ou dados sensíveis.
+
+## Direitos do titular
+
+Em conformidade com a LGPD, o usuário deve poder solicitar confirmação de tratamento, acesso, correção, eliminação quando aplicável, informações sobre compartilhamento e revogação de consentimento para funcionalidades opcionais.
 
 ---
 
@@ -505,111 +677,119 @@ python main.py --cli
 
 # Variáveis de Ambiente
 
-### Backend
+Os exemplos abaixo representam a configuração recomendada para nuvem. Valores sensíveis devem ser armazenados como secrets do provedor, e não versionados no repositório.
+
+### Backend API (`flowly_api`)
 
 ```env
-# API Configuration
-PORT_ENV=5000
-NODE_ENV=development
+# Runtime
+PORT_ENV=8080
+NODE_ENV=production
+BODY_SIZE_LIMIT=20mb
 
-# MongoDB
-MONGO_URI=mongodb://localhost:27017/Flowly
+# Frontend e CORS
+CORS_ORIGIN=https://SEU_FRONTEND_AZURE_STATIC_WEB_APPS
+FRONTEND_URL=https://SEU_FRONTEND_AZURE_STATIC_WEB_APPS
 
-# GOOGLE CLOUD CONFIG
-GCP_PROJECT_ID=id_do_seu_projeto
-GCP_BUCKET_NAME=id_do_seu_bucket
+# MongoDB Atlas
+MONGO_URI=mongodb+srv://USER:PASSWORD@CLUSTER/Flowly?retryWrites=true&w=majority
 
-# JWT
-JWT_SECRET=sua_chave_secreta_segura_aqui
+# Autenticação
+JWT_SECRET=GERAR_UM_SEGREDO_LONGO_COM_32_BYTES_OU_MAIS
 JWT_EXPIRES_IN=7d
 
-# CORS
-CORS_ORIGIN=*
+# Reconhecimento facial: API Node chama o serviço Python
+FACE_SERVICE_URL=https://SEU_FLOWLY_FACE_IOT_CLOUD_RUN
+FACE_MATCH_THRESHOLD=0.46
+FACE_VERIFY_THRESHOLD=0.50
+FACE_DUPLICATE_THRESHOLD=0.46
+FACE_SESSION_EXPIRES_IN=5m
+FACE_ENROLL_SESSION_EXPIRES_IN=10m
 
-# NODEMAILER CONFIG
+# Google Cloud Storage e Vision API
+GCP_PROJECT_ID=SEU_GCP_PROJECT_ID
+GCP_BUCKET_NAME=SEU_BUCKET_GCS
+UPLOAD_IMAGE_MODERATION_PROVIDER=google_vision
+UPLOAD_IMAGE_MODERATION_REQUIRED=true
+UPLOAD_MODERATION_MAX_BYTES=10485760
+
+# Moderação complementar por endpoint interno do assistente
+UPLOAD_MODERATION_URL=https://SEU_ASSISTENTE_CLOUD_RUN/api/v1/uploads/moderate
+UPLOAD_MODERATION_SECRET=GERAR_UM_SEGREDO_LONGO_IGUAL_NO_ASSISTENTE
+UPLOAD_MODERATION_REQUIRED=false
+
+# Analytics interno do assistente via HTTP, se usado
+ASSISTANT_ANALYTICS_SECRET=GERAR_UM_SEGREDO_LONGO_SE_USAR_INGEST_HTTP
+
+# SMTP
 HOST=smtp.example.com
 EMAIL_PORT=587
 SECURE=false
-AUTH_EMAIL=seu_email@example.com
-AUTH_PASSWORD=sua_senha_secreta_aqui
+AUTH_EMAIL=no-reply@example.com
+AUTH_PASSWORD=SENHA_DO_SMTP
 SERVICE=example
 ```
 
-### Frontend
+> No Cloud Run, a API precisa escutar a porta `8080`. Como o projeto lê `PORT_ENV`, configure `PORT_ENV=8080`.
+
+### Frontend Web (`flowly_frontend`)
 
 ```env
-# API URL
-REACT_APP_API_URL=http://localhost:5000/api
+# Variáveis de build do React
+REACT_APP_API_URL=https://SEU_BACKEND_CLOUD_RUN/api
+REACT_APP_API_PUBLIC_URL=https://SEU_BACKEND_CLOUD_RUN
+REACT_APP_SOCKET_URL=https://SEU_BACKEND_CLOUD_RUN
+REACT_APP_ASSISTANT_URL=https://SEU_ASSISTENTE_CLOUD_RUN
 ```
 
-### Assistente
+> `REACT_APP_*` é embutido no build. Alterar essas variáveis exige novo build/deploy do frontend.
+
+### Assistente (`flowly_assistente`)
 
 ```env
-# Base URL do backend Flowly (repare no /api)
-FLOWLY_API_BASE_URL=http://localhost:5000/api
-
-# Token JWT para autenticação com o backend
-FLOWLY_API_TOKEN=seu_token_jwt_aqui
-
-# Timeout das requisições HTTP para o backend (segundos)
+# API principal
+FLOWLY_API_BASE_URL=https://SEU_BACKEND_CLOUD_RUN/api
 FLOWLY_API_TIMEOUT_SEC=20
-
-# Threshold de correspondência do parser de comandos (0-100)
-# Aumentar: mais permissivo (reconhece comandos com mais variação)
-# Diminuir: mais restritivo (reconhece apenas comandos bem similares)
 FLOWLY_MATCH_THRESHOLD=78
+FLOWLY_CORS_ORIGIN=https://SEU_FRONTEND_AZURE_STATIC_WEB_APPS
 
-# Origem CORS permitida (para chamadas do frontend)
-# "*" = permite todas as origens
-# "https://seu-frontend.com" = permite apenas esse domínio
-FLOWLY_CORS_ORIGIN=*
-
-# Modo texto: força entrada via teclado (não usa microfone)
-FLOWLY_TEXT_ONLY=False
-
-# Desligar TTS (Text-to-Speech): evita travas do pyttsx3 em alguns ambientes
-FLOWLY_TTS_ENABLED=True
-
-# Linguagem para reconhecimento de fala
-FLOWLY_LANGUAGE=pt-BR
-
-# Timeouts de audio (segundos)
-FLOWLY_LISTEN_TIMEOUT=5
-FLOWLY_PHRASE_TIME_LIMIT=10
-
-# Configurações do SpeechRecognition (Google Speech API)
-FLOWLY_SR_ENERGY_THRESHOLD=300
-FLOWLY_SR_DYNAMIC_ENERGY=True
-FLOWLY_SR_PAUSE_THRESHOLD=0.8
-FLOWLY_SR_NON_SPEAKING_DURATION=0.5
-
-# TTS Configurações
-FLOWLY_TTS_RATE=175
-FLOWLY_TTS_VOLUME=1.0
-
-# Habilita logs detalhados (timing das chamadas, stack traces, etc)
-FLOWLY_DEBUG=False
-
-# Papel do usuário: se vazio, a assistente tenta descobrir via GET /users/me
-# Valores: "admin", "user", ou deixar em branco para auto-detect
+# Em cloud, o token do usuário chega por Authorization: Bearer <token>
+FLOWLY_API_TOKEN=
 FLOWLY_USER_TYPE=
+
+# Analytics
+FLOWLY_ANALYTICS_STORAGE=mongodb
+FLOWLY_MONGO_URI=mongodb+srv://USER:PASSWORD@CLUSTER/Flowly?retryWrites=true&w=majority
+FLOWLY_MONGO_DB=Flowly
+FLOWLY_ANALYTICS_COLLECTION=assistantinsights
+
+# Fila local no próprio container
+FLOWLY_ANALYTICS_QUEUE_MODE=local
+FLOWLY_LOCAL_WORKER_THREADS=2
+FLOWLY_CONVERSATION_STORE=/tmp/flowly_conversation_state.json
+FLOWLY_CONVERSATION_TTL_SEC=900
+
+# Contrato de voz/TTS para navegador e modo local
 FLOWLY_LANGUAGE=pt-BR
-FLOWLY_LISTEN_TIMEOUT=5
-FLOWLY_PHRASE_TIME_LIMIT=10
+FLOWLY_TTS_ENABLED=true
 
-# Ajustes do SpeechRecognition (engine google)
-FLOWLY_SR_ENERGY_THRESHOLD=300
-FLOWLY_SR_DYNAMIC_ENERGY=True
-FLOWLY_SR_PAUSE_THRESHOLD=0.8
-FLOWLY_SR_NON_SPEAKING_DURATION=0.5
+# Segredo usado pela API Node ao chamar /api/v1/uploads/moderate
+UPLOAD_MODERATION_SECRET=GERAR_UM_SEGREDO_LONGO_IGUAL_NA_API
 
-# Parser
-FLOWLY_MATCH_THRESHOLD=78
-
-# TTS
-FLOWLY_TTS_RATE=175
-FLOWLY_TTS_VOLUME=1.0
+# Debug
+FLOWLY_DEBUG=false
 ```
+
+### IoT Face (`flowly_iot_face`)
+
+```env
+FACE_MODEL=VGG-Face
+FACE_DETECTOR=opencv
+FACE_MATCH_THRESHOLD=0.46
+FACE_VERIFY_THRESHOLD=0.50
+```
+
+> Em Cloud Run, não configure `HOST` nem `PORT` para o serviço facial. O container já usa a porta injetada pela plataforma.
 
 ---
 
@@ -627,23 +807,28 @@ FLOWLY_TTS_VOLUME=1.0
 
 ---
 
-# Mineração de Dados
+# Analytics, Assistente e Mineração de Dados
 
-O módulo de mineração de dados será responsável por:
+O módulo `flowly_assistente` concentra o assistente HTTP/CLI, comandos por texto/voz e geração de insights operacionais:
 
-* Processamento de mensagens do chat
-* Filtragem textual
-* Agrupamento de mensagens
-* Geração de indicadores
-* Análise de comunicação
+* Processamento de comandos do assistente
+* Consulta à API principal com JWT do usuário
+* Coleta de eventos e indicadores do uso do assistente
+* Persistência de analytics em MongoDB ou arquivo local
+* Fila opcional para processamento assíncrono com Celery/Redis
 
 ## Tecnologias utilizadas
 
 * Python
-* Regex
-* Pandas
-* Matplotlib
-* MongoDB
+* requests
+* SpeechRecognition
+* pyttsx3
+* pymongo
+* Functions Framework
+* Celery
+* Redis
+
+> Observação: Pandas e Matplotlib foram removidos desta seção porque não aparecem nos `requirements.txt` atuais do projeto.
 
 ---
 
@@ -677,37 +862,94 @@ Curso de Desenvolvimento de Software Multiplataforma
 
 # Referências
 
+<details>
+<summary><strong>Backend, banco de dados e seguranca</strong></summary>
+
 - ARGON2. Argon2 Password Hashing Algorithm Documentation. Disponível em: https://argon2-cffi.readthedocs.io/.<br>
-- AXIOS. Axios HTTP Client Documentation. Disponível em: https://axios-http.com/docs/intro.<br>
-- CHART.JS. Chart.js Documentation. Disponível em: https://www.chartjs.org/docs/latest/. <br>
-- CYPRESS. Cypress Documentation. Disponível em: https://docs.cypress.io/. <br>
-- DART. Dart Language Documentation. Disponível em: https://dart.dev/guides. <br>
-- DOCKER. Docker Documentation. Disponível em: https://docs.docker.com/.<br>
 - EXPRESS. Express.js Documentation. Disponível em: https://expressjs.com/.<br>
-- FLUTTER. Flutter Documentation. Disponível em: https://docs.flutter.dev/. <br>
-- GITHUB. GitHub Actions Documentation. Disponível em: https://docs.github.com/actions. <br>
 - GOOGLE. Google Cloud Storage Documentation. Disponível em: https://cloud.google.com/storage/docs. <br>
-- GOOGLE FONTS. Google Fonts Documentation. Disponível em: https://fonts.google.com/. <br>
+- GOOGLE. Cloud Vision API Documentation. Disponível em: https://cloud.google.com/vision/docs.<br>
 - JEST. Jest Documentation. Disponível em: https://jestjs.io/docs/getting-started.<br>
 - JSON WEB TOKEN. JWT Introduction and Documentation. Disponível em: https://jwt.io/introduction. <br>
-- KUBERNETES. Kubernetes Documentation. Disponível em: https://kubernetes.io/docs/home/. <br>
-- MATPLOTLIB DEVELOPMENT TEAM. Matplotlib Documentation. Disponível em: https://matplotlib.org/stable/index.html. <br>
 - MONGODB. MongoDB Documentation. Disponível em: https://www.mongodb.com/docs/.<br>
 - MONGOOSE. Mongoose ODM Documentation. Disponível em: https://mongoosejs.com/docs/. <br>
 - MULTER. Multer Documentation. Disponível em: https://github.com/expressjs/multer. <br>
-- NODEMAILER. Nodemailer Documentation. Disponível em: https://nodemailer.com/about/.<br>
 - NODE.JS. Node.js Documentation. Disponível em: https://nodejs.org/en/docs. <br>
-- PANDAS DEVELOPMENT TEAM. Pandas Documentation. Disponível em: https://pandas.pydata.org/docs/. <br>
-- PYTHON SOFTWARE FOUNDATION. Python Documentation. Disponível em: https://docs.python.org/3/.<br>
-- REACT. React Documentation. Disponível em: https://react.dev/.<br>
-- REACT ROUTER. React Router Documentation. Disponível em: https://reactrouter.com/en/main. <br>
-- RECHARTS. Recharts Documentation. Disponível em: https://recharts.org/en-US/. <br>
+- NODEMAILER. Nodemailer Documentation. Disponível em: https://nodemailer.com/about/.<br>
 - SOCKET.IO. Socket.IO Documentation. Disponível em: https://socket.io/docs/v4/. <br>
+- SUPERTEST. Supertest Documentation. Disponível em: https://github.com/ladjs/supertest.<br>
+
+</details>
+
+<details>
+<summary><strong>Frontend web</strong></summary>
+
+- AXIOS. Axios HTTP Client Documentation. Disponível em: https://axios-http.com/docs/intro.<br>
+- CHART.JS. Chart.js Documentation. Disponível em: https://www.chartjs.org/docs/latest/. <br>
+- CYPRESS. Cypress Documentation. Disponível em: https://docs.cypress.io/. <br>
+- HELLO PANGEA DND. @hello-pangea/dnd Documentation. Disponível em: https://github.com/hello-pangea/dnd.<br>
+- JSPDF. jsPDF Documentation. Disponível em: https://github.com/parallax/jsPDF.<br>
+- OGL. OGL Documentation. Disponível em: https://github.com/oframe/ogl.<br>
+- REACT. React Documentation. Disponível em: https://react.dev/.<br>
+- REACT ICONS. React Icons Documentation. Disponível em: https://react-icons.github.io/react-icons/.<br>
+- REACT ROUTER. React Router Documentation. Disponível em: https://reactrouter.com/. <br>
+- REACT TOASTIFY. React Toastify Documentation. Disponível em: https://fkhadra.github.io/react-toastify/.<br>
+- RECHARTS. Recharts Documentation. Disponível em: https://recharts.org/en-US/. <br>
 - TESTING LIBRARY. React Testing Library Documentation. Disponível em: https://testing-library.com/docs/react-testing-library/intro/.<br>
 - THREE.JS. Three.js Documentation. Disponível em: https://threejs.org/docs/.<br>
+
+</details>
+
+<details>
+<summary><strong>Mobile Flutter</strong></summary>
+
+- DART. Dart Language Documentation. Disponível em: https://dart.dev/guides. <br>
+- DIO. Dio Package Documentation. Disponível em: https://pub.dev/packages/dio.<br>
+- FILE PICKER. file_picker Package Documentation. Disponível em: https://pub.dev/packages/file_picker.<br>
+- FLUTTER. Flutter Documentation. Disponível em: https://docs.flutter.dev/. <br>
+- FLUTTER DOTENV. flutter_dotenv Package Documentation. Disponível em: https://pub.dev/packages/flutter_dotenv.<br>
+- FLUTTER SECURE STORAGE. flutter_secure_storage Package Documentation. Disponível em: https://pub.dev/packages/flutter_secure_storage.<br>
+- GO ROUTER. go_router Package Documentation. Disponível em: https://pub.dev/packages/go_router.<br>
+- GOOGLE FONTS. Google Fonts Documentation. Disponível em: https://fonts.google.com/. <br>
+- IMAGE PICKER. image_picker Package Documentation. Disponível em: https://pub.dev/packages/image_picker.<br>
+- PDF. pdf Package Documentation. Disponível em: https://pub.dev/packages/pdf.<br>
+- PRINTING. printing Package Documentation. Disponível em: https://pub.dev/packages/printing.<br>
+- SOCKET.IO CLIENT DART. socket_io_client Package Documentation. Disponível em: https://pub.dev/packages/socket_io_client.<br>
+
+</details>
+
+<details>
+<summary><strong>Python, assistente e reconhecimento facial</strong></summary>
+
+- CELERY. Celery Documentation. Disponível em: https://docs.celeryq.dev/.<br>
+- DEEPFACE. DeepFace Documentation. Disponível em: https://github.com/serengil/deepface.<br>
+- FLASK. Flask Documentation. Disponível em: https://flask.palletsprojects.com/.<br>
+- FUNCTIONS FRAMEWORK. Google Functions Framework for Python. Disponível em: https://github.com/GoogleCloudPlatform/functions-framework-python.<br>
+- GUNICORN. Gunicorn Documentation. Disponível em: https://docs.gunicorn.org/.<br>
+- NUMPY. NumPy Documentation. Disponível em: https://numpy.org/doc/.<br>
+- OPENCV. OpenCV Documentation. Disponível em: https://docs.opencv.org/.<br>
+- PYTHON SOFTWARE FOUNDATION. Python Documentation. Disponível em: https://docs.python.org/3/.<br>
+- PYTTSX3. pyttsx3 Documentation. Disponível em: https://pyttsx3.readthedocs.io/.<br>
+- REDIS. Redis Documentation. Disponível em: https://redis.io/docs/latest/.<br>
+- REQUESTS. Requests Documentation. Disponível em: https://requests.readthedocs.io/.<br>
+- SPEECHRECOGNITION. SpeechRecognition Documentation. Disponível em: https://pypi.org/project/SpeechRecognition/.<br>
+- TENSORFLOW. TensorFlow Documentation. Disponível em: https://www.tensorflow.org/.<br>
+
+</details>
+
+<details>
+<summary><strong>Infraestrutura, qualidade e repositorios</strong></summary>
+
+- AZURE. Azure Static Web Apps Documentation. Disponível em: https://learn.microsoft.com/azure/static-web-apps/.<br>
+- DOCKER. Docker Documentation. Disponível em: https://docs.docker.com/.<br>
+- GITHUB. GitHub Actions Documentation. Disponível em: https://docs.github.com/actions. <br>
+- GOOGLE. Cloud Run Documentation. Disponível em: https://cloud.google.com/run/docs.<br>
+- ISO25000. ISO/IEC 25010 – Systems and software Quality Requirements and Evaluation (SQuaRE). Disponível em: https://iso25000.com/index.php/en/iso-25000-standards/iso-25010.<br>
+- KUBERNETES. Kubernetes Documentation. Disponível em: https://kubernetes.io/docs/home/. <br>
 - FATEC-MOBILE-GROUP. flowly-2.0. Repositório GitHub. Disponível em: https://github.com/FATEC-Mobile-Group/flowly-2.0.<br>
 - FATEC-MOBILE-GROUP. Flowly. Repositório GitHub. Disponível em: https://github.com/FATEC-Mobile-Group/Flowly.<br>
-- ISO25000. ISO/IEC 25010 – Systems and software Quality Requirements and Evaluation (SQuaRE). Disponível em: https://iso25000.com/index.php/en/iso-25000-standards/iso-25010.<br>
+
+</details>
 
 ---
 
